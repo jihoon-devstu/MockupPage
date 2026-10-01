@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* ───────────────────────────────────────────────
+   곳간 디자인 토큰
+   - 쇼핑몰: 흰 바탕 + 먹색 + 따뜻한 회색, 각진 모서리, 얇은 선
+   - 콘솔(판매자/관리자): 회색 작업면 + 흰 패널, 촘촘한 표
+   - 포인트 컬러는 '주홍(vermilion)' 하나만 사용 (할인·알림·CTA)
+   ─────────────────────────────────────────────── */
+@theme {
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-ink: #141414;
+  --color-ink-2: #3b3b3b;
+  --color-mute: #8a8780;
+  --color-line: #e6e3dc;
+  --color-line-2: #d6d2c8;
+  --color-paper: #ffffff;
+  --color-cream: #f6f4ef;
+  --color-sand: #ece8df;
+  --color-work: #f1f1ef;
+
+  --color-point: #ff5a1f;
+  --color-point-dark: #d9430e;
+  --color-moss: #3f6b4f;
+  --color-moss-soft: #e5eee7;
+  --color-amber: #b7791f;
+  --color-amber-soft: #f8eedb;
+  --color-rust: #b4371f;
+  --color-rust-soft: #f8e4de;
+  --color-sky: #2f5f8a;
+  --color-sky-soft: #e2ebf3;
+
+  --text-2xs: 11px;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  @apply bg-paper text-ink font-sans antialiased;
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+}
+img { @apply select-none; }
+/* 그리드 아이템이 내부 표 너비만큼 늘어나 가로 스크롤이 생기지 않도록 */
+.grid > * { min-width: 0; }
+input, select, textarea, button { font: inherit; letter-spacing: inherit; }
+::selection { background: #141414; color: #fff; }
+
+@layer components {
+  /* 공통 */
+  .num { @apply font-mono tabular-nums tracking-normal; }
+  .eyebrow { @apply text-2xs font-semibold uppercase tracking-[0.14em] text-mute; }
+  .hairline { @apply border-line; }
+
+  /* 버튼 */
+  .btn { @apply inline-flex items-center justify-center gap-1.5 h-10 px-4 text-sm font-medium border transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed; }
+  .btn-sm { @apply h-8 px-3 text-[13px]; }
+  .btn-xs { @apply h-7 px-2.5 text-xs; }
+  .btn-lg { @apply h-13 px-6 text-[15px] font-semibold; }
+  .btn-ink { @apply bg-ink text-white border-ink hover:bg-ink-2; }
+  .btn-line { @apply bg-white text-ink border-line-2 hover:border-ink; }
+  .btn-point { @apply bg-point text-white border-point hover:bg-point-dark hover:border-point-dark; }
+  .btn-ghost { @apply border-transparent text-ink-2 hover:bg-sand; }
+
+  /* 입력 */
+  .field { @apply h-10 w-full border border-line-2 bg-white px-3 text-sm outline-none placeholder:text-mute focus:border-ink; }
+  .field-sm { @apply h-8 text-[13px] px-2.5; }
+  textarea.field { @apply h-auto py-2.5 leading-relaxed; }
+  .label { @apply block text-[13px] font-semibold text-ink-2 mb-1.5; }
+
+  /* 콘솔 패널/표 */
+  .panel { @apply bg-white border border-line min-w-0; }
+  .panel-head { @apply flex items-center justify-between px-5 h-12 border-b border-line; }
+  .panel-title { @apply text-[15px] font-bold; }
+  .tbl { @apply w-full text-[13px]; }
+  .tbl th { @apply h-9 px-3 text-left font-semibold text-ink-2 bg-cream border-y border-line whitespace-nowrap; }
+  .tbl td { @apply h-12 px-3 border-b border-line align-middle; }
+  .tbl tbody tr:hover td { @apply bg-[#fbfaf7]; }
+
+  /* 탭 */
+  .tab { @apply relative h-11 px-1 text-[15px] text-mute hover:text-ink; }
+  .tab-on { @apply text-ink font-bold after:absolute after:left-0 after:right-0 after:-bottom-px after:h-0.5 after:bg-ink; }
+}
+
+/* 스크롤바 숨김 (가로 스크롤 칩) */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* 토스트 */
+@keyframes toast-in { from { transform: translate(-50%, 12px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+.toast-in { animation: toast-in .18s ease-out; }
+
+/* 마키 (상단 띠배너) */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee { animation: marquee 38s linear infinite; }
