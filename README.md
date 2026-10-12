@@ -7,7 +7,7 @@
 - 화면 이동, 상태 변화(장바구니 담기, 발주확인, 입점 승인 등)는 **프론트 상태로만 흉내** (새로고침 시 초기화)
 - 화면 좌측 하단 **`MOCK 화면 목록`** 버튼으로 46개 화면(42개 라우트) 어디로든 바로 이동 가능
 - 범위 기준: 곳간 가이드라인 개정 8절(서비스 9개 + Keycloak, MoSCoW). 찜 · 쿠폰 · 비회원 구매 · 회원 신고는 제외 (5절 "제외한 기능")
-- 배포 예시 페이지 https://mock-up-phi.vercel.app/
+- 배포 페이지 https://mockup-page-sable.vercel.app/ (가이드 문서와 함께 보기: https://gotganguide.vercel.app/)
 
 ---
 
