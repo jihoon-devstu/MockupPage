@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Heart, Share2, X, Minus, Plus, Lock, ThumbsUp, ChevronRight, Truck, Camera } from 'lucide-react';
+import { Share2, X, Minus, Plus, Lock, ThumbsUp, ChevronRight, Truck, Camera } from 'lucide-react';
 import { productById, storeById, catById, visibleProducts } from '../../data/catalog';
 import { reviewsOf, ratingSummary, qnas } from '../../data/reviews';
 import { userById } from '../../data/people';
+import { earnOf } from '../../data/orders';
 import { useApp } from '../../lib/store';
-import { Stars, Price, Modal, Checkbox, Pager, Pill } from '../../components/ui';
+import { Stars, Price, Modal, Checkbox, Pager, Pill, GradeBadge } from '../../components/ui';
 import ProductCard from '../../components/ProductCard';
 import { cx, comma, won, salePrice, ymd, maskName } from '../../lib/format';
 
@@ -24,7 +25,7 @@ export default function ProductDetail() {
   const p = productById[id];
   const nav = useNavigate();
   const loc = useLocation();
-  const { addToCart, wish, toggleWish, toast } = useApp();
+  const { addToCart, toast } = useApp();
   const [img, setImg] = useState(0);
   const [pick, setPick] = useState({});
   const [lines, setLines] = useState([]);
@@ -37,7 +38,7 @@ export default function ProductDetail() {
   const [helped, setHelped] = useState(new Set());
 
   useEffect(() => { setImg(0); setPick({}); setLines([]); }, [id]);
-  useEffect(() => { if (loc.hash === '#reviews') setTimeout(() => document.getElementById('reviews')?.scrollIntoView(), 50); }, [loc.hash]);
+  useEffect(() => { if (loc.hash) setTimeout(() => document.getElementById(loc.hash.slice(1))?.scrollIntoView(), 50); }, [loc.hash]);
 
   const revs = useMemo(() => reviewsOf(id), [id]);
   const sum = ratingSummary(revs);
@@ -115,14 +116,13 @@ export default function ProductDetail() {
           <div className="mt-5 pb-5 border-b border-line"><Price p={p} size="lg" /></div>
 
           <dl className="py-4 border-b border-line text-[13px] grid grid-cols-[72px_1fr] gap-y-2.5">
-            <dt className="text-mute">적립</dt><dd>최대 <b className="num">{comma(unit * 0.01)}P</b> 적립 <span className="text-mute">(리뷰 작성 시 +500P)</span></dd>
+            <dt className="text-mute">적립</dt><dd>결제 시 실결제금액의 5% · 약 <b className="num">{comma(earnOf(unit))}P</b></dd>
             <dt className="text-mute">배송</dt>
             <dd>
               <div className="flex items-center gap-1.5"><Truck size={14} strokeWidth={1.6} /> {store.courier} · {store.shipFee ? `${comma(store.shipFee)}원` : '무료배송'}</div>
               {store.freeOver > 0 && store.shipFee > 0 && <div className="text-mute mt-0.5">{comma(store.freeOver)}원 이상 구매 시 무료 (스토어 묶음배송)</div>}
               <div className="text-moss mt-0.5 font-medium">{store.dispatch}</div>
             </dd>
-            <dt className="text-mute">쿠폰</dt><dd><button onClick={() => toast('쿠폰 2장을 받았어요')} className="underline">스토어 쿠폰 받기</button> <span className="text-mute">· 첫 구매 3,000원</span></dd>
           </dl>
 
           {/* 옵션 */}
@@ -158,8 +158,7 @@ export default function ProductDetail() {
             <span className="text-[13px] text-ink-2">총 상품금액 <span className="text-mute">(배송비 {ship ? won(ship) : '무료'})</span></span>
             <span className="text-[24px] font-bold num">{won(total)}</span>
           </div>
-          <div className="mt-4 grid grid-cols-[52px_1fr_1fr] gap-2">
-            <button onClick={() => { toggleWish(p.id); toast(wish.has(p.id) ? '찜 해제했어요' : '찜했어요'); }} className="btn btn-line btn-lg px-0" aria-label="찜"><Heart size={20} strokeWidth={1.6} className={wish.has(p.id) ? 'fill-point text-point' : ''} /></button>
+          <div className="mt-4 grid grid-cols-2 gap-2">
             {soldOut ? (
               <button onClick={() => toast('재입고 알림을 신청했어요')} className="btn btn-ink btn-lg col-span-2">재입고 알림 신청</button>
             ) : (
@@ -275,7 +274,7 @@ export default function ProductDetail() {
                     <div className="flex items-center gap-2.5">
                       <img src={u.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
                       <div>
-                        <div className="text-[13px] font-semibold">{maskName(u.nick)} <span className="ml-1 text-[11px] font-normal text-mute">{u.grade}</span></div>
+                        <div className="text-[13px] font-semibold">{maskName(u.nick)} <GradeBadge grade={u.grade} className="ml-1 align-middle" /></div>
                         <div className="flex items-center gap-2 text-[11.5px] text-mute"><Stars value={r.rating} size={11} /> {ymd(r.date)}</div>
                       </div>
                     </div>
@@ -294,7 +293,6 @@ export default function ProductDetail() {
                         className={cx('inline-flex items-center gap-1.5 h-7 px-2.5 border', helped.has(r.id) ? 'border-ink bg-ink text-white' : 'border-line-2 text-ink-2')}>
                         <ThumbsUp size={12} /> 도움돼요 <span className="num">{r.helpful + (helped.has(r.id) ? 1 : 0)}</span>
                       </button>
-                      <button onClick={() => toast('신고가 접수되었어요. 검토 후 처리됩니다.')} className="text-mute hover:text-ink">신고</button>
                     </div>
                   </li>
                 );
@@ -343,6 +341,7 @@ export default function ProductDetail() {
                   ['반품 배송비', `단순 변심: 왕복 ${won((store.shipFee || 3000) * 2)} / 상품 하자·오배송: 판매자 부담`],
                   ['교환/반품 불가', '착용 흔적·세탁·택 제거 시, 신선식품 단순 변심, 주문 제작 상품'],
                   ['구매 확정', '배송 완료 7일 후 자동 구매확정 (확정 이후에는 교환/반품 불가)'],
+                  ['포인트', '취소 · 반품 완료 시 그 상품분 사용 포인트는 환원, 적립 포인트는 회수'],
                 ].map(([k, v]) => (
                   <tr key={k} className="border-b border-line"><th className="w-40 bg-cream text-left font-medium px-3 py-3 text-ink-2 align-top">{k}</th><td className="px-3 py-3 leading-relaxed">{v}</td></tr>
                 ))}

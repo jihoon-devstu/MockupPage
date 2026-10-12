@@ -8,7 +8,7 @@ import { Cart, Checkout, OrderComplete } from './pages/shop/CartCheckout';
 import { Login, Signup, Help } from './pages/shop/AuthPages';
 import SellerApply from './pages/shop/SellerApply';
 import {
-  MyPageLayout, MyOrders, MyOrderDetail, ClaimRequest, MyClaims, MyReviews, MyWishlist, MyQna, MyCoupons, MyProfile, MyAddresses,
+  MyPageLayout, MyOrders, MyOrderDetail, ClaimRequest, MyClaims, MyReviews, MyQna, MyPoints, MyProfile, MyAddresses,
 } from './pages/mypage/MyPage';
 import SellerLayout from './pages/seller/SellerLayout';
 import SellerDashboard from './pages/seller/SellerDashboard';
@@ -45,9 +45,8 @@ export default function App() {
             <Route path="claim/:lineId" element={<ClaimRequest />} />
             <Route path="claims" element={<MyClaims />} />
             <Route path="reviews" element={<MyReviews />} />
-            <Route path="wishlist" element={<MyWishlist />} />
             <Route path="qna" element={<MyQna />} />
-            <Route path="coupons" element={<MyCoupons />} />
+            <Route path="points" element={<MyPoints />} />
             <Route path="profile" element={<MyProfile />} />
             <Route path="addresses" element={<MyAddresses />} />
           </Route>

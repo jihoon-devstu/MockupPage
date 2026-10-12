@@ -3,8 +3,8 @@ import { productById } from '../data/catalog';
 import { salePrice } from './format';
 
 /* 목업 전용 전역 상태 (새로고침하면 초기화)
-   - 장바구니, 찜, 토스트 알림
-   실제 개발 시: 장바구니는 서버(회원) / localStorage(비회원) 병행 */
+   - 장바구니, 토스트 알림
+   실제 개발 시: 장바구니는 order-service (Redis cart:{userId}) */
 const Ctx = createContext(null);
 
 const INITIAL_CART = [
@@ -15,7 +15,6 @@ const INITIAL_CART = [
 
 export function AppProvider({ children }) {
   const [cart, setCart] = useState(INITIAL_CART);
-  const [wish, setWish] = useState(new Set(['p202', 'p403', 'p901', 'p303']));
   const [toastMsg, setToastMsg] = useState(null);
 
   const toast = useCallback((msg) => {
@@ -43,12 +42,10 @@ export function AppProvider({ children }) {
       toggleAll: (on) => setCart((c) => c.map((i) => ({ ...i, checked: on }))),
       removeLines: (keys) => setCart((c) => c.filter((i) => !keys.includes(i.key))),
       clearChecked: () => setCart((c) => c.filter((i) => !i.checked)),
-      wish,
-      toggleWish: (pid) => setWish((w) => { const n = new Set(w); n.has(pid) ? n.delete(pid) : n.add(pid); return n; }),
       toast,
       toastMsg,
     };
-  }, [cart, wish, toast, toastMsg, addToCart]);
+  }, [cart, toast, toastMsg, addToCart]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

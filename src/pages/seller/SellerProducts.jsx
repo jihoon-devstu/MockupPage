@@ -143,10 +143,16 @@ export function SellerProductForm() {
           <Block title="카테고리 · 상품명">
             <Row label="카테고리" req>
               <div className="grid grid-cols-2 gap-2">
-                <select value={cat} onChange={(e) => { setCat(e.target.value); setSub(catById[e.target.value].subs[0]); }} className="field">{categories.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
-                <select value={sub} onChange={(e) => setSub(e.target.value)} className="field">{c.subs.map((s) => <option key={s}>{s}</option>)}</select>
+                <div>
+                  <div className="text-[11.5px] text-mute mb-1">상위 카테고리</div>
+                  <select value={cat} onChange={(e) => { setCat(e.target.value); setSub(catById[e.target.value].subs[0]); }} className="field">{categories.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+                </div>
+                <div>
+                  <div className="text-[11.5px] text-mute mb-1">하위 카테고리</div>
+                  <select value={sub} onChange={(e) => setSub(e.target.value)} className="field">{c.subs.map((s) => <option key={s}>{s}</option>)}</select>
+                </div>
               </div>
-              <p className="text-[12px] text-mute mt-1.5">판매수수료 {pct(c.commission)} + 결제수수료 2.2% {cat !== MY_STORE.cat && <span className="text-amber">· 입점 카테고리 외 등록은 관리자 승인 후 노출</span>}</p>
+              <p className="text-[12px] text-mute mt-1.5"><span className="text-ink">{c.name} &gt; {sub}</span> · 판매수수료 {pct(c.commission)} + 결제수수료 2.2% · 카테고리는 운영자가 등록한 목록에서만 선택할 수 있어요 {cat !== MY_STORE.cat && <span className="text-amber">· 입점 카테고리 외 등록은 관리자 승인 후 노출</span>}</p>
             </Row>
             <Row label="상품명" req>
               <input value={name} onChange={(e) => setName(e.target.value)} maxLength={50} className="field" placeholder="브랜드명 · 핵심 소재 · 상품 종류 순으로 작성하면 검색에 유리해요" />

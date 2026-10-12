@@ -38,7 +38,7 @@ export default function ShopLayout() {
         <div className="marquee flex whitespace-nowrap gap-12 pl-12">
           {[0, 1].map((k) => (
             <span key={k} className="flex gap-12">
-              <span>지금 가입하면 3,000P 즉시 지급</span><span className="text-point">●</span>
+              <span>결제할 때마다 실결제금액의 5% 포인트 적립</span><span className="text-point">●</span>
               <span>서귀포 노지 햇감귤 첫 수확 — 산지직송</span><span className="text-point">●</span>
               <span>10월 리빙 기획전 · 최대 30% 할인</span><span className="text-point">●</span>
               <span>작은 가게 사장님, 곳간에 입점하세요 → 수수료 첫 3개월 50%</span><span className="text-point">●</span>

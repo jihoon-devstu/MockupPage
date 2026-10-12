@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Flag, Lock } from 'lucide-react';
+import { Download, Lock } from 'lucide-react';
 import { productById, catById, PAYMENT_FEE } from '../../data/catalog';
 import { reviewsOfStore, ratingSummary } from '../../data/reviews';
 import { settlements, pendingThisWeek } from '../../data/orders';
@@ -17,7 +17,6 @@ export function SellerReviews() {
   const [tab, setTab] = useState('전체');
   const [prod, setProd] = useState('all');
   const [draft, setDraft] = useState({});
-  const [report, setReport] = useState(null);
   const sum = ratingSummary(all);
   const list = rows.filter((r) =>
     (prod === 'all' || r.productId === prod) &&
@@ -30,7 +29,7 @@ export function SellerReviews() {
 
   return (
     <div>
-      <PageHead title="리뷰 관리" desc="답글은 쇼핑몰 상품 상세에 공개됩니다. 부당한 리뷰는 '신고'로 관리자 검토를 요청할 수 있어요 (임의 삭제 불가)." />
+      <PageHead title="리뷰 관리" desc="답글은 쇼핑몰 상품 상세에 공개됩니다. 판매자는 리뷰를 삭제할 수 없으며, 운영 정책 위반 리뷰는 관리자가 블라인드 처리합니다." />
       <div className="grid lg:grid-cols-[260px_1fr] gap-4">
         <div className="panel p-5 text-center">
           <div className="text-[13px] text-mute">스토어 평균 평점</div>
@@ -67,12 +66,10 @@ export function SellerReviews() {
                   <Stars value={r.rating} size={12} /><b className="text-[13px]">{r.rating}.0</b>
                   <span className="text-mute">{maskName(u.name)} · {ymd(r.date)} · {p.name} ({r.option})</span>
                   {r.blinded && <Pill tone="rust">블라인드</Pill>}
-                  {r.reports > 0 && <Pill tone="amber">신고 {r.reports}</Pill>}
                 </div>
                 <p className="mt-2 text-[14px] font-semibold">{r.title}</p>
                 <p className="mt-1 text-[13.5px] text-ink-2 leading-relaxed">{r.body}</p>
                 {r.photos[0] && <img src={r.photos[0]} alt="" className="mt-2 w-20 h-20 object-cover" />}
-                <button onClick={() => setReport(r)} className="mt-3 text-[12px] text-mute flex items-center gap-1 hover:text-rust"><Flag size={12} /> 관리자에게 신고</button>
               </div>
               <div>
                 {r.reply ? (
@@ -92,13 +89,6 @@ export function SellerReviews() {
         })}
       </div>
 
-      <Modal open={!!report} onClose={() => setReport(null)} title="리뷰 신고" width={440}
-        footer={<><button className="btn btn-line btn-sm" onClick={() => setReport(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setReport(null); toast('신고가 접수되었어요. 관리자 검토 후 결과를 알려드려요.'); }}>신고하기</button></>}>
-        <div className="space-y-2 text-[14px]">
-          {['욕설/비방', '광고/홍보성 내용', '상품과 무관한 내용', '개인정보 노출', '허위 사실 (미구매 등)'].map((x, i) => <label key={x} className="flex items-center gap-2"><input type="radio" name="rr" defaultChecked={!i} /> {x}</label>)}
-        </div>
-        <p className="text-[12px] text-mute mt-4">신고 누적 3회 이상 또는 관리자 판단 시 블라인드됩니다. 단순 낮은 평점은 신고 사유가 되지 않습니다.</p>
-      </Modal>
     </div>
   );
 }

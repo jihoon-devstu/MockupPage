@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Search, Download, Printer } from 'lucide-react';
 import { productById } from '../../data/catalog';
-import { sellerOrders, trackingOf, FLOW } from '../../data/orders';
+import { sellerOrders, trackingOf, FLOW, POINT_RATE } from '../../data/orders';
 import { userById } from '../../data/people';
 import { useApp } from '../../lib/store';
-import { PageHead, Segments, StatusPill, Checkbox, Modal, KV, Pager } from '../../components/ui';
-import { won, ymd, ymdhm, cx, maskName } from '../../lib/format';
+import { PageHead, Segments, StatusPill, Checkbox, Modal, KV, Pager, GradeBadge } from '../../components/ui';
+import { won, comma, ymd, ymdhm, cx, maskName } from '../../lib/format';
 import { MY_STORE } from './SellerLayout';
 
 /* 목업용 모듈 상태: 페이지 이동 후에도 처리 결과가 유지되도록 */
@@ -172,7 +172,7 @@ export function SellerOrderDetail() {
           <div className="panel">
             <div className="panel-head"><span className="panel-title">구매자</span></div>
             <div className="p-5 text-[13px] space-y-1.5">
-              <div className="flex items-center gap-2.5"><img src={buyer.avatar} alt="" className="w-9 h-9 rounded-full object-cover" /><div><b>{buyer.name}</b> <span className="text-mute">({maskName(buyer.nick)})</span><div className="text-[12px] text-mute">{buyer.grade} · 우리 스토어 구매 {buyer.orders % 7 + 1}회</div></div></div>
+              <div className="flex items-center gap-2.5"><img src={buyer.avatar} alt="" className="w-9 h-9 rounded-full object-cover" /><div><b>{buyer.name}</b> <span className="text-mute">({maskName(buyer.nick)})</span><div className="text-[12px] text-mute flex items-center gap-1.5 mt-0.5"><GradeBadge grade={buyer.grade} /> 우리 스토어 구매 {buyer.orders % 7 + 1}회</div></div></div>
             </div>
           </div>
           <div className="panel">
@@ -192,44 +192,71 @@ export function SellerOrderDetail() {
 }
 
 /* ─────────── 취소/반품/교환 ─────────── */
+const NEXT = { 취소요청: '취소완료', 반품요청: '반품완료', 교환요청: '교환완료' };
+const SELLER_FAULT = ['상품 불량 (오염)'];
+
+function claimMoney(r) {
+  const amount = r.unitPrice * r.qty;
+  const type = r.claim.type;
+  const fee = type === '취소' || SELLER_FAULT.includes(r.claim.reason) ? 0 : (MY_STORE.shipFee || 3000) * 2;
+  if (type === '교환') return { amount, fee, cash: 0, pointBack: 0, pointTake: 0 };
+  const used = r.usedPoint || 0;
+  const pointTake = Math.floor((amount - used) * POINT_RATE);
+  return { amount, fee, cash: Math.max(0, amount - used - fee), pointBack: used, pointTake };
+}
+
 export function SellerClaims() {
   const { toast } = useApp();
   const [rows, setRows] = useState(() => ORDERS.filter((o) => o.claim));
   const [tab, setTab] = useState('처리대기');
+  const [type, setType] = useState('전체');
+  const [detail, setDetail] = useState(null);
   const [reject, setReject] = useState(null);
-  const pending = rows.filter((r) => r.status.endsWith('요청'));
-  const list = tab === '처리대기' ? pending : rows.filter((r) => !r.status.endsWith('요청'));
-  const done = { 취소요청: '취소완료', 반품요청: '반품완료', 교환요청: '배송중' };
-  const approve = (r) => { const next = rows.map((x) => (x.lineId === r.lineId ? { ...x, status: done[x.status] } : x)); setRows(next); ORDERS = ORDERS.map((x) => next.find((n) => n.lineId === x.lineId) || x); toast(`${r.status.replace('요청', '')} 승인 처리했어요`); };
+  const byType = type === '전체' ? rows : rows.filter((r) => r.claim.type === type);
+  const pending = byType.filter((r) => r.status.endsWith('요청'));
+  const list = tab === '처리대기' ? pending : byType.filter((r) => !r.status.endsWith('요청'));
+  const typeCounts = { 전체: rows.length, 취소: 0, 반품: 0, 교환: 0 };
+  rows.forEach((r) => { typeCounts[r.claim.type] += 1; });
+  const approve = (r) => {
+    const next = rows.map((x) => (x.lineId === r.lineId ? { ...x, status: NEXT[x.status] } : x));
+    setRows(next);
+    ORDERS = ORDERS.map((x) => next.find((n) => n.lineId === x.lineId) || x);
+    setDetail(null);
+    toast(r.claim.type === '교환' ? '교환 상품 재배송 처리했어요' : `${r.claim.type} 승인 · 환불이 진행돼요`);
+  };
 
   return (
     <div>
-      <PageHead title="취소 · 반품 · 교환" desc="요청 접수 후 3영업일 내 미처리 시 곳간 고객센터가 직권 처리하며, 판매자 페널티 점수가 부과됩니다." />
-      <Segments items={['처리대기', '처리완료']} value={tab} onChange={setTab} counts={{ 처리대기: pending.length, 처리완료: rows.length - pending.length }} />
+      <PageHead title="취소 · 반품 · 교환" desc="요청 접수 후 3영업일 내 처리해주세요. 취소 · 반품 승인 시 결제 취소 → 재고 복원 → 구매자 포인트 환원 · 회수가 함께 진행됩니다." />
+      <div className="flex flex-wrap gap-2">
+        <Segments items={['처리대기', '처리완료']} value={tab} onChange={setTab} counts={{ 처리대기: pending.length, 처리완료: byType.length - pending.length }} />
+        <Segments items={['전체', '취소', '반품', '교환']} value={type} onChange={setType} counts={typeCounts} />
+      </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
-          <thead><tr><th>유형</th><th>상품주문번호</th><th>상품</th><th>구매자</th><th>사유</th><th>요청일</th><th className="text-right">금액</th><th className="text-center">처리</th></tr></thead>
+          <thead><tr><th>상태</th><th>유형</th><th>상품주문번호</th><th>상품</th><th>구매자</th><th>사유</th><th>요청일</th><th className="text-right">금액</th><th className="text-center">처리</th></tr></thead>
           <tbody>
-            {list.length === 0 && <tr><td colSpan={8} className="text-center text-mute py-10">처리할 요청이 없습니다.</td></tr>}
+            {list.length === 0 && <tr><td colSpan={9} className="text-center text-mute py-10">처리할 요청이 없습니다.</td></tr>}
             {list.map((r) => {
               const p = productById[r.productId];
-              const pastDue = (Date.now() - r.claim.requested) / 864e5 > 2;
+              const open = r.status.endsWith('요청');
+              const pastDue = open && (Date.now() - r.claim.requested) / 864e5 > 2;
               return (
                 <tr key={r.lineId}>
                   <td><StatusPill s={r.status} /></td>
+                  <td className="font-semibold">{r.claim.type}</td>
                   <td><Link to={`/seller/orders/${r.lineId}`} className="num text-sky hover:underline">{r.lineId}</Link></td>
                   <td className="max-w-[220px] truncate">{p.name}<div className="text-[11.5px] text-mute">{r.option}</div></td>
                   <td>{r.receiver}</td>
                   <td>{r.claim.reason}</td>
-                  <td className={cx('num whitespace-nowrap', pastDue && r.status.endsWith('요청') && 'text-rust font-semibold')}>{ymd(r.claim.requested)}{pastDue && r.status.endsWith('요청') && ' (기한임박)'}</td>
+                  <td className={cx('num whitespace-nowrap', pastDue && 'text-rust font-semibold')}>{ymd(r.claim.requested)}{pastDue && ' (기한임박)'}</td>
                   <td className="text-right num">{won(r.unitPrice * r.qty)}</td>
                   <td>
-                    {r.status.endsWith('요청') ? (
-                      <div className="flex gap-1 justify-center">
-                        <button onClick={() => approve(r)} className="btn btn-ink btn-xs">{r.status === '교환요청' ? '교환 재발송' : '승인'}</button>
-                        <button onClick={() => setReject(r)} className="btn btn-line btn-xs">거부</button>
-                      </div>
-                    ) : <span className="text-mute text-[12px] block text-center">완료</span>}
+                    <div className="flex gap-1 justify-center">
+                      <button onClick={() => setDetail(r)} className="btn btn-line btn-xs">상세</button>
+                      {open && <button onClick={() => approve(r)} className="btn btn-ink btn-xs">{r.claim.type === '교환' ? '재배송' : '승인'}</button>}
+                      {open && <button onClick={() => setReject(r)} className="btn btn-line btn-xs">거부</button>}
+                    </div>
                   </td>
                 </tr>
               );
@@ -237,12 +264,44 @@ export function SellerClaims() {
           </tbody>
         </table>
       </div>
+
+      {detail && (() => {
+        const m = claimMoney(detail);
+        const p = productById[detail.productId];
+        const open = detail.status.endsWith('요청');
+        return (
+          <Modal open onClose={() => setDetail(null)} title={`${detail.claim.type} 요청 상세`} width={560}
+            footer={open ? <><button className="btn btn-line btn-sm" onClick={() => { setReject(detail); setDetail(null); }}>거부</button><button className="btn btn-ink btn-sm" onClick={() => approve(detail)}>{detail.claim.type === '교환' ? '재배송 처리' : '승인'}</button></> : <button className="btn btn-line btn-sm" onClick={() => setDetail(null)}>닫기</button>}>
+            <div className="flex gap-3 pb-4 border-b border-line text-[13px]">
+              <img src={p.images[0]} alt="" className="w-14 h-16 object-cover" />
+              <div className="flex-1"><div className="font-semibold">{p.name}</div><div className="text-mute">{detail.option} · {detail.qty}개</div><div className="num text-mute">{detail.lineId}</div></div>
+              <StatusPill s={detail.status} />
+            </div>
+            <div className="mt-4"><KV rows={[['유형', detail.claim.type], ['사유', detail.claim.reason], ['요청일', ymd(detail.claim.requested)], ['구매자', detail.receiver], ['송장', detail.invoice ? <span className="num">{detail.courier} {detail.invoice}</span> : '-']]} /></div>
+            <div className="mt-4 bg-cream p-4 text-[13px] space-y-1.5">
+              <div className="flex justify-between"><span className="text-ink-2">상품 결제금액</span><span className="num">{won(m.amount)}</span></div>
+              {detail.claim.type === '교환' ? (
+                <div className="flex justify-between"><span className="text-ink-2">교환 배송비 (왕복)</span><span className="num">{m.fee ? won(m.fee) : '판매자 부담'}</span></div>
+              ) : (
+                <>
+                  <div className="flex justify-between"><span className="text-ink-2">반품 배송비 (구매자 부담)</span><span className="num">{m.fee ? `−${won(m.fee)}` : '0원'}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-2">구매자 사용 포인트 환원</span><span className="num text-moss">+{comma(m.pointBack)}P</span></div>
+                  <div className="flex justify-between"><span className="text-ink-2">구매자 적립 포인트 회수</span><span className="num text-rust">−{comma(m.pointTake)}P</span></div>
+                  <div className="flex justify-between font-bold border-t border-line-2 pt-1.5"><span>결제수단 환불액 (부분 취소)</span><span className="num">{won(m.cash)}</span></div>
+                </>
+              )}
+            </div>
+            <p className="text-[12px] text-mute mt-2">{detail.claim.type === '교환' ? '교환은 결제 · 재고 변동 없이 회수 확인 후 재배송합니다.' : '포인트 환원 · 회수는 회원 포인트에서 처리되며 판매자 정산에서는 해당 상품주문이 제외됩니다.'}</p>
+          </Modal>
+        );
+      })()}
+
       <Modal open={!!reject} onClose={() => setReject(null)} title="요청 거부" width={460}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setReject(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setReject(null); toast('거부 사유가 구매자에게 전달되었어요'); }}>거부하기</button></>}>
         <label className="label">거부 사유</label>
         <select className="field mb-3"><option>이미 발송된 상품 (반품으로 진행 요청)</option><option>상품 사용 흔적 확인</option><option>반품 기한 경과</option><option>기타</option></select>
         <textarea rows={3} className="field" placeholder="구매자에게 전달할 상세 사유" />
-        <p className="text-[12px] text-mute mt-2">거부 시 구매자는 곳간 고객센터에 분쟁 조정을 신청할 수 있습니다.</p>
+        <p className="text-[12px] text-mute mt-2">거부 사유는 구매자의 취소 · 반품 · 교환 내역에 표시됩니다.</p>
       </Modal>
     </div>
   );

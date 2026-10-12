@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { X, Minus, Plus, Check, ChevronRight } from 'lucide-react';
 import { storeById } from '../../data/catalog';
-import { myAddresses, myCoupons, ME } from '../../data/people';
-import { shipFeeFor } from '../../data/orders';
+import { myAddresses } from '../../data/people';
+import { shipFeeFor, earnOf, POINT_RATE } from '../../data/orders';
+import { myPointBalance } from '../../data/points';
 import { useApp } from '../../lib/store';
 import { Checkbox, Empty, Modal } from '../../components/ui';
 import { cx, won, comma } from '../../lib/format';
@@ -19,26 +20,31 @@ function groupByStore(lines) {
   });
 }
 
-function Summary({ groups, discount = 0, point = 0, cta }) {
+/* 실결제금액 = 상품금액(할인 반영) + 배송비 − 사용 포인트 / 적립 = 실결제금액의 5% */
+const totalsOf = (groups, point = 0) => {
   const list = groups.reduce((a, g) => a + g.lines.reduce((b, l) => b + l.product.price * l.qty, 0), 0);
   const sale = groups.reduce((a, g) => a + g.subtotal, 0);
   const ship = groups.reduce((a, g) => a + g.ship, 0);
-  const pay = sale + ship - discount - point;
+  const pay = Math.max(0, sale + ship - point);
+  return { list, sale, ship, pay, earn: earnOf(pay) };
+};
+
+function Summary({ groups, point = 0, cta, label = '결제 예정금액' }) {
+  const t = totalsOf(groups, point);
   return (
     <div className="border border-ink">
       <div className="p-5 space-y-2.5 text-[14px]">
-        <div className="flex justify-between"><span className="text-ink-2">상품금액</span><span className="num">{won(list)}</span></div>
-        <div className="flex justify-between"><span className="text-ink-2">상품할인</span><span className="num text-point">−{won(list - sale)}</span></div>
-        {discount > 0 && <div className="flex justify-between"><span className="text-ink-2">쿠폰할인</span><span className="num text-point">−{won(discount)}</span></div>}
-        {point > 0 && <div className="flex justify-between"><span className="text-ink-2">포인트</span><span className="num text-point">−{won(point)}</span></div>}
-        <div className="flex justify-between"><span className="text-ink-2">배송비</span><span className="num">{ship ? `+${won(ship)}` : '무료'}</span></div>
+        <div className="flex justify-between"><span className="text-ink-2">상품금액</span><span className="num">{won(t.list)}</span></div>
+        <div className="flex justify-between"><span className="text-ink-2">상품할인</span><span className="num text-point">−{won(t.list - t.sale)}</span></div>
+        <div className="flex justify-between"><span className="text-ink-2">배송비</span><span className="num">{t.ship ? `+${won(t.ship)}` : '무료'}</span></div>
+        {point > 0 && <div className="flex justify-between"><span className="text-ink-2">포인트 사용</span><span className="num text-point">−{comma(point)}P</span></div>}
       </div>
       <div className="px-5 py-4 border-t border-line flex justify-between items-baseline">
-        <span className="font-bold">결제 예정금액</span>
-        <span className="text-[24px] font-bold num">{won(Math.max(0, pay))}</span>
+        <span className="font-bold">{label}</span>
+        <span className="text-[24px] font-bold num">{won(t.pay)}</span>
       </div>
-      <div className="px-5 pb-5">{cta(pay)}</div>
-      <p className="px-5 pb-4 -mt-2 text-[11.5px] text-mute">구매 시 <b className="num">{comma(sale * 0.01)}P</b> 적립 예정 ({ME.grade} 등급 1%)</p>
+      <div className="px-5 pb-5">{cta(t.pay, t.earn)}</div>
+      <p className="px-5 pb-4 -mt-2 text-[11.5px] text-mute">결제 시 실결제금액의 {POINT_RATE * 100}% <b className="num text-ink">{comma(t.earn)}P</b> 적립 예정</p>
     </div>
   );
 }
@@ -130,16 +136,15 @@ export function Checkout() {
   const groups = groupByStore(lines);
   const [addr, setAddr] = useState(myAddresses[0]);
   const [addrModal, setAddrModal] = useState(false);
-  const [coupon, setCoupon] = useState('');
   const [point, setPoint] = useState(0);
   const [method, setMethod] = useState(PAY_METHODS[0]);
   const [agree, setAgree] = useState(false);
-  const sale = groups.reduce((a, g) => a + g.subtotal, 0);
-  const cp = myCoupons.find((c) => c.id === coupon);
-  const discount = cp ? (cp.rate ? Math.min(cp.max, Math.round(sale * cp.rate)) : cp.amount) : 0;
+  const base = totalsOf(groups);
+  const maxUse = Math.min(myPointBalance, base.sale + base.ship);
+  const usePoint = (v) => setPoint(Math.max(0, Math.min(maxUse, v)));
+  const t = totalsOf(groups, point);
 
   if (!lines.length) return <Empty title="주문할 상품이 없어요" action={<Link to="/cart" className="btn btn-ink">장바구니로</Link>} />;
-
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-6 pt-10">
@@ -173,20 +178,27 @@ export function Checkout() {
             ))}
           </Section>
 
-          <Section n="03" title="할인 · 포인트">
+          <Section n="03" title="포인트 사용" right={<Link to="/mypage/points" className="text-[12px] text-mute hover:text-ink underline">내역 보기</Link>}>
             <div className="grid sm:grid-cols-[100px_1fr] gap-3 items-center text-[14px]">
-              <span className="text-ink-2">쿠폰</span>
-              <select value={coupon} onChange={(e) => setCoupon(e.target.value)} className="field">
-                <option value="">쿠폰 선택 (보유 {myCoupons.length}장)</option>
-                {myCoupons.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.cond}</option>)}
-              </select>
-              <span className="text-ink-2">포인트</span>
+              <span className="text-ink-2">보유 포인트</span>
+              <span className="num font-bold">{comma(myPointBalance)}P</span>
+              <span className="text-ink-2">사용</span>
               <div className="flex gap-2">
-                <input value={point || ''} onChange={(e) => setPoint(Math.min(ME.point, Number(e.target.value.replace(/\D/g, '')) || 0))} className="field num" placeholder="0" />
-                <button onClick={() => setPoint(ME.point)} className="btn btn-line shrink-0">전액사용</button>
+                <div className="relative flex-1">
+                  <input value={point ? comma(point) : ''} onChange={(e) => usePoint(Number(e.target.value.replace(/\D/g, '')) || 0)} className="field num pr-8 text-right" placeholder="0" inputMode="numeric" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-mute">P</span>
+                </div>
+                <button onClick={() => usePoint(maxUse)} className="btn btn-line shrink-0">전액 사용</button>
+                {point > 0 && <button onClick={() => setPoint(0)} className="btn btn-ghost shrink-0">취소</button>}
               </div>
               <span />
-              <span className="text-[12px] text-mute -mt-1">보유 {comma(ME.point)}P · 1,000P 이상부터 사용 가능</span>
+              <span className="text-[12px] text-mute -mt-1">1P = 1원 · 사용 후 잔여 {comma(myPointBalance - point)}P</span>
+            </div>
+            <div className="mt-4 bg-cream p-4 text-[13px] space-y-1.5">
+              <div className="flex justify-between"><span className="text-ink-2">상품금액 + 배송비</span><span className="num">{won(base.sale + base.ship)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-2">사용 포인트</span><span className="num">−{comma(point)}P</span></div>
+              <div className="flex justify-between font-bold border-t border-line-2 pt-1.5"><span>실결제금액</span><span className="num">{won(t.pay)}</span></div>
+              <div className="text-[12px] text-moss">결제 시 실결제금액의 {POINT_RATE * 100}% <b className="num">{comma(t.earn)}P</b> 적립 예정</div>
             </div>
           </Section>
 
@@ -216,8 +228,8 @@ export function Checkout() {
         </div>
 
         <div className="lg:sticky lg:top-24 self-start">
-          <Summary groups={groups} discount={discount} point={point} cta={(pay) => (
-            <button disabled={!agree} onClick={() => { clearChecked(); nav('/order/complete', { state: { pay, method } }); }} className="btn btn-point btn-lg w-full">{won(pay)} 결제하기</button>
+          <Summary groups={groups} point={point} label="실결제금액" cta={(pay, earn) => (
+            <button disabled={!agree} onClick={() => { clearChecked(); nav('/order/complete', { state: { pay, method, point, earn } }); }} className="btn btn-point btn-lg w-full">{won(pay)} 결제하기</button>
           )} />
           {!agree && <p className="text-[12px] text-mute mt-2 text-center">약관에 동의해야 결제할 수 있어요</p>}
         </div>
@@ -246,7 +258,14 @@ export function OrderComplete() {
       <h1 className="mt-6 text-[26px] font-bold tracking-tight">주문이 완료되었습니다</h1>
       <p className="mt-2 text-sm text-ink-2">판매자가 주문을 확인하면 알림톡으로 알려드려요.</p>
       <div className="mt-10 border-t border-ink text-left text-[14px]">
-        {[['주문번호', <span className="num">2026100110231187</span>], ['결제수단', st.method || '신용/체크카드'], ['결제금액', <b className="num">{won(st.pay || 0)}</b>], ['배송지', `${myAddresses[0].addr} ${myAddresses[0].detail}`]].map(([k, v]) => (
+        {[
+          ['주문번호', <span className="num">2026100110231187</span>],
+          ['결제수단', st.method || '신용/체크카드'],
+          ['사용 포인트', <span className="num">{comma(st.point || 0)}P</span>],
+          ['실결제금액', <b className="num">{won(st.pay ?? 64400)}</b>],
+          ['적립 포인트', <span className="num text-moss font-semibold">+{comma(st.earn ?? earnOf(st.pay ?? 64400))}P <span className="text-mute font-normal text-[12px]">실결제금액의 {POINT_RATE * 100}%</span></span>],
+          ['배송지', `${myAddresses[0].addr} ${myAddresses[0].detail}`],
+        ].map(([k, v]) => (
           <div key={k} className="flex py-3.5 border-b border-line"><span className="w-28 text-mute">{k}</span><span className="flex-1">{v}</span></div>
         ))}
       </div>

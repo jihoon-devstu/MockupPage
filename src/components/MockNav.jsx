@@ -8,12 +8,13 @@ export const SCREENS = [
   ['구매자 · 쇼핑몰', [
     ['/', '메인'], ['/products?cat=fashion', '상품 목록 (카테고리)'], ['/products?q=리넨', '검색 결과'], ['/products/p101', '상품 상세 (옵션·리뷰)'],
     ['/products/p103', '상품 상세 (품절)'], ['/stores', '스토어 목록'], ['/store/s1', '스토어 홈'], ['/cart', '장바구니'], ['/checkout', '주문/결제'],
-    ['/order/complete', '주문 완료'], ['/login', '로그인'], ['/signup', '회원가입'], ['/help', '고객센터 FAQ'], ['/seller/apply', '입점 신청'],
+    ['/order/complete', '주문 완료'], ['/login', '로그인'], ['/signup', '회원가입'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'],
   ]],
   ['구매자 · 마이페이지', [
-    ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/2026092809114007', '주문 상세 · 배송조회'], ['/mypage/claim/2026092419502215-1?type=반품', '반품 신청'],
-    ['/mypage/claims', '취소/반품/교환 내역'], ['/mypage/reviews', '리뷰 관리'], ['/mypage/wishlist', '찜'], ['/mypage/coupons', '쿠폰 · 포인트'],
-    ['/mypage/profile', '회원정보'], ['/mypage/addresses', '배송지'],
+    ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/2026092809114007', '주문 상세 (포인트 사용)'],
+    ['/mypage/claim/2026093014582201-1?type=취소', '취소 신청'], ['/mypage/claim/2026092419502215-1?type=반품', '반품 신청'], ['/mypage/claim/2026092419502215-1?type=교환', '교환 신청'],
+    ['/mypage/claims', '취소/반품/교환 내역'], ['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'], ['/mypage/points', '포인트'],
+    ['/mypage/profile', '회원정보 · 등급'], ['/mypage/addresses', '배송지'],
   ]],
   ['판매자센터', [
     ['/seller', '대시보드'], ['/seller/products', '상품 조회'], ['/seller/products/new', '상품 등록'], ['/seller/products/p101/edit', '상품 수정'],
@@ -23,7 +24,7 @@ export const SCREENS = [
   ['스토어 관리자', [
     ['/admin', '운영 대시보드'], ['/admin/applications', '입점 심사 목록'], ['/admin/applications/AP-2609-031', '입점 심사 상세'], ['/admin/stores', '스토어 관리'],
     ['/admin/stores/s5', '스토어 상세 (휴면)'], ['/admin/settlements', '정산 관리'], ['/admin/users', '회원 관리'], ['/admin/users/u11', '회원 상세 (정지)'],
-    ['/admin/reviews', '신고 리뷰'], ['/admin/categories', '카테고리 · 수수료'],
+    ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reviews', '리뷰 관리'], ['/admin/categories', '카테고리 · 수수료'],
   ]],
 ];
 

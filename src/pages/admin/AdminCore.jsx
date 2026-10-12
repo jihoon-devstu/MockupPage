@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileCheck, Store, Wallet, Users, Flag, Tags, ArrowRight, FileText, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, FileCheck, Store, Wallet, Users, Star, Tags, ArrowRight, FileText, ExternalLink } from 'lucide-react';
 import ConsoleLayout from '../../layouts/ConsoleLayout';
 import { stores, categories, catById, PAYMENT_FEE } from '../../data/catalog';
 import { applications, users } from '../../data/people';
@@ -12,7 +12,7 @@ import { won, comma, ymd, ymdhm, pct, shortWon, cx } from '../../lib/format';
 
 /* 목업용 모듈 상태 */
 export let APPS = applications.map((a) => ({ ...a }));
-const reported = () => reviews.filter((r) => r.reports > 0);
+const flaggedReviews = () => reviews.filter((r) => r.flag);
 
 export function AdminLayout() {
   const groups = [
@@ -24,14 +24,14 @@ export function AdminLayout() {
     ] },
     { title: '회원 · 콘텐츠', items: [
       { to: '/admin/users', label: '회원 관리', icon: Users },
-      { to: '/admin/reviews', label: '신고 리뷰', icon: Flag, count: reported().filter((r) => r.blinded).length },
+      { to: '/admin/reviews', label: '리뷰 관리', icon: Star, count: flaggedReviews().filter((r) => !r.blinded).length },
     ] },
     { title: '설정', items: [{ to: '/admin/categories', label: '카테고리 · 수수료', icon: Tags }] },
   ];
   const notices = [
     { text: '신규 입점 신청 2건 (숲속제과, 실과바늘)', time: '3시간 전', to: '/admin/applications' },
     { text: '9/21~9/27 주차 정산 지급 승인 대기 (9개 스토어)', time: '오늘 09:00', to: '/admin/settlements' },
-    { text: '리뷰 신고 누적 3회 이상 — 자동 블라인드 3건', time: '어제', to: '/admin/reviews' },
+    { text: '운영 정책 검토 대상 리뷰 1건', time: '어제', to: '/admin/reviews' },
   ];
   return <ConsoleLayout kind="admin" badge="운영관리" groups={groups} notices={notices} account={{ name: '곳간 운영팀', role: '파트너운영 · 최고관리자', avatar: '/images/avatar/u-2.jpg' }} />;
 }
@@ -56,7 +56,7 @@ export function AdminDashboard() {
     ['보완 요청 중', APPS.filter((a) => a.status === '보완요청').length, '/admin/applications'],
     ['정산 지급 승인', lastWeek.filter((s) => s.status === '지급예정').length, '/admin/settlements'],
     ['지급 보류', settlements.filter((s) => s.status === '지급보류').length, '/admin/settlements'],
-    ['신고 리뷰', reported().length, '/admin/reviews'],
+    ['리뷰 검토', flaggedReviews().filter((r) => !r.blinded).length, '/admin/reviews'],
     ['이용정지 회원', users.filter((u) => u.status === '이용정지').length, '/admin/users'],
   ];
   return (

@@ -2,10 +2,10 @@ import { products, productById } from './catalog';
 import { users } from './people';
 import { seeded, pick, daysAgo } from '../lib/format';
 
-/* 리뷰 정책
-   - 구매확정된 주문상품 1건당 1개 작성 가능 (작성 기한: 구매확정 후 30일)
-   - 포토리뷰 500P / 텍스트리뷰 100P 적립
-   - 신고 3회 이상 누적 시 자동 블라인드 → 관리자 검토 */
+/* 리뷰 정책 (review-service)
+   - 구매확정된 주문상품 1건당 1개 작성 가능 (작성 기한: 구매확정 후 30일) · 별점 1~5 · 사진
+   - 판매자는 답글만 가능 (삭제 불가)
+   - 운영 정책 위반이 의심되는 리뷰는 관리자 검토 대상 → 블라인드 / 정상 노출 */
 
 const POOL = {
   fashion: [
@@ -91,22 +91,22 @@ for (const p of products) {
       helpful: Math.floor(rnd() * 40),
       fit: p.cat === 'fashion' || p.cat === 'shoes-bags' ? pick(rnd, ['작아요', '정사이즈', '정사이즈', '정사이즈', '커요']) : null,
       reply: rnd() < 0.45 ? pick(rnd, REPLIES) : null,
-      reports: 0,
+      flag: null,
       blinded: false,
     });
   }
 }
 reviews.sort((a, b) => b.date - a.date);
 
-// 신고 접수된 리뷰 (관리자 검토 대상)
-const reported = [
-  { idx: 3, reports: 4, reason: '광고/홍보성 내용', body: '여기보다 ○○몰이 더 싸요 검색해보세요 ㅋㅋ 링크 프로필에 있음' },
-  { idx: 11, reports: 3, reason: '욕설/비방', body: '판매자 대응 진짜 최악. 이딴 걸 돈 받고 파냐 ㅡㅡ' },
-  { idx: 27, reports: 2, reason: '상품과 무관한 내용', body: '배송기사님이 문 앞에 안 두고 경비실에 두셨네요. 별 하나 뺍니다.' },
-  { idx: 40, reports: 5, reason: '개인정보 노출', body: '판매자 번호 010-XXXX-XXXX 로 연락하니 바로 환불 해주네요' },
+// 운영 정책 검토 대상 리뷰 (관리자 모니터링)
+const flagged = [
+  { idx: 3, reason: '광고/홍보성 내용', blinded: true, body: '여기보다 ○○몰이 더 싸요 검색해보세요 ㅋㅋ 링크 프로필에 있음' },
+  { idx: 11, reason: '욕설/비방', blinded: true, body: '판매자 대응 진짜 최악. 이딴 걸 돈 받고 파냐 ㅡㅡ' },
+  { idx: 27, reason: '상품과 무관한 내용', blinded: false, body: '배송기사님이 문 앞에 안 두고 경비실에 두셨네요. 별 하나 뺍니다.' },
+  { idx: 40, reason: '개인정보 노출', blinded: true, body: '판매자 번호 010-XXXX-XXXX 로 연락하니 바로 환불 해주네요' },
 ];
-for (const r of reported) {
-  Object.assign(reviews[r.idx], { reports: r.reports, reportReason: r.reason, body: r.body, rating: 1, blinded: r.reports >= 3, userId: 'u11' });
+for (const r of flagged) {
+  Object.assign(reviews[r.idx], { flag: r.reason, body: r.body, rating: 1, blinded: r.blinded, userId: 'u11' });
 }
 
 export const reviewsOf = (pid) => reviews.filter((r) => r.productId === pid && !r.blinded);

@@ -1,13 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
 import { storeById } from '../data/catalog';
-import { useApp } from '../lib/store';
 import { comma, cx } from '../lib/format';
 import { Price } from './ui';
 
 export default function ProductCard({ p, rank, showStore = true }) {
-  const { wish, toggleWish, toast } = useApp();
-  const on = wish.has(p.id);
   const store = storeById[p.storeId];
   const soldOut = p.status === '품절';
   return (
@@ -18,7 +14,7 @@ export default function ProductCard({ p, rank, showStore = true }) {
           {soldOut && <div className="absolute inset-0 bg-white/55 flex items-center justify-center"><span className="bg-ink text-white text-xs font-bold px-3 py-1.5">일시품절</span></div>}
           {rank && <span className="absolute left-0 top-0 min-w-7 h-7 px-1.5 bg-ink text-white text-[13px] font-bold num flex items-center justify-center">{rank}</span>}
         </div>
-        <div className="pt-2.5 pr-6">
+        <div className="pt-2.5">
           {showStore && <div className="text-[12px] font-bold text-ink-2 mb-0.5">{store.name}</div>}
           <div className="text-[13px] text-ink-2 leading-snug line-clamp-2 min-h-[2.4em]">{p.name}</div>
           <div className="mt-1"><Price p={p} /></div>
@@ -35,13 +31,6 @@ export default function ProductCard({ p, rank, showStore = true }) {
           )}
         </div>
       </Link>
-      <button
-        onClick={() => { toggleWish(p.id); toast(on ? '찜 목록에서 삭제했어요' : '찜 목록에 담았어요'); }}
-        className="absolute right-2 top-2 w-8 h-8 flex items-center justify-center bg-white/80 hover:bg-white"
-        aria-label="찜하기"
-      >
-        <Heart size={17} strokeWidth={1.6} className={on ? 'fill-point text-point' : 'text-ink'} />
-      </button>
     </div>
   );
 }

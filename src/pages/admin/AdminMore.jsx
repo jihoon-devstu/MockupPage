@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Search, Download, ExternalLink } from 'lucide-react';
-import { stores, storeById, catById, categories, productsOfStore, productById, PAYMENT_FEE } from '../../data/catalog';
-import { users, userById } from '../../data/people';
+import { Search, Download, ExternalLink, ChevronRight } from 'lucide-react';
+import { stores, storeById, catById, categories, products, productsOfStore, productById, PAYMENT_FEE } from '../../data/catalog';
+import { users, userById, GRADES, nextGrade } from '../../data/people';
+import { userPointHistory } from '../../data/points';
 import { settlements } from '../../data/orders';
 import { reviews, reviewsOfStore, ratingSummary } from '../../data/reviews';
 import { useApp } from '../../lib/store';
-import { PageHead, Segments, StatusPill, Modal, KV, Kpi, Checkbox, Stars, Pill, Spark } from '../../components/ui';
+import { PageHead, Segments, StatusPill, Modal, KV, Kpi, Checkbox, Stars, Pill, Spark, GradeBadge } from '../../components/ui';
 import { won, comma, ymd, ymdhm, pct, cx, shortWon } from '../../lib/format';
 
 /* ─────────── 스토어 관리 ─────────── */
@@ -216,29 +217,33 @@ export function AdminSettlements() {
 /* ─────────── 회원 관리 ─────────── */
 export function AdminUsers() {
   const [tab, setTab] = useState('전체');
+  const [grade, setGrade] = useState('전체');
   const [q, setQ] = useState('');
   const T = ['전체', '정상', '휴면', '이용정지'];
+  const G = ['전체', ...GRADES.map((g) => g.id)];
   const counts = Object.fromEntries(T.map((t) => [t, t === '전체' ? users.length : users.filter((u) => u.status === t).length]));
-  const list = users.filter((u) => (tab === '전체' || u.status === tab) && (u.name + u.email).includes(q));
+  const gCounts = Object.fromEntries(G.map((g) => [g, g === '전체' ? users.length : users.filter((u) => u.grade === g).length]));
+  const list = users.filter((u) => (tab === '전체' || u.status === tab) && (grade === '전체' || u.grade === grade) && (u.name + u.email).includes(q));
   return (
     <div>
-      <PageHead title="회원 관리" desc="1년 미접속 회원은 개인정보 분리보관(휴면) · 등급은 매월 1일 갱신" />
+      <PageHead title="회원 관리" desc="회원등급은 누적 구매확정 금액 기준 (NORMAL · SILVER 30만원 · GOLD 80만원) · 포인트 적립률 5%" />
       <div className="flex flex-wrap gap-3 items-center">
         <Segments items={T} value={tab} onChange={setTab} counts={counts} />
+        <Segments items={G} value={grade} onChange={setGrade} counts={gCounts} />
         <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 · 이메일" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
-          <thead><tr><th>회원</th><th>이메일</th><th>등급</th><th className="text-right">주문</th><th className="text-right">누적 구매</th><th className="text-right">포인트</th><th>가입일</th><th>최근 접속</th><th>상태</th></tr></thead>
+          <thead><tr><th>회원</th><th>이메일</th><th>등급</th><th className="text-right">주문</th><th className="text-right">누적 구매확정</th><th className="text-right">보유 포인트</th><th>가입일</th><th>최근 접속</th><th>상태</th></tr></thead>
           <tbody>
             {list.map((u) => (
               <tr key={u.id}>
                 <td><Link to={`/admin/users/${u.id}`} className="flex items-center gap-2 font-semibold hover:underline"><img src={u.avatar} alt="" className="w-7 h-7 rounded-full object-cover" />{u.name}</Link></td>
                 <td className="text-ink-2">{u.email}</td>
-                <td>{u.grade}</td>
+                <td><GradeBadge grade={u.grade} /></td>
                 <td className="text-right num">{u.orders}</td>
                 <td className="text-right num">{comma(u.spent)}</td>
-                <td className="text-right num">{comma(u.point)}</td>
+                <td className="text-right num">{comma(u.point)}P</td>
                 <td className="num text-ink-2">{ymd(u.joined)}</td>
                 <td className="num text-ink-2">{ymd(u.lastLogin)}</td>
                 <td><StatusPill s={u.status} /></td>
@@ -257,74 +262,101 @@ export function AdminUserDetail() {
   const u = userById[id] || users[0];
   const [modal, setModal] = useState(null);
   const urev = reviews.filter((r) => r.userId === u.id).slice(0, 5);
+  const next = nextGrade(u.spent);
+  const ph = userPointHistory(u);
   return (
     <div>
-      <PageHead crumbs="회원 · 콘텐츠 > 회원 관리" title={u.name} desc={`${u.email} · 가입 ${ymd(u.joined)}`}
-        right={<><button onClick={() => setModal('point')} className="btn btn-line btn-sm">포인트 지급/회수</button><button onClick={() => setModal('ban')} className={cx('btn btn-sm', u.status === '이용정지' ? 'btn-ink' : 'btn-line text-rust')}>{u.status === '이용정지' ? '정지 해제' : '이용 정지'}</button></>} />
+      <PageHead crumbs="회원 · 콘텐츠 > 회원 관리" title={<span className="flex items-center gap-2">{u.name} <GradeBadge grade={u.grade} /></span>} desc={`${u.email} · 가입 ${ymd(u.joined)}`}
+        right={<button onClick={() => setModal('ban')} className={cx('btn btn-sm', u.status === '이용정지' ? 'btn-ink' : 'btn-line text-rust')}>{u.status === '이용정지' ? '정지 해제' : '이용 정지'}</button>} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <Kpi label="등급" value={u.grade} sub="최근 6개월 기준" />
+        <Kpi label="회원등급" value={u.grade} sub={next ? `${next.id}까지 ${won(next.min - u.spent)}` : '최고 등급'} />
         <Kpi label="누적 주문" value={u.orders} unit="건" />
-        <Kpi label="누적 구매금액" value={comma(u.spent)} unit="원" />
-        <Kpi label="보유 포인트" value={comma(u.point)} unit="P" />
+        <Kpi label="누적 구매확정 금액" value={comma(u.spent)} unit="원" />
+        <Kpi label="보유 포인트" value={comma(u.point)} unit="P" sub="적립률 5% (실결제금액 기준)" />
       </div>
       <div className="grid xl:grid-cols-[360px_1fr] gap-4 mt-4">
         <div className="panel">
           <div className="p-5 flex items-center gap-3 border-b border-line"><img src={u.avatar} alt="" className="w-12 h-12 rounded-full object-cover" /><div><b>{u.name}</b> <span className="text-mute text-[13px]">({u.nick})</span><div><StatusPill s={u.status} /></div></div></div>
-          <div className="p-5"><KV rows={[['회원번호', u.id.toUpperCase()], ['휴대폰', u.phone], ['최근 접속', ymdhm(u.lastLogin)], ['마케팅 수신', '동의 (2025.03.02)'], ['본인인증', '완료']]} /></div>
+          <div className="p-5"><KV rows={[['회원번호', u.id.toUpperCase()], ['휴대폰', u.phone], ['회원등급', <GradeBadge grade={u.grade} />], ['최근 접속', ymdhm(u.lastLogin)], ['마케팅 수신', '동의 (2025.03.02)']]} /></div>
           {u.memo && <div className="mx-5 mb-5 bg-rust-soft text-rust text-[13px] p-3">{u.memo}</div>}
         </div>
-        <div className="panel">
-          <div className="panel-head"><span className="panel-title">작성 리뷰</span></div>
-          {urev.length === 0 && <div className="py-10 text-center text-mute text-sm">작성한 리뷰가 없습니다.</div>}
-          {urev.map((r) => (
-            <div key={r.id} className="px-5 py-3.5 border-b border-line last:border-0 text-[13px]">
-              <div className="flex items-center gap-2"><Stars value={r.rating} size={11} /><span className="text-mute">{ymd(r.date)} · {productById[r.productId].name}</span>{r.reports > 0 && <Pill tone="rust">신고 {r.reports}</Pill>}</div>
-              <p className="mt-1 text-ink-2">{r.body}</p>
+        <div className="space-y-4">
+          <div className="panel">
+            <div className="panel-head"><span className="panel-title">포인트 내역</span><span className="text-[12px] text-mute">최근 {ph.length}건</span></div>
+            <div className="overflow-x-auto">
+              <table className="tbl">
+                <thead><tr><th>일자</th><th>구분</th><th>내용</th><th className="text-right">포인트</th></tr></thead>
+                <tbody>
+                  {ph.map((r) => (
+                    <tr key={r.id}>
+                      <td className="num text-ink-2">{ymd(r.date)}</td>
+                      <td><StatusPill s={r.type} /></td>
+                      <td>{r.desc}</td>
+                      <td className={cx('text-right num font-semibold', r.amount < 0 && 'text-rust')}>{r.amount > 0 ? '+' : ''}{comma(r.amount)}P</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
+          </div>
+          <div className="panel">
+            <div className="panel-head"><span className="panel-title">작성 리뷰</span></div>
+            {urev.length === 0 && <div className="py-10 text-center text-mute text-sm">작성한 리뷰가 없습니다.</div>}
+            {urev.map((r) => (
+              <div key={r.id} className="px-5 py-3.5 border-b border-line last:border-0 text-[13px]">
+                <div className="flex items-center gap-2"><Stars value={r.rating} size={11} /><span className="text-mute">{ymd(r.date)} · {productById[r.productId].name}</span>{r.blinded && <Pill tone="rust">블라인드</Pill>}</div>
+                <p className="mt-1 text-ink-2">{r.body}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <Modal open={modal === 'ban'} onClose={() => setModal(null)} title={u.status === '이용정지' ? '이용 정지 해제' : '이용 정지'} width={440}
-        footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setModal(null); toast('처리되었어요 (회원에게 안내 메일 발송)'); }}>확인</button></>}>
-        {u.status !== '이용정지' && <><label className="label">정지 기간</label><select className="field mb-3"><option>7일</option><option>30일</option><option>영구</option></select><label className="label">사유</label><select className="field mb-3"><option>허위 리뷰 / 리뷰 어뷰징</option><option>상습 반품 · 블랙컨슈머</option><option>결제 도용 의심</option><option>욕설 · 비방</option></select></>}
+        footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setModal(null); toast('처리되었어요'); }}>확인</button></>}>
+        {u.status !== '이용정지' && <><label className="label">정지 기간</label><select className="field mb-3"><option>7일</option><option>30일</option><option>영구</option></select><label className="label">사유</label><select className="field mb-3"><option>허위 리뷰 / 리뷰 어뷰징</option><option>결제 도용 의심</option><option>욕설 · 비방</option></select></>}
         <textarea rows={3} className="field" placeholder="내부 메모" />
-      </Modal>
-      <Modal open={modal === 'point'} onClose={() => setModal(null)} title="포인트 지급/회수" width={400}
-        footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setModal(null); toast('포인트가 지급되었어요'); }}>실행</button></>}>
-        <Segments items={['지급', '회수']} value="지급" onChange={() => {}} />
-        <input className="field num mt-3" placeholder="포인트" />
-        <input className="field mt-2" placeholder="사유 (회원에게 노출)" />
       </Modal>
     </div>
   );
 }
 
-/* ─────────── 신고 리뷰 ─────────── */
+/* ─────────── 리뷰 관리 ─────────── */
 export function AdminReviews() {
   const { toast } = useApp();
-  const [rows, setRows] = useState(() => reviews.filter((r) => r.reports > 0).map((r) => ({ ...r })));
-  const decide = (r, blind) => { setRows(rows.map((x) => (x.id === r.id ? { ...x, blinded: blind, decided: true } : x))); toast(blind ? '블라인드 처리 · 작성자에게 통보' : '정상 노출로 복구했어요'); };
+  const [rows, setRows] = useState(() => reviews.slice(0, 40).concat(reviews.slice(40).filter((r) => r.flag)).map((r) => ({ ...r })));
+  const [tab, setTab] = useState('검토 대상');
+  const [photo, setPhoto] = useState(false);
+  const T = ['검토 대상', '블라인드', '전체'];
+  const match = (r, t) => (t === '검토 대상' ? r.flag && !r.blinded : t === '블라인드' ? r.blinded : true);
+  const counts = Object.fromEntries(T.map((t) => [t, rows.filter((r) => match(r, t)).length]));
+  const list = rows.filter((r) => match(r, tab) && (!photo || r.photos.length));
+  const decide = (r, blind) => { setRows(rows.map((x) => (x.id === r.id ? { ...x, blinded: blind } : x))); toast(blind ? '블라인드 처리했어요' : '정상 노출로 변경했어요'); };
   return (
     <div>
-      <PageHead title="신고 리뷰" desc="신고 3회 이상 누적 시 자동 블라인드 → 운영자 최종 판단 · 판매자는 리뷰를 직접 삭제할 수 없습니다." />
-      <div className="panel overflow-x-auto">
+      <PageHead title="리뷰 관리" desc="별점 · 사진 리뷰 모니터링 · 운영 정책 위반 리뷰는 블라인드 처리 (판매자는 리뷰를 삭제할 수 없음)" />
+      <div className="flex flex-wrap gap-3 items-center">
+        <Segments items={T} value={tab} onChange={setTab} counts={counts} />
+        <Checkbox checked={photo} onChange={setPhoto} label="사진 리뷰만" className="ml-auto" />
+      </div>
+      <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
-          <thead><tr><th>리뷰</th><th>상품 / 스토어</th><th>작성자</th><th>신고 사유</th><th className="text-right">신고</th><th>현재</th><th className="text-center">처리</th></tr></thead>
+          <thead><tr><th>리뷰</th><th>사진</th><th>상품 / 스토어</th><th>작성자</th><th>검토 사유</th><th>상태</th><th className="text-center">처리</th></tr></thead>
           <tbody>
-            {rows.map((r) => {
+            {list.length === 0 && <tr><td colSpan={7} className="text-center text-mute py-10">해당하는 리뷰가 없습니다.</td></tr>}
+            {list.map((r) => {
               const p = productById[r.productId];
               return (
                 <tr key={r.id}>
                   <td className="max-w-[320px]"><div className="flex items-center gap-1.5 text-[11.5px] text-mute"><Stars value={r.rating} size={10} /> {ymd(r.date)}</div><p className="mt-0.5 line-clamp-2">{r.body}</p></td>
+                  <td>{r.photos[0] ? <img src={r.photos[0]} alt="" className="w-10 h-10 object-cover" /> : <span className="text-mute">-</span>}</td>
                   <td className="text-[12.5px]">{p.name}<div className="text-mute">{storeById[p.storeId].name}</div></td>
                   <td><Link to={`/admin/users/${r.userId}`} className="hover:underline">{userById[r.userId].name}</Link></td>
-                  <td>{r.reportReason}</td>
-                  <td className={cx('text-right num font-bold', r.reports >= 3 && 'text-rust')}>{r.reports}</td>
-                  <td><StatusPill s={r.blinded ? '블라인드' : '검토대기'} /></td>
+                  <td className="text-[12.5px]">{r.flag || <span className="text-mute">-</span>}</td>
+                  <td><StatusPill s={r.blinded ? '블라인드' : r.flag ? '검토대기' : '정상노출'} /></td>
                   <td>
                     <div className="flex gap-1 justify-center">
-                      <button onClick={() => decide(r, true)} className="btn btn-ink btn-xs">블라인드</button>
-                      <button onClick={() => decide(r, false)} className="btn btn-line btn-xs">정상노출</button>
+                      {!r.blinded && <button onClick={() => decide(r, true)} className="btn btn-ink btn-xs">블라인드</button>}
+                      {(r.blinded || r.flag) && <button onClick={() => decide(r, false)} className="btn btn-line btn-xs">정상노출</button>}
                     </div>
                   </td>
                 </tr>
@@ -338,31 +370,84 @@ export function AdminReviews() {
 }
 
 /* ─────────── 카테고리 · 수수료 ─────────── */
+const DOCS_BY_CAT = { food: '영업신고증 / 농업경영체', beauty: '화장품 책임판매업 등록필증', digital: 'KC 인증서' };
+
 export function AdminCategories() {
   const { toast } = useApp();
+  const [open, setOpen] = useState(() => new Set([categories[0].id]));
+  const [edit, setEdit] = useState(null);
+  const toggle = (id) => setOpen((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const prodCount = (cid, sub) => products.filter((p) => p.cat === cid && (!sub || p.sub === sub)).length;
   return (
     <div>
-      <PageHead title="카테고리 · 수수료" desc="수수료율 변경은 판매자 공지 후 7일 뒤 적용 (전자상거래 표준약관) · 결제수수료는 PG 계약 기준 일괄 적용"
-        right={<button onClick={() => toast('변경 사항이 2026.10.08부터 적용 예약되었어요')} className="btn btn-ink btn-sm">변경 예약</button>} />
+      <PageHead title="카테고리 · 수수료" desc="상위 / 하위 2단계 카테고리 · 판매자는 상품 등록 시 이 목록에서만 선택합니다 · 수수료율 변경은 판매자 공지 후 7일 뒤 적용"
+        right={<>
+          <button onClick={() => setEdit({ mode: 'new', parent: '' })} className="btn btn-line btn-sm">+ 상위 카테고리</button>
+          <button onClick={() => toast('변경 사항이 2026.10.08부터 적용 예약되었어요')} className="btn btn-ink btn-sm">수수료 변경 예약</button>
+        </>} />
+      <div className="flex gap-2 mb-3 text-[12.5px]">
+        <button onClick={() => setOpen(new Set(categories.map((c) => c.id)))} className="btn btn-line btn-xs">모두 펼치기</button>
+        <button onClick={() => setOpen(new Set())} className="btn btn-line btn-xs">모두 접기</button>
+      </div>
       <div className="panel overflow-x-auto">
         <table className="tbl">
-          <thead><tr><th>카테고리</th><th>세부 분류</th><th className="text-right">스토어</th><th className="w-36">판매수수료</th><th className="text-right">결제수수료</th><th className="text-right">합계</th><th>필수 인증 서류</th></tr></thead>
+          <thead><tr><th>카테고리</th><th>코드</th><th className="text-right">상품</th><th className="text-right">스토어</th><th className="w-36">판매수수료</th><th className="text-right">결제수수료</th><th className="text-right">합계</th><th>필수 인증 서류</th><th className="text-center">관리</th></tr></thead>
           <tbody>
-            {categories.map((c) => (
-              <tr key={c.id}>
-                <td className="font-semibold">{c.name}<div className="text-[11px] font-mono text-mute font-normal">{c.en}</div></td>
-                <td className="text-ink-2 text-[12.5px]">{c.subs.join(' · ')}</td>
-                <td className="text-right num">{stores.filter((s) => s.cat === c.id).length}</td>
-                <td><div className="flex items-center gap-1"><input className="field field-sm num w-20" defaultValue={(c.commission * 100).toFixed(1)} /> %</div></td>
-                <td className="text-right num">{pct(PAYMENT_FEE, 1)}</td>
-                <td className="text-right num font-semibold">{pct(c.commission + PAYMENT_FEE, 1)}</td>
-                <td className="text-[12.5px] text-ink-2">{{ food: '영업신고증 / 농업경영체', beauty: '화장품 책임판매업 등록필증', digital: 'KC 인증서' }[c.id] || '-'}</td>
-              </tr>
-            ))}
+            {categories.map((c) => {
+              const on = open.has(c.id);
+              return [
+                <tr key={c.id} className="bg-cream/60">
+                  <td>
+                    <button onClick={() => toggle(c.id)} className="flex items-center gap-1.5 font-semibold">
+                      <ChevronRight size={14} className={cx('transition-transform', on && 'rotate-90')} />
+                      {c.name} <span className="text-[11px] text-mute font-normal">하위 {c.subs.length}</span>
+                    </button>
+                  </td>
+                  <td className="font-mono text-[11.5px] text-mute">{c.id}</td>
+                  <td className="text-right num">{prodCount(c.id)}</td>
+                  <td className="text-right num">{stores.filter((s) => s.cat === c.id).length}</td>
+                  <td><div className="flex items-center gap-1"><input className="field field-sm num w-20" defaultValue={(c.commission * 100).toFixed(1)} /> %</div></td>
+                  <td className="text-right num">{pct(PAYMENT_FEE, 1)}</td>
+                  <td className="text-right num font-semibold">{pct(c.commission + PAYMENT_FEE, 1)}</td>
+                  <td className="text-[12.5px] text-ink-2">{DOCS_BY_CAT[c.id] || '-'}</td>
+                  <td><div className="flex gap-1 justify-center"><button onClick={() => setEdit({ mode: 'new', parent: c.id })} className="btn btn-line btn-xs">하위 추가</button><button onClick={() => setEdit({ mode: 'edit', parent: '', name: c.name })} className="btn btn-line btn-xs">수정</button></div></td>
+                </tr>,
+                ...(on ? c.subs.map((s) => (
+                  <tr key={`${c.id}-${s}`}>
+                    <td className="pl-10 text-ink-2"><span className="text-line-2 mr-1.5">└</span>{s}</td>
+                    <td className="font-mono text-[11.5px] text-mute">{c.id}/{s}</td>
+                    <td className="text-right num">{prodCount(c.id, s)}</td>
+                    <td className="text-right text-mute">-</td>
+                    <td className="text-[12.5px] text-mute">상위와 동일 ({pct(c.commission)})</td>
+                    <td className="text-right num text-mute">{pct(PAYMENT_FEE, 1)}</td>
+                    <td className="text-right num text-mute">{pct(c.commission + PAYMENT_FEE, 1)}</td>
+                    <td />
+                    <td><div className="flex gap-1 justify-center"><button onClick={() => setEdit({ mode: 'edit', parent: c.id, name: s })} className="btn btn-line btn-xs">수정</button><button onClick={() => toast(prodCount(c.id, s) ? '상품이 등록된 카테고리는 삭제할 수 없어요' : '삭제했어요')} className="btn btn-ghost btn-xs">삭제</button></div></td>
+                  </tr>
+                )) : []),
+              ];
+            })}
           </tbody>
         </table>
       </div>
-      <button className="btn btn-line btn-sm mt-3">+ 카테고리 추가</button>
+
+      <Modal open={!!edit} onClose={() => setEdit(null)} title={edit?.mode === 'edit' ? '카테고리 수정' : '카테고리 추가'} width={440}
+        footer={<><button className="btn btn-line btn-sm" onClick={() => setEdit(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setEdit(null); toast('저장했어요'); }}>저장</button></>}>
+        {edit && (
+          <div className="space-y-3">
+            <div>
+              <label className="label">상위 카테고리</label>
+              <select className="field" defaultValue={edit.parent}>
+                <option value="">없음 (상위 카테고리로 등록)</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div><label className="label">카테고리명</label><input className="field" defaultValue={edit.name || ''} placeholder="예: 셔츠" /></div>
+            {!edit.parent && <div><label className="label">판매수수료 (%)</label><input className="field num" placeholder="예: 10.0" /></div>}
+            <div><label className="label">노출 순서</label><input className="field num" defaultValue="1" /></div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

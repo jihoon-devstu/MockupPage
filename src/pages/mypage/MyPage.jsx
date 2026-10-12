@@ -2,26 +2,28 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Star, Camera, Upload } from 'lucide-react';
 import { productById, storeById } from '../../data/catalog';
-import { ME, myAddresses, myCoupons } from '../../data/people';
-import { myOrders, FLOW, trackingOf, orderTotal } from '../../data/orders';
+import { ME, myAddresses, GRADES, gradeById, nextGrade } from '../../data/people';
+import { myOrders, FLOW, trackingOf, orderPay, linePoints, orderOfLine, POINT_RATE } from '../../data/orders';
+import { myPointHistory, myPointBalance, pointSum, POINT_TYPES } from '../../data/points';
 import { reviews } from '../../data/reviews';
 import { useApp } from '../../lib/store';
-import { StatusPill, Modal, Checkbox, Stars, Empty, Pill } from '../../components/ui';
-import ProductCard from '../../components/ProductCard';
+import { StatusPill, Modal, Checkbox, Stars, Empty, Pill, GradeBadge, Segments } from '../../components/ui';
 import { cx, won, comma, ymd, ymdhm } from '../../lib/format';
 
 const allLines = myOrders.flatMap((o) => o.items.map((l) => ({ ...l, orderId: o.id })));
 
 /* ─────────── 레이아웃 ─────────── */
 const MENU = [
-  ['쇼핑', [['/mypage/orders', '주문 · 배송'], ['/mypage/claims', '취소 · 반품 · 교환'], ['/cart', '장바구니'], ['/mypage/wishlist', '찜한 상품']]],
+  ['쇼핑', [['/mypage/orders', '주문 · 배송'], ['/mypage/claims', '취소 · 반품 · 교환'], ['/cart', '장바구니']]],
   ['활동', [['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의']]],
-  ['혜택', [['/mypage/coupons', '쿠폰 · 포인트']]],
+  ['혜택', [['/mypage/points', '포인트']]],
   ['내 정보', [['/mypage/profile', '회원정보 수정'], ['/mypage/addresses', '배송지 관리']]],
 ];
 
 export function MyPageLayout() {
-  const { wish } = useApp();
+  const next = nextGrade(ME.spent);
+  const todoReviews = allLines.filter((l) => l.status === '구매확정' && !l.reviewed).length;
+  const openClaims = allLines.filter((l) => ['취소요청', '반품요청', '교환요청'].includes(l.status)).length;
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-6 pt-8">
       {/* 상단 요약 */}
@@ -29,13 +31,13 @@ export function MyPageLayout() {
         <div className="p-6 md:p-8 flex items-center gap-5">
           <img src={ME.avatar} alt="" className="w-16 h-16 rounded-full object-cover" />
           <div>
-            <div className="text-[13px] text-white/60"><span className="text-[#e6c06a] font-bold">{ME.grade}</span> 회원 · 다음 등급까지 {won(2000000 - ME.spent)}</div>
+            <div className="flex items-center gap-2 text-[13px] text-white/60"><GradeBadge grade={ME.grade} dark /> {gradeById[ME.grade].label} 회원 · {next ? `${next.id}까지 ${won(next.min - ME.spent)}` : '최고 등급'}</div>
             <div className="text-[22px] font-bold mt-0.5">{ME.name}님, 반가워요</div>
-            <div className="mt-2 h-1 w-56 bg-white/15"><div className="h-full bg-[#e6c06a]" style={{ width: `${(ME.spent / 2000000) * 100}%` }} /></div>
+            <div className="mt-2 h-1 w-56 bg-white/15"><div className="h-full bg-[#e6c06a]" style={{ width: `${next ? (ME.spent / next.min) * 100 : 100}%` }} /></div>
           </div>
         </div>
         <div className="grid grid-cols-3 border-t md:border-t-0 md:border-l border-white/10">
-          {[['포인트', `${comma(ME.point)}P`, '/mypage/coupons'], ['쿠폰', `${myCoupons.length}장`, '/mypage/coupons'], ['찜', `${wish.size}개`, '/mypage/wishlist']].map(([k, v, to], i) => (
+          {[['포인트', `${comma(myPointBalance)}P`, '/mypage/points'], ['작성 가능 리뷰', `${todoReviews}건`, '/mypage/reviews'], ['진행 중 클레임', `${openClaims}건`, '/mypage/claims']].map(([k, v, to], i) => (
             <Link key={k} to={to} className={cx('px-6 md:px-9 py-5 md:py-8 text-center hover:bg-white/5', i && 'border-l border-white/10')}>
               <div className="text-[12px] text-white/60">{k}</div>
               <div className="text-[20px] font-bold mt-1 num">{v}</div>
@@ -78,7 +80,7 @@ export function ReviewModal({ line, onClose }) {
   const wear = p.cat === 'fashion' || p.cat === 'shoes-bags';
   return (
     <Modal open onClose={onClose} title="리뷰 쓰기" width={560}
-      footer={<><button className="btn btn-line btn-sm" onClick={onClose}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { onClose(); toast(`리뷰 등록 완료 · ${photo ? 500 : 100}P 적립`); }}>등록하기</button></>}>
+      footer={<><button className="btn btn-line btn-sm" onClick={onClose}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { onClose(); toast('리뷰가 등록되었어요'); }}>등록하기</button></>}>
       <div className="flex gap-3 pb-4 border-b border-line">
         <img src={p.images[0]} alt="" className="w-14 h-16 object-cover" />
         <div className="text-[13px]"><div className="text-mute">{storeById[p.storeId].name}</div><div className="font-semibold">{p.name}</div><div className="text-mute">{line.option}</div></div>
@@ -105,7 +107,7 @@ export function ReviewModal({ line, onClose }) {
       <button onClick={() => setPhoto(!photo)} className={cx('mt-3 w-20 h-20 border flex flex-col items-center justify-center text-[11px] gap-1', photo ? 'border-ink' : 'border-dashed border-line-2 text-mute')}>
         {photo ? <img src={p.images[1]} alt="" className="w-full h-full object-cover" /> : <><Camera size={18} />사진 추가</>}
       </button>
-      <p className="mt-3 text-[12px] text-mute">텍스트 리뷰 100P · 포토 리뷰 500P 적립 · 상품과 무관한 내용, 욕설은 블라인드 처리될 수 있습니다.</p>
+      <p className="mt-3 text-[12px] text-mute">사진은 최대 5장 · 상품과 무관한 내용, 욕설은 운영 정책에 따라 블라인드 처리될 수 있습니다.</p>
     </Modal>
   );
 }
@@ -116,16 +118,18 @@ function LineActions({ l, onReview }) {
   const nav = useNavigate();
   const b = 'btn btn-line btn-xs';
   switch (l.status) {
-    case '결제완료': return <button className={b} onClick={() => toast('주문이 취소되었어요. 환불은 영업일 1~3일 소요')}>주문취소</button>;
+    case '결제완료': return <button className={b} onClick={() => nav(`/mypage/claim/${l.lineId}?type=취소`)}>주문취소</button>;
     case '배송준비': return <button className={b} onClick={() => nav(`/mypage/claim/${l.lineId}?type=취소`)}>취소요청</button>;
     case '배송중': return <Link className={b} to={`/mypage/orders/${l.orderId}`}>배송조회</Link>;
     case '배송완료': return (<>
-      <button className="btn btn-ink btn-xs" onClick={() => toast('구매확정 완료 · 적립금 지급')}>구매확정</button>
+      <button className="btn btn-ink btn-xs" onClick={() => toast('구매확정 되었어요. 리뷰를 작성할 수 있어요')}>구매확정</button>
       <button className={b} onClick={() => nav(`/mypage/claim/${l.lineId}?type=반품`)}>반품요청</button>
       <button className={b} onClick={() => nav(`/mypage/claim/${l.lineId}?type=교환`)}>교환요청</button>
     </>);
-    case '구매확정': return l.reviewed ? <span className="text-[12px] text-mute">리뷰 작성완료</span> : <button className="btn btn-point btn-xs" onClick={() => onReview(l)}>리뷰쓰기 +500P</button>;
+    case '구매확정': return l.reviewed ? <span className="text-[12px] text-mute">리뷰 작성완료</span> : <button className="btn btn-point btn-xs" onClick={() => onReview(l)}>리뷰쓰기</button>;
     case '반품요청': return <button className={b} onClick={() => toast('반품 요청을 철회했어요')}>반품철회</button>;
+    case '교환요청': return <button className={b} onClick={() => toast('교환 요청을 철회했어요')}>교환철회</button>;
+    case '취소요청': return <button className={b} onClick={() => toast('취소 요청을 철회했어요')}>취소철회</button>;
     default: return null;
   }
 }
@@ -184,7 +188,7 @@ export function MyOrderDetail() {
   const { id } = useParams();
   const o = myOrders.find((x) => x.id === id) || myOrders[1];
   const shipped = o.items.find((l) => l.invoice) || o.items[0];
-  const total = orderTotal(o);
+  const pay = orderPay(o);
   return (
     <div>
       <H right={<Link to="/mypage/orders" className="text-[13px] text-ink-2">← 목록</Link>}>주문 상세</H>
@@ -228,8 +232,9 @@ export function MyOrderDetail() {
         <div>
           <div className="font-bold mb-2">결제 정보</div>
           <div className="border-t border-ink text-[13px]">
-            {[['상품금액', won(total)], ['쿠폰할인', `−${won(o.payment.coupon)}`], ['포인트', `−${won(o.payment.point)}`], ['결제수단', `${o.payment.method} · ${o.payment.detail}`]].map(([k, v]) => <div key={k} className="flex justify-between py-2.5 border-b border-line"><span className="text-mute">{k}</span><span className="num">{v}</span></div>)}
-            <div className="flex justify-between py-3 font-bold"><span>총 결제금액</span><span className="num text-[16px]">{won(total - o.payment.coupon - o.payment.point)}</span></div>
+            {[['상품금액', won(pay.goods)], ['배송비', pay.ship ? `+${won(pay.ship)}` : '무료'], ['포인트 사용', pay.used ? `−${comma(pay.used)}P` : '0P'], ['결제수단', `${o.payment.method} · ${o.payment.detail}`]].map(([k, v]) => <div key={k} className="flex justify-between py-2.5 border-b border-line"><span className="text-mute">{k}</span><span className="num">{v}</span></div>)}
+            <div className="flex justify-between py-3 font-bold border-b border-line"><span>실결제금액</span><span className="num text-[16px]">{won(pay.paid)}</span></div>
+            <div className="flex justify-between py-2.5 text-[13px]"><span className="text-mute">적립 포인트 (실결제금액의 {POINT_RATE * 100}%)</span><span className="num font-semibold text-moss">+{comma(pay.earned)}P</span></div>
           </div>
           <button className="btn btn-line btn-sm mt-2">영수증 / 거래명세서</button>
         </div>
@@ -238,37 +243,88 @@ export function MyOrderDetail() {
   );
 }
 
-/* ─────────── 클레임 신청 ─────────── */
+/* ─────────── 클레임 신청 (취소 · 반품 · 교환) ─────────── */
+const CLAIM_ALLOWED = { 결제완료: ['취소'], 배송준비: ['취소'], 배송중: [], 배송완료: ['반품', '교환'] };
+const REASONS = {
+  취소: ['단순 변심', '다른 상품 잘못 주문', '배송 지연', '판매자 요청'],
+  반품: ['단순 변심', '사이즈/색상 안 맞음', '상품 불량/파손', '오배송', '상품정보와 다름'],
+  교환: ['사이즈/색상 안 맞음', '상품 불량/파손', '오배송', '상품정보와 다름'],
+};
+const SELLER_FAULT = ['상품 불량/파손', '오배송', '상품정보와 다름'];
+
+/* 환불 계산: 결제수단 환불 = 상품금액 − 그 상품주문분 사용 포인트 − 반품 배송비 / 사용 포인트는 환원, 적립 포인트는 회수 */
+function refundOf(o, l, type, reason) {
+  const amount = l.unitPrice * l.qty;
+  const lp = linePoints(o, l);
+  const shipFee = storeById[l.storeId].shipFee || 3000;
+  const fee = type === '취소' || SELLER_FAULT.includes(reason) ? 0 : shipFee * 2;
+  if (type === '교환') return { amount, fee, cash: 0, pointBack: 0, pointTake: 0 };
+  return { amount, fee, cash: Math.max(0, amount - lp.used - fee), pointBack: lp.used, pointTake: lp.earned };
+}
+
+function RefundBox({ r, type }) {
+  const row = (k, v, cls = '') => <div className={cx('flex justify-between', cls)}><span className="text-ink-2">{k}</span><span className="num">{v}</span></div>;
+  return (
+    <div className="bg-cream p-5 text-[14px] space-y-2">
+      {row('상품 금액', won(r.amount))}
+      {type === '교환'
+        ? row('교환 배송비 (왕복)', r.fee ? won(r.fee) : '판매자 부담')
+        : <>
+          {row(type === '취소' ? '취소 배송비' : '반품 배송비 차감', r.fee ? `−${won(r.fee)}` : '판매자 부담')}
+          {row('사용 포인트 환원', r.pointBack ? `+${comma(r.pointBack)}P` : '0P', 'text-moss')}
+          {row('적립 포인트 회수', r.pointTake ? `−${comma(r.pointTake)}P` : '0P', 'text-rust')}
+          <div className="flex justify-between font-bold border-t border-line-2 pt-2"><span>결제수단 환불 예정 금액</span><span className="num">{won(r.cash)}</span></div>
+        </>}
+    </div>
+  );
+}
+
 export function ClaimRequest() {
   const { lineId } = useParams();
   const [sp] = useSearchParams();
-  const type = sp.get('type') || '반품';
   const nav = useNavigate();
   const { toast } = useApp();
   const l = allLines.find((x) => x.lineId === lineId) || allLines[0];
+  const o = orderOfLine(l.lineId);
   const p = productById[l.productId];
   const store = storeById[p.storeId];
+  const allowed = CLAIM_ALLOWED[l.status] || [];
+  const types = allowed.length ? allowed : ['취소', '반품', '교환'];
+  const [type, setType] = useState(types.includes(sp.get('type')) ? sp.get('type') : types[0]);
   const [reason, setReason] = useState('');
-  const sellerFault = ['상품 불량/파손', '오배송', '상품정보와 다름'].includes(reason);
-  const fee = type === '취소' || sellerFault ? 0 : type === '교환' ? (store.shipFee || 3000) * 2 : (store.shipFee || 3000) * 2;
-  const amount = l.unitPrice * l.qty;
+  const sellerFault = SELLER_FAULT.includes(reason);
+  const r = refundOf(o, l, type, reason);
   return (
     <div>
-      <H>{type} 신청</H>
+      <H>취소 · 반품 · 교환 신청</H>
       <div className="flex gap-4 border border-line p-4 text-[13px]">
         <img src={p.images[0]} alt="" className="w-16 h-20 object-cover" />
-        <div><div className="text-mute">{store.name}</div><div className="font-medium text-[14px]">{p.name}</div><div className="text-mute">{l.option} · {l.qty}개 · {won(amount)}</div></div>
+        <div className="flex-1"><div className="text-mute">{store.name}</div><div className="font-medium text-[14px]">{p.name}</div><div className="text-mute">{l.option || '단일상품'} · {l.qty}개 · {won(r.amount)}</div></div>
+        <div><StatusPill s={l.status} /></div>
       </div>
       <div className="mt-6 space-y-5">
         <div>
+          <label className="label">신청 유형</label>
+          <div className="grid grid-cols-3 gap-2">
+            {['취소', '반품', '교환'].map((t) => {
+              const on = types.includes(t);
+              return (
+                <button key={t} disabled={!on} onClick={() => { setType(t); setReason(''); }}
+                  className={cx('h-11 border text-[14px]', type === t ? 'border-ink border-2 font-semibold' : 'border-line-2', !on && 'text-line-2 bg-cream cursor-not-allowed')}>{t}</button>
+              );
+            })}
+          </div>
+          <p className="text-[12px] text-mute mt-1.5">결제완료 · 배송준비: 취소 / 배송완료 후 7일 이내: 반품 · 교환 (구매확정 후에는 신청할 수 없어요)</p>
+        </div>
+        <div>
           <label className="label">{type} 사유</label>
           <div className="grid sm:grid-cols-2 gap-2">
-            {(type === '취소' ? ['단순 변심', '다른 상품 잘못 주문', '배송 지연', '판매자 요청'] : ['단순 변심', '사이즈/색상 안 맞음', '상품 불량/파손', '오배송', '상품정보와 다름']).map((r) => (
-              <button key={r} onClick={() => setReason(r)} className={cx('h-11 border text-left px-3 text-[14px]', reason === r ? 'border-ink border-2 font-semibold' : 'border-line-2')}>{r}</button>
+            {REASONS[type].map((x) => (
+              <button key={x} onClick={() => setReason(x)} className={cx('h-11 border text-left px-3 text-[14px]', reason === x ? 'border-ink border-2 font-semibold' : 'border-line-2')}>{x}</button>
             ))}
           </div>
         </div>
-        {type === '교환' && <div><label className="label">교환 옵션</label><select className="field"><option>{l.option} → 다른 옵션 선택</option>{productById[l.productId].options.flatMap((o) => o.values).map((v) => <option key={v}>{v}</option>)}</select></div>}
+        {type === '교환' && <div><label className="label">교환 옵션</label><select className="field"><option>{l.option} → 다른 옵션 선택</option>{p.options.flatMap((op) => op.values).map((v) => <option key={v}>{v}</option>)}</select></div>}
         <div><label className="label">상세 사유</label><textarea rows={4} className="field" placeholder="판매자에게 전달할 내용을 적어주세요" /></div>
         {type !== '취소' && (
           <div>
@@ -281,14 +337,10 @@ export function ClaimRequest() {
             <div className="grid grid-cols-2 gap-2"><button className="h-11 border-2 border-ink text-sm font-semibold">판매자 지정 택배 회수</button><button className="h-11 border border-line-2 text-sm">직접 발송</button></div>
           </div>
         )}
-        <div className="bg-cream p-5 text-[14px] space-y-2">
-          <div className="flex justify-between"><span className="text-ink-2">상품 금액</span><span className="num">{won(amount)}</span></div>
-          <div className="flex justify-between"><span className="text-ink-2">{type === '교환' ? '교환 배송비 (왕복)' : '반품 배송비 차감'}</span><span className="num">{fee ? `−${won(fee)}` : '판매자 부담'}</span></div>
-          {type !== '교환' && <div className="flex justify-between font-bold border-t border-line-2 pt-2"><span>환불 예정 금액</span><span className="num">{won(amount - fee)}</span></div>}
-          <p className="text-[12px] text-mute">{type === '취소' ? '판매자 승인 후 결제수단으로 환불됩니다.' : '판매자가 회수 상품을 확인한 후 환불/교환이 진행됩니다. (영업일 1~3일)'}</p>
-        </div>
+        <RefundBox r={r} type={type} />
+        <p className="text-[12px] text-mute -mt-3">{type === '취소' ? '결제완료 상태는 즉시, 배송준비 상태는 판매자 승인 후 환불됩니다.' : type === '반품' ? '판매자가 회수 상품을 확인한 후 환불됩니다. (영업일 1~3일)' : '교환은 결제 · 재고 변동 없이 회수 확인 후 재배송됩니다.'}</p>
         <div className="flex gap-2 justify-end">
-          <button onClick={() => nav(-1)} className="btn btn-line">취소</button>
+          <button onClick={() => nav(-1)} className="btn btn-line">이전으로</button>
           <button disabled={!reason} onClick={() => { toast(`${type} 신청이 접수되었어요`); nav('/mypage/claims'); }} className="btn btn-ink px-8">{type} 신청하기</button>
         </div>
       </div>
@@ -297,21 +349,50 @@ export function ClaimRequest() {
 }
 
 export function MyClaims() {
-  const lines = allLines.filter((l) => l.claim);
+  const [type, setType] = useState('전체');
+  const [open, setOpen] = useState(null);
+  const all = allLines.filter((l) => l.claim);
+  const counts = { 전체: all.length, 취소: 0, 반품: 0, 교환: 0 };
+  all.forEach((l) => { counts[l.claim.type] += 1; });
+  const lines = type === '전체' ? all : all.filter((l) => l.claim.type === type);
   return (
     <div>
       <H>취소 · 반품 · 교환</H>
+      <div className="mb-4"><Segments items={['전체', '취소', '반품', '교환']} value={type} onChange={setType} counts={counts} /></div>
       <table className="w-full text-[13px] border-t border-ink">
-        <thead><tr className="text-left text-ink-2 border-b border-line"><th className="py-3 font-semibold">상품</th><th className="font-semibold">유형</th><th className="font-semibold">사유</th><th className="font-semibold">신청일</th><th className="font-semibold">상태</th></tr></thead>
+        <thead><tr className="text-left text-ink-2 border-b border-line"><th className="py-3 font-semibold">상품</th><th className="font-semibold">유형</th><th className="font-semibold hidden sm:table-cell">사유</th><th className="font-semibold hidden sm:table-cell">신청일</th><th className="font-semibold">상태</th><th /></tr></thead>
         <tbody>
           {lines.map((l) => {
             const p = productById[l.productId];
-            return (
+            const o = orderOfLine(l.lineId);
+            const r = refundOf(o, l, l.claim.type, l.claim.reason);
+            const done = l.status.endsWith('완료');
+            const isOpen = open === l.lineId;
+            return [
               <tr key={l.lineId} className="border-b border-line">
                 <td className="py-3"><div className="flex items-center gap-3"><img src={p.images[0]} alt="" className="w-12 h-14 object-cover" /><span className="font-medium">{p.name}<br /><span className="text-mute font-normal">{l.option}</span></span></div></td>
-                <td>{l.claim.type}</td><td className="text-ink-2">{l.claim.reason}</td><td className="num">{ymd(l.claim.requested)}</td><td><StatusPill s={l.status} /></td>
-              </tr>
-            );
+                <td>{l.claim.type}</td><td className="text-ink-2 hidden sm:table-cell">{l.claim.reason}</td><td className="num hidden sm:table-cell">{ymd(l.claim.requested)}</td><td><StatusPill s={l.status} /></td>
+                <td className="text-right"><button onClick={() => setOpen(isOpen ? null : l.lineId)} className="btn btn-line btn-xs">{isOpen ? '접기' : '상세'}</button></td>
+              </tr>,
+              isOpen && (
+                <tr key={`${l.lineId}-d`} className="border-b border-line">
+                  <td colSpan={6} className="py-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="text-[13px] space-y-1.5">
+                        <div><span className="text-mute w-24 inline-block">상품주문번호</span><span className="num">{l.lineId}</span></div>
+                        <div><span className="text-mute w-24 inline-block">사유</span>{l.claim.reason}{l.claim.detail && ` · ${l.claim.detail}`}</div>
+                        <div><span className="text-mute w-24 inline-block">신청일</span><span className="num">{ymd(l.claim.requested)}</span></div>
+                        <div><span className="text-mute w-24 inline-block">처리 상태</span>{done ? `${l.claim.type} 처리 완료` : '판매자 확인 중'}</div>
+                      </div>
+                      <div>
+                        <RefundBox r={r} type={l.claim.type} />
+                        {l.claim.type !== '교환' && <p className="text-[12px] text-mute mt-2">{done ? '사용 포인트는 환원되고, 이 상품주문분 적립 포인트는 회수되었어요.' : '처리 완료 시 사용 포인트 환원 · 적립 포인트 회수가 함께 진행돼요.'}</p>}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ),
+            ];
           })}
         </tbody>
       </table>
@@ -319,7 +400,7 @@ export function MyClaims() {
         <b className="text-ink">처리 안내</b><br />
         · 결제완료 상태: 즉시 취소 · 배송준비 상태: 판매자 승인 후 취소<br />
         · 반품/교환: 배송완료 후 7일 이내 신청 가능 · 구매확정 후에는 신청 불가<br />
-        · 판매자가 3영업일 내 처리하지 않으면 곳간 고객센터가 직권 처리합니다.
+        · 취소 · 반품 완료 시 그 상품주문분 사용 포인트는 환원, 적립 포인트는 회수됩니다.
       </div>
     </div>
   );
@@ -340,7 +421,7 @@ export function MyReviews() {
       </div>
       {tab === 'todo' ? (
         <div className="space-y-3">
-          <p className="text-[13px] text-mute mb-2">구매확정 후 30일 이내 작성 가능 · 포토 리뷰 500P / 텍스트 100P</p>
+          <p className="text-[13px] text-mute mb-2">구매확정된 상품주문 1건당 1개 · 확정 후 30일 이내 · 별점과 사진(최대 5장)을 남길 수 있어요</p>
           {todo.map((l) => {
             const p = productById[l.productId];
             return (
@@ -376,52 +457,56 @@ export function MyReviews() {
   );
 }
 
-export function MyWishlist() {
-  const { wish } = useApp();
-  const items = [...wish].map((id) => productById[id]);
-  return (
-    <div>
-      <H>찜한 상품 <span className="num text-mute">{items.length}</span></H>
-      {items.length ? <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">{items.map((p) => <ProductCard key={p.id} p={p} />)}</div> : <Empty title="찜한 상품이 없어요" />}
-    </div>
-  );
-}
-
 export function MyQna() {
   return (
     <div>
       <H>상품 문의</H>
-      <Empty title="작성한 문의가 없어요" desc="상품 상세 페이지의 Q&A 탭에서 문의할 수 있어요." />
+      <Empty title="작성한 문의가 없어요" desc="상품 상세 페이지의 Q&A 탭에서 문의할 수 있어요." action={<Link to="/help" className="btn btn-line btn-sm">고객센터 FAQ 보기</Link>} />
     </div>
   );
 }
 
-export function MyCoupons() {
+/* ─────────── 포인트 ─────────── */
+export function MyPoints() {
+  const [type, setType] = useState('전체');
+  const counts = Object.fromEntries([['전체', myPointHistory.length], ...POINT_TYPES.map((t) => [t, myPointHistory.filter((r) => r.type === t).length])]);
+  const rows = type === '전체' ? myPointHistory : myPointHistory.filter((r) => r.type === type);
   return (
     <div>
-      <H>쿠폰 · 포인트</H>
-      <div className="grid sm:grid-cols-2 gap-3">
-        {myCoupons.map((c) => (
-          <div key={c.id} className="flex border border-ink">
-            <div className="w-28 bg-ink text-white flex flex-col items-center justify-center">
-              <span className="text-[22px] font-bold num">{c.rate ? `${c.rate * 100}%` : comma(c.amount)}</span>
-              {!c.rate && <span className="text-[11px]">원 할인</span>}
-            </div>
-            <div className="p-4 text-[13px] border-l border-dashed border-white">
-              <div className="font-bold">{c.name}</div><div className="text-mute mt-1">{c.cond}{c.max && ` · 최대 ${comma(c.max)}원`}</div><div className="text-mute">~ {c.until}</div>
-            </div>
+      <H>포인트</H>
+      <div className="grid grid-cols-2 md:grid-cols-5 border border-line">
+        <div className="col-span-2 md:col-span-1 p-5 bg-ink text-white">
+          <div className="text-[12px] text-white/60">보유 포인트</div>
+          <div className="text-[26px] font-bold num mt-1">{comma(myPointBalance)}<span className="text-[15px] ml-0.5">P</span></div>
+        </div>
+        {POINT_TYPES.map((t, i) => (
+          <div key={t} className={cx('p-5', i % 2 === 1 && 'border-l border-line', i > 0 && 'md:border-l', i < 2 && 'border-b md:border-b-0 border-line')}>
+            <div className="text-[12px] text-mute">누적 {t}</div>
+            <div className={cx('text-[18px] font-bold num mt-1', (t === '사용' || t === '회수') && 'text-ink-2')}>{t === '사용' || t === '회수' ? '−' : '+'}{comma(pointSum(t))}P</div>
           </div>
         ))}
       </div>
-      <h2 className="font-bold mt-10 mb-3">포인트 내역 <span className="text-point num ml-1">{comma(ME.point)}P</span></h2>
+      <div className="mt-6 mb-4"><Segments items={['전체', ...POINT_TYPES]} value={type} onChange={setType} counts={counts} /></div>
       <table className="w-full text-[13px] border-t border-ink">
+        <thead><tr className="text-left text-ink-2 border-b border-line"><th className="py-3 font-semibold w-28">일자</th><th className="font-semibold w-16">구분</th><th className="font-semibold">내용</th><th className="font-semibold text-right">포인트</th><th className="font-semibold text-right hidden sm:table-cell">잔액</th></tr></thead>
         <tbody>
-          {[['2026.09.21', '리뷰 작성 (포토)', 500], ['2026.09.20', '구매확정 적립 · 다완 찻잔 2인 세트', 588], ['2026.09.17', '주문 사용', -1000], ['2026.08.31', '골드 등급 월간 적립', 3000], ['2026.08.12', '구매확정 적립 · 시카 9 진정 토너', 192]].map(([d, t, v]) => (
-            <tr key={d + t} className="border-b border-line"><td className="py-3 w-28 text-mute num">{d}</td><td>{t}</td><td className={cx('text-right num font-semibold', v < 0 ? 'text-rust' : '')}>{v > 0 ? '+' : ''}{comma(v)}P</td></tr>
+          {rows.map((r) => (
+            <tr key={r.id} className="border-b border-line">
+              <td className="py-3 text-mute num">{ymd(r.date)}</td>
+              <td><StatusPill s={r.type} /></td>
+              <td><div>{r.desc}</div><div className="text-[11.5px] text-mute num">{r.ref}</div></td>
+              <td className={cx('text-right num font-semibold', r.amount < 0 && 'text-rust')}>{r.amount > 0 ? '+' : ''}{comma(r.amount)}P</td>
+              <td className="text-right num text-ink-2 hidden sm:table-cell">{comma(r.balance)}P</td>
+            </tr>
           ))}
         </tbody>
       </table>
-      <p className="text-[12px] text-mute mt-3">이번 달 소멸 예정 포인트 0P · 포인트 유효기간은 적립일로부터 1년</p>
+      <div className="mt-6 bg-cream p-5 text-[13px] text-ink-2 leading-relaxed">
+        <b className="text-ink">포인트 안내</b><br />
+        · 결제 시 실결제금액(포인트 사용분 제외)의 {POINT_RATE * 100}%가 적립되며, 다음 결제부터 사용할 수 있어요.<br />
+        · 사용 · 적립 포인트는 상품주문 단위로 금액 비율에 따라 나뉘어 기록돼요.<br />
+        · 취소 · 반품이 완료되면 그 상품주문분 사용 포인트는 환원, 적립 포인트는 회수됩니다.
+      </div>
     </div>
   );
 }
@@ -449,12 +534,17 @@ export function MyProfile() {
         </div>
       </div>
       <div className="mt-10 border border-line p-5 text-[13px]">
-        <div className="font-bold mb-3">등급별 혜택 <span className="text-mute font-normal">· 최근 6개월 구매확정 금액 기준</span></div>
-        <div className="grid grid-cols-4 gap-px bg-line">
-          {[['일반', '-', '0.5%'], ['실버', '30만원', '1%'], ['골드', '80만원', '1% + 월 3,000P'], ['VIP', '200만원', '2% + 무료반품']].map(([g, c, b]) => (
-            <div key={g} className={cx('p-3 text-center', g === ME.grade ? 'bg-ink text-white' : 'bg-white')}><div className="font-bold">{g}</div><div className="text-[11.5px] opacity-70 mt-1">{c}</div><div className="text-[11.5px] mt-1">{b}</div></div>
+        <div className="font-bold mb-3">회원등급 <span className="text-mute font-normal">· 누적 구매확정 금액 기준 · 적립률은 모든 등급 {POINT_RATE * 100}%</span></div>
+        <div className="grid grid-cols-3 gap-px bg-line">
+          {GRADES.map((g) => (
+            <div key={g.id} className={cx('p-3 text-center', g.id === ME.grade ? 'bg-ink text-white' : 'bg-white')}>
+              <GradeBadge grade={g.id} dark={g.id === ME.grade} />
+              <div className="font-bold mt-1.5">{g.label}</div>
+              <div className="text-[11.5px] opacity-70 mt-1">{g.min ? `누적 ${comma(g.min / 10000)}만원 이상` : '가입 시'}</div>
+            </div>
           ))}
         </div>
+        <p className="text-[12px] text-mute mt-2">내 누적 구매확정 금액 <b className="num text-ink">{won(ME.spent)}</b></p>
       </div>
     </div>
   );

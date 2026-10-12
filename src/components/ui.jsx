@@ -45,9 +45,25 @@ const STATUS = {
   지급예정: 'sky', 지급완료: 'mute', 지급보류: 'rust', 집계중: 'line',
   결제완료: 'sky', 배송준비: 'amber', 배송중: 'moss', 배송완료: 'ink', 구매확정: 'mute',
   취소요청: 'rust', 취소완료: 'mute', 반품요청: 'rust', 반품완료: 'mute', 교환요청: 'rust',
-  답변완료: 'mute', 미답변: 'rust', 블라인드: 'rust', 검토대기: 'amber', 정상노출: 'moss',
+  답변완료: 'mute', 미답변: 'rust', 블라인드: 'rust', 검토대기: 'amber', 정상노출: 'moss', 교환완료: 'mute',
+  적립: 'moss', 사용: 'sky', 회수: 'rust', 환원: 'amber',
 };
 export const StatusPill = ({ s }) => <Pill tone={STATUS[s] || 'mute'}>{s}</Pill>;
+
+/* ─── 회원등급 뱃지 (NORMAL / SILVER / GOLD) ─── */
+const GRADE_TONE = {
+  GOLD: 'border-[#c9a24a] text-[#a07a1f]',
+  SILVER: 'border-line-2 text-ink-2',
+  NORMAL: 'border-line text-mute',
+};
+export function GradeBadge({ grade, dark = false, className = '' }) {
+  return (
+    <span className={cx('inline-flex items-center h-[20px] px-1.5 border text-[10.5px] font-bold tracking-[0.08em] font-mono',
+      dark ? (grade === 'GOLD' ? 'border-[#e6c06a] text-[#e6c06a]' : 'border-white/40 text-white/80') : GRADE_TONE[grade], className)}>
+      {grade}
+    </span>
+  );
+}
 
 /* ─── 가격 ─── */
 export function Price({ p, size = 'md' }) {
