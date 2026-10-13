@@ -17,6 +17,8 @@ export function SellerReviews() {
   const [tab, setTab] = useState('전체');
   const [prod, setProd] = useState('all');
   const [draft, setDraft] = useState({});
+  const [flagTarget, setFlagTarget] = useState(null);
+  const [flagReason, setFlagReason] = useState('');
   const sum = ratingSummary(all);
   const list = rows.filter((r) =>
     (prod === 'all' || r.productId === prod) &&
@@ -66,6 +68,10 @@ export function SellerReviews() {
                   <Stars value={r.rating} size={12} /><b className="text-[13px]">{r.rating}.0</b>
                   <span className="text-mute">{maskName(u.name)} · {ymd(r.date)} · {p.name} ({r.option})</span>
                   {r.blinded && <Pill tone="rust">블라인드</Pill>}
+                  {!r.blinded && r.flag && <Pill tone="amber">검토 요청됨</Pill>}
+                  {!r.blinded && !r.flag && (
+                    <button onClick={() => { setFlagTarget(r); setFlagReason(''); }} className="ml-auto text-[12px] text-mute underline">관리자 검토 요청</button>
+                  )}
                 </div>
                 <p className="mt-2 text-[14px] font-semibold">{r.title}</p>
                 <p className="mt-1 text-[13.5px] text-ink-2 leading-relaxed">{r.body}</p>
@@ -89,6 +95,14 @@ export function SellerReviews() {
         })}
       </div>
 
+      <Modal open={!!flagTarget} onClose={() => setFlagTarget(null)} title="관리자 검토 요청"
+        footer={<>
+          <button onClick={() => setFlagTarget(null)} className="btn btn-ghost btn-sm">취소</button>
+          <button disabled={!flagReason.trim()} onClick={() => { setRows(rows.map((x) => (x.id === flagTarget.id ? { ...x, flag: flagReason.trim() } : x))); setFlagTarget(null); toast('검토 요청을 보냈어요. 관리자가 확인 후 블라인드 여부를 결정합니다'); }} className="btn btn-ink btn-sm">요청</button>
+        </>}>
+        <p className="text-[13px] text-ink-2">판매자는 리뷰를 삭제하거나 가릴 수 없습니다. 욕설 · 광고 · 허위 사실 등 정책 위반이 의심되면 사유를 적어 관리자에게 검토를 요청하세요.</p>
+        <textarea rows={3} value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="field text-[13px] mt-3" placeholder="예: 상품과 무관한 광고성 내용" />
+      </Modal>
     </div>
   );
 }
