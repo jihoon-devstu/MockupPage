@@ -18,8 +18,6 @@ export function Wordmark({ dark = false, sub }) {
 const NAV = [
   { to: '/products?sort=rank', label: '랭킹' },
   { to: '/products?sort=new', label: '신상' },
-  { to: '/products?tag=산지직송', label: '산지직송' },
-  { to: '/products?tag=핸드메이드', label: '핸드메이드' },
   { to: '/stores', label: '스토어' },
 ];
 

@@ -359,7 +359,7 @@ export default function ProductDetail() {
                 <span className="w-8 h-8 text-white text-sm font-bold flex items-center justify-center" style={{ background: store.color }}>{store.name[0]}</span>
                 <div>
                   <div className="font-bold text-[15px]">{store.name}</div>
-                  <div className="text-[11.5px] text-mute">{store.grade} 판매자 · 관심고객 {comma(store.followers)}</div>
+                  <div className="text-[11.5px] text-mute">{store.grade} 판매자</div>
                 </div>
               </div>
               <p className="mt-3 text-[12.5px] text-ink-2 leading-relaxed">{store.intro}</p>

@@ -22,13 +22,6 @@ export default function ProductCard({ p, rank, showStore = true }) {
             <span className="text-ink">★ {p.rating.toFixed(1)}</span>
             <span className="num">({comma(p.reviews)})</span>
           </div>
-          {p.tags.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {p.tags.slice(0, 2).map((t) => (
-                <span key={t} className={cx('text-[10.5px] px-1.5 py-0.5 border', t === 'NEW' ? 'border-point text-point' : 'border-line-2 text-ink-2')}>{t}</span>
-              ))}
-            </div>
-          )}
         </div>
       </Link>
     </div>

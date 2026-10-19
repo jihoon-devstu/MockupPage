@@ -15,14 +15,12 @@ const SORTS = [
   ['rating', '평점 높은순'],
 ];
 const PRICES = [[0, 30000, '3만원 이하'], [30000, 80000, '3만 ~ 8만원'], [80000, 150000, '8만 ~ 15만원'], [150000, 1e9, '15만원 이상']];
-const BENEFITS = ['무료배송', '오늘출발', '산지직송', '핸드메이드', 'NEW'];
 
 export default function ProductList() {
   const [sp, setSp] = useSearchParams();
-  const cat = sp.get('cat'), sub = sp.get('sub'), q = sp.get('q') || '', tag = sp.get('tag');
+  const cat = sp.get('cat'), sub = sp.get('sub'), q = sp.get('q') || '';
   const sort = sp.get('sort') || 'rank';
   const [price, setPrice] = useState(null);
-  const [tags, setTags] = useState(tag ? [tag] : []);
   const [excludeSoldOut, setExcludeSoldOut] = useState(false);
   const [mobileFilter, setMobileFilter] = useState(false);
 
@@ -33,7 +31,6 @@ export default function ProductList() {
       (!cat || p.cat === cat) && (!sub || p.sub === sub) &&
       (!q || (p.name + storeById[p.storeId].name + p.sub).includes(q)) &&
       (!price || (salePrice(p) >= price[0] && salePrice(p) < price[1])) &&
-      tags.every((t) => p.tags.includes(t)) &&
       (!excludeSoldOut || p.status !== '품절'));
     const by = {
       rank: (a, b) => b.sold - a.sold, new: (a, b) => b.created - a.created,
@@ -41,10 +38,10 @@ export default function ProductList() {
       review: (a, b) => b.reviews - a.reviews, rating: (a, b) => b.rating - a.rating,
     };
     return l.sort(by[sort]);
-  }, [cat, sub, q, price, tags, excludeSoldOut, sort]);
+  }, [cat, sub, q, price, excludeSoldOut, sort]);
 
   const c = cat && catById[cat];
-  const title = q ? `‘${q}’ 검색 결과` : tag ? tag : c ? c.name : sort === 'new' ? '신상품' : sort === 'rank' ? '랭킹' : '전체 상품';
+  const title = q ? `‘${q}’ 검색 결과` : c ? c.name : sort === 'new' ? '신상품' : sort === 'rank' ? '랭킹' : '전체 상품';
 
   const Filters = (
     <div className="space-y-8 text-sm">
@@ -68,12 +65,6 @@ export default function ProductList() {
         <div className="font-bold mb-3">가격</div>
         <div className="space-y-2">
           {PRICES.map((pr) => <Checkbox key={pr[2]} checked={price === pr} onChange={() => setPrice(price === pr ? null : pr)} label={pr[2]} />)}
-        </div>
-      </div>
-      <div>
-        <div className="font-bold mb-3">혜택 · 배송</div>
-        <div className="space-y-2">
-          {BENEFITS.map((b) => <Checkbox key={b} checked={tags.includes(b)} onChange={() => setTags(tags.includes(b) ? tags.filter((t) => t !== b) : [...tags, b])} label={b} />)}
         </div>
       </div>
       <Checkbox checked={excludeSoldOut} onChange={setExcludeSoldOut} label="품절 상품 제외" />
@@ -100,10 +91,9 @@ export default function ProductList() {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <div className="text-[13px] text-ink-2">총 <b className="num text-ink">{list.length}</b>개
-              {(price || tags.length > 0) && (
+              {price && (
                 <span className="ml-3 inline-flex flex-wrap gap-1.5 align-middle">
                   {price && <button onClick={() => setPrice(null)} className="inline-flex items-center gap-1 h-6 px-2 bg-sand text-[12px]">{price[2]}<X size={12} /></button>}
-                  {tags.map((t) => <button key={t} onClick={() => setTags(tags.filter((x) => x !== t))} className="inline-flex items-center gap-1 h-6 px-2 bg-sand text-[12px]">{t}<X size={12} /></button>)}
                 </span>
               )}
             </div>

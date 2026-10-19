@@ -102,7 +102,7 @@ export function AdminStoreDetail() {
         <div className="space-y-4">
           <div className="panel">
             <img src={s.cover} alt="" className="w-full h-28 object-cover" />
-            <div className="p-5"><KV rows={[['상태', <StatusPill s={status} />], ['등급', s.grade], ['사업자번호', s.bizNo], ['연락처', s.phone], ['이메일', s.email], ['배송', `${s.courier} · ${won(s.shipFee)}`], ['관심고객', comma(s.followers)]]} /></div>
+            <div className="p-5"><KV rows={[['상태', <StatusPill s={status} />], ['등급', s.grade], ['사업자번호', s.bizNo], ['연락처', s.phone], ['이메일', s.email], ['배송', `${s.courier} · ${won(s.shipFee)}`]]} /></div>
           </div>
           <div className="panel p-5 space-y-3">
             <div className="panel-title">수수료 개별 설정</div>
