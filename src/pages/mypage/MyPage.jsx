@@ -8,7 +8,8 @@ import { myPointHistory, myPointBalance, pointSum, POINT_TYPES } from '../../dat
 import { reviews } from '../../data/reviews';
 import { useApp } from '../../lib/store';
 import { StatusPill, Modal, Checkbox, Stars, Empty, Pill, GradeBadge, Segments } from '../../components/ui';
-import { ChatInbox } from '../../components/Chat';
+import { ChatInbox, OpenChatButton } from '../../components/Chat';
+import { CHAT_ME } from '../../data/chats';
 import { cx, won, comma, ymd, ymdhm } from '../../lib/format';
 
 const allLines = myOrders.flatMap((o) => o.items.map((l) => ({ ...l, orderId: o.id })));
@@ -203,7 +204,13 @@ export function MyOrderDetail() {
               <div key={l.lineId} className="flex gap-4 p-4 border-b border-line last:border-0 text-[13px]">
                 <img src={p.images[0]} alt="" className="w-16 h-20 object-cover" />
                 <div className="flex-1"><StatusPill s={l.status} /><div className="font-medium text-[14px] mt-1.5">{p.name}</div><div className="text-mute">{l.option} · {l.qty}개</div></div>
-                <div className="font-bold num">{won(l.unitPrice * l.qty)}</div>
+                <div className="flex flex-col items-end justify-between">
+                  <div className="font-bold num">{won(l.unitPrice * l.qty)}</div>
+                  <OpenChatButton className="btn btn-line btn-xs" basePath="/mypage/chats" by="BUYER"
+                    request={{ type: 'STORE_INQUIRY', buyerId: CHAT_ME.userId, storeId: l.storeId, context: { type: 'ORDER_ITEM', id: l.lineId } }}>
+                    판매자 문의
+                  </OpenChatButton>
+                </div>
               </div>
             );
           })}
@@ -237,7 +244,12 @@ export function MyOrderDetail() {
             <div className="flex justify-between py-3 font-bold border-b border-line"><span>실결제금액</span><span className="num text-[16px]">{won(pay.paid)}</span></div>
             <div className="flex justify-between py-2.5 text-[13px]"><span className="text-mute">적립 포인트 (실결제금액의 {POINT_RATE * 100}%)</span><span className="num font-semibold text-moss">+{comma(pay.earned)}P</span></div>
           </div>
-          <button className="btn btn-line btn-sm mt-2">영수증 / 거래명세서</button>
+          <div className="flex gap-2 mt-2">
+            <button className="btn btn-line btn-sm">영수증 / 거래명세서</button>
+            <OpenChatButton basePath="/mypage/chats" by="BUYER" request={{ type: 'BUYER_SUPPORT', buyerId: CHAT_ME.userId, context: { type: 'ORDER', id: o.id } }}>
+              결제 · 환불 문의
+            </OpenChatButton>
+          </div>
         </div>
       </div>
     </div>

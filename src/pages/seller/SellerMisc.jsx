@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Lock } from 'lucide-react';
+import { Download, Lock, MessagesSquare } from 'lucide-react';
 import { productById, catById, PAYMENT_FEE } from '../../data/catalog';
 import { reviewsOfStore, ratingSummary } from '../../data/reviews';
 import { settlements, pendingThisWeek } from '../../data/orders';
@@ -192,7 +192,12 @@ export function SellerSettlements() {
           </tbody>
         </table>
       </div>
-      <Modal open={!!detail} onClose={() => setDetail(null)} title={`정산 상세 · ${detail?.id}`} width={520}>
+      <Modal open={!!detail} onClose={() => setDetail(null)} title={`정산 상세 · ${detail?.id}`} width={520}
+        footer={detail && (
+          <OpenChatButton by="SELLER" basePath="/seller/chats" request={{ type: 'SELLER_SUPPORT', storeId: MY_STORE.id, context: { type: 'SETTLEMENT', id: detail.id } }}>
+            <MessagesSquare size={14} /> 이 정산 문의
+          </OpenChatButton>
+        )}>
         {detail && (
           <div className="text-[14px]">
             <div className="text-[13px] text-mute mb-3">대상기간 {ymd(detail.start)} ~ {ymd(detail.end)} · 지급일 {ymd(detail.pay)}</div>

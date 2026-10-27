@@ -175,13 +175,19 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
   );
 }
 
+// 문맥 카드 머리 — 어떤 화면에서 무엇을 두고 묻는지 (실제 프론트 chatView.contextLabel 과 같음)
+const CONTEXT_LABEL = {
+  PRODUCT: '상품 문의', ORDER: '주문 · 결제 문의', ORDER_ITEM: '주문 상품 문의', SETTLEMENT: '정산 문의',
+  STORE: '스토어 문의', REPORT: '신고 처리 문의', CHAT_ROOM: '스토어 톡 도움 요청',
+};
+
 function MessageItem({ m, mine, read, basePath }) {
   if (m.kind === 'SYSTEM') return <p className="text-center text-[12px] text-mute py-1">{m.content}</p>;
   if (m.kind === 'CONTEXT') {
     return (
       <div className={cx('flex', mine ? 'justify-end' : 'justify-start')}>
         <div className="max-w-[80%] border border-line-2 bg-white px-3 py-2">
-          <div className="text-[11px] text-mute">문의 대상</div>
+          <div className="text-[11px] text-mute">{CONTEXT_LABEL[m.context.type] ?? '문의 대상'}</div>
           <div className="text-[13.5px] font-semibold">{m.context.title}</div>
           {m.context.type === 'CHAT_ROOM' && basePath === '/admin/chats' && (
             <Link to={`${basePath}/${m.context.id}`} className="text-[12px] text-point underline">대화 보기 (읽기 전용)</Link>

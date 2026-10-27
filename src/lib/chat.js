@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { storeById, productById } from '../data/catalog';
 import { userById } from '../data/people';
+import { myOrders, settlements } from '../data/orders';
 import { CHAT_ROOMS, CHAT_MESSAGE_SEQ, CHAT_ME, ADMIN_DISPLAY_NAME, RESOLVED_NOTICE } from '../data/chats';
 import { maskName } from './format';
 
@@ -68,6 +69,15 @@ function contextTitle(ctx) {
   if (ctx.type === 'CHAT_ROOM') {
     const r = rooms.find((x) => x.roomId === ctx.id);
     return `스토어 톡 #${ctx.id} (${storeById[r?.storeId]?.name ?? ''})`;
+  }
+  if (ctx.type === 'ORDER') return `주문 ${ctx.id}`;
+  if (ctx.type === 'ORDER_ITEM') {
+    const line = myOrders.flatMap((o) => o.items).find((l) => l.lineId === ctx.id);
+    return line ? `${productById[line.productId]?.name ?? '상품'} · ${line.option}` : `상품주문 #${ctx.id}`;
+  }
+  if (ctx.type === 'SETTLEMENT') {
+    const s = settlements.find((x) => x.id === ctx.id);
+    return s ? `정산 ${s.id} · ${s.payout.toLocaleString()}원` : `정산 #${ctx.id}`;
   }
   return `${ctx.type} #${ctx.id}`;
 }
