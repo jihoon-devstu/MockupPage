@@ -8,6 +8,7 @@ import { useApp } from '../../lib/store';
 import { PageHead, Segments, Stars, StatusPill, Modal, Kpi, KV, Pill, Checkbox, HBars } from '../../components/ui';
 import { won, comma, ymd, cx, maskName, pct } from '../../lib/format';
 import { MY_STORE, myStoreQna } from './SellerLayout';
+import { ChatInbox, OpenChatButton } from '../../components/Chat';
 
 /* ─────────── 리뷰 관리 ─────────── */
 export function SellerReviews() {
@@ -139,6 +140,17 @@ export function SellerQna() {
         ))}
       </div>
     </div>
+  );
+}
+
+/* ─────────── 채팅 (스토어 톡 · 판매자 운영 상담) ─────────── */
+export function SellerChats() {
+  return (
+    <>
+      <PageHead title="채팅" desc="구매자 스토어 톡과 운영팀 상담을 한곳에서 봅니다."
+        right={<OpenChatButton request={{ type: 'SELLER_SUPPORT', storeId: MY_STORE.id }} by="SELLER" basePath="/seller/chats">운영팀에 문의</OpenChatButton>} />
+      <ChatInbox kind="seller" basePath="/seller/chats" />
+    </>
   );
 }
 

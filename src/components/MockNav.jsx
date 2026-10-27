@@ -13,18 +13,22 @@ export const SCREENS = [
   ['구매자 · 마이페이지', [
     ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/2026092809114007', '주문 상세 (포인트 사용)'],
     ['/mypage/claim/2026093014582201-1?type=취소', '취소 신청'], ['/mypage/claim/2026092419502215-1?type=반품', '반품 신청'], ['/mypage/claim/2026092419502215-1?type=교환', '교환 신청'],
-    ['/mypage/claims', '취소/반품/교환 내역'], ['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'], ['/mypage/points', '포인트'],
+    ['/mypage/claims', '취소/반품/교환 내역'], ['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'],
+    ['/mypage/chats', '1:1 채팅'], ['/mypage/chats/101', '스토어 톡 (상품 문의 카드)'], ['/mypage/chats/103', '고객센터 상담 (도움 요청)'], ['/mypage/points', '포인트'],
     ['/mypage/profile', '회원정보 · 등급'], ['/mypage/addresses', '배송지'],
   ]],
   ['판매자센터', [
     ['/seller', '대시보드'], ['/seller/products', '상품 조회'], ['/seller/products/new', '상품 등록'], ['/seller/products/p101/edit', '상품 수정'],
     ['/seller/orders', '주문 관리'], ['/seller/claims', '취소/반품/교환'], ['/seller/reviews', '리뷰 관리'], ['/seller/qna', '상품 문의'],
+    ['/seller/chats', '채팅'], ['/seller/chats/105', '스토어 톡 (가린 구매자 이름)'], ['/seller/chats/104', '운영 상담 (정산 카드)'],
     ['/seller/settlements', '정산 내역'], ['/seller/store', '스토어 설정'],
   ]],
   ['스토어 관리자', [
     ['/admin', '운영 대시보드'], ['/admin/applications', '입점 심사 목록'], ['/admin/applications/AP-2609-031', '입점 심사 상세'], ['/admin/stores', '스토어 관리'],
     ['/admin/stores/s5', '스토어 상세 (휴면)'], ['/admin/settlements', '정산 관리'], ['/admin/users', '회원 관리'], ['/admin/users/u11', '회원 상세 (정지)'],
-    ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reviews', '리뷰 관리'], ['/admin/categories', '카테고리 · 수수료'],
+    ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reviews', '리뷰 관리'],
+    ['/admin/chats', '상담함'], ['/admin/chats/103', '고객 상담 (도움 요청 카드)'], ['/admin/chats/102', '스토어 톡 열람 (읽기 전용)'], ['/admin/chats/106', '판매자 상담 (종료)'],
+    ['/admin/categories', '카테고리 · 수수료'],
   ]],
 ];
 

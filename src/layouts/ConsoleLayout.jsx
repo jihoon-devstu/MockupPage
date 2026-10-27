@@ -1,19 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Bell, Menu, X, ExternalLink, ChevronDown } from 'lucide-react';
+import { Menu, X, ExternalLink, ChevronDown } from 'lucide-react';
 import { Wordmark } from './ShopLayout';
 import { cx } from '../lib/format';
 
 /**
  * 판매자센터 / 관리자 공용 콘솔 레이아웃
- * - 상단: 먹색 바 (콘솔 이름 + 알림 + 계정)
+ * - 상단: 먹색 바 (콘솔 이름 + 알림 벨(bell — 레이아웃이 알림 센터 벨을 넘김) + 계정)
  * - 좌측: 그룹형 메뉴 (네이버 스마트스토어센터 / Shopify Admin 구성 참고)
  */
-export default function ConsoleLayout({ kind, groups, account, badge, notices = [] }) {
+export default function ConsoleLayout({ kind, groups, account, badge, bell }) {
   const [open, setOpen] = useState(false);
-  const [bell, setBell] = useState(false);
   const loc = useLocation();
-  useEffect(() => { setOpen(false); setBell(false); window.scrollTo(0, 0); }, [loc.pathname]);
+  useEffect(() => { setOpen(false); window.scrollTo(0, 0); }, [loc.pathname]);
 
   const Side = (
     <nav className="py-4 text-[14px]">
@@ -43,23 +42,7 @@ export default function ConsoleLayout({ kind, groups, account, badge, notices = 
         <span className={cx('hidden sm:inline text-[11px] font-bold px-2 py-0.5', kind === 'seller' ? 'bg-[#c9f26b] text-ink' : 'bg-point text-white')}>{badge}</span>
         <div className="ml-auto flex items-center gap-4 text-[13px]">
           <Link to="/" className="hidden md:flex items-center gap-1 text-white/70 hover:text-white">쇼핑몰 보기 <ExternalLink size={13} /></Link>
-          <div className="relative">
-            <button onClick={() => setBell(!bell)} className="relative p-1" aria-label="알림">
-              <Bell size={19} strokeWidth={1.6} />
-              {notices.length > 0 && <span className="absolute right-0.5 top-0.5 w-2 h-2 rounded-full bg-point" />}
-            </button>
-            {bell && (
-              <div className="absolute right-0 top-10 w-80 bg-white text-ink border border-line shadow-xl">
-                <div className="px-4 h-11 flex items-center border-b border-line font-bold text-sm">알림 <span className="ml-1.5 text-point num">{notices.length}</span></div>
-                {notices.map((n, i) => (
-                  <Link key={i} to={n.to} className="block px-4 py-3 border-b border-line hover:bg-cream">
-                    <div className="text-[13px] leading-snug">{n.text}</div>
-                    <div className="text-[11px] text-mute mt-1">{n.time}</div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {bell}
           <div className="flex items-center gap-2">
             <img src={account.avatar} alt="" className="w-7 h-7 rounded-full object-cover" />
             <div className="hidden sm:block leading-tight">

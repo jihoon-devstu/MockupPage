@@ -9,6 +9,7 @@ import { reviews, reviewsOfStore, ratingSummary } from '../../data/reviews';
 import { useApp } from '../../lib/store';
 import { PageHead, Segments, StatusPill, Modal, KV, Kpi, Checkbox, Stars, Pill, Spark, GradeBadge } from '../../components/ui';
 import { won, comma, ymd, ymdhm, pct, cx, shortWon } from '../../lib/format';
+import { ChatInbox, OpenChatButton } from '../../components/Chat';
 
 /* ─────────── 스토어 관리 ─────────── */
 export function AdminStores() {
@@ -66,7 +67,8 @@ export function AdminStoreDetail() {
   return (
     <div>
       <PageHead crumbs="판매자 > 스토어 관리" title={s.name} desc={`${c.name} · ${s.owner} · 입점 ${ymd(s.since)}`}
-        right={<><Link to={`/store/${s.id}`} className="btn btn-line btn-sm">쇼핑몰에서 보기 <ExternalLink size={13} /></Link><button onClick={() => setModal(true)} className="btn btn-ink btn-sm">상태 변경</button></>} />
+        right={<><Link to={`/store/${s.id}`} className="btn btn-line btn-sm">쇼핑몰에서 보기 <ExternalLink size={13} /></Link>
+          <OpenChatButton basePath="/admin/chats" by="ADMIN" request={{ type: 'SELLER_SUPPORT', storeId: s.id, context: { type: 'STORE', id: s.id } }}>판매자와 상담</OpenChatButton><button onClick={() => setModal(true)} className="btn btn-ink btn-sm">상태 변경</button></>} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <Kpi label="8주 거래액" value={shortWon(ss.reduce((a, x) => a + x.gross, 0))} unit="원" />
         <Kpi label="8주 수수료 수익" value={comma(ss.reduce((a, x) => a + x.commission, 0) / 10000)} unit="만원" sub={`판매수수료 ${pct(c.commission)}`} />
@@ -130,6 +132,16 @@ export function AdminStoreDetail() {
         {status !== '운영중' && <><label className="label mt-4">사유 (판매자에게 통보)</label><textarea rows={3} className="field" /></>}
       </Modal>
     </div>
+  );
+}
+
+/* ─────────── 상담함 (판매자 운영 상담 · 고객센터 1:1 상담, 관리자 전원 공용) ─────────── */
+export function AdminChats() {
+  return (
+    <>
+      <PageHead title="상담함" desc="판매자 · 고객 상담을 관리자 전원이 함께 봅니다. 답변은 '곳간 운영팀' 이름으로 나갑니다." />
+      <ChatInbox kind="admin" basePath="/admin/chats" />
+    </>
   );
 }
 

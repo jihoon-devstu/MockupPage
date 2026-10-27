@@ -8,6 +8,7 @@ import { myPointHistory, myPointBalance, pointSum, POINT_TYPES } from '../../dat
 import { reviews } from '../../data/reviews';
 import { useApp } from '../../lib/store';
 import { StatusPill, Modal, Checkbox, Stars, Empty, Pill, GradeBadge, Segments } from '../../components/ui';
+import { ChatInbox } from '../../components/Chat';
 import { cx, won, comma, ymd, ymdhm } from '../../lib/format';
 
 const allLines = myOrders.flatMap((o) => o.items.map((l) => ({ ...l, orderId: o.id })));
@@ -15,7 +16,7 @@ const allLines = myOrders.flatMap((o) => o.items.map((l) => ({ ...l, orderId: o.
 /* ─────────── 레이아웃 ─────────── */
 const MENU = [
   ['쇼핑', [['/mypage/orders', '주문 · 배송'], ['/mypage/claims', '취소 · 반품 · 교환'], ['/cart', '장바구니']]],
-  ['활동', [['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의']]],
+  ['활동', [['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'], ['/mypage/chats', '1:1 채팅']]],
   ['혜택', [['/mypage/points', '포인트']]],
   ['내 정보', [['/mypage/profile', '회원정보 수정'], ['/mypage/addresses', '배송지 관리']]],
 ];
@@ -462,6 +463,16 @@ export function MyQna() {
     <div>
       <H>상품 문의</H>
       <Empty title="작성한 문의가 없어요" desc="상품 상세 페이지의 Q&A 탭에서 문의할 수 있어요." action={<Link to="/help" className="btn btn-line btn-sm">고객센터 FAQ 보기</Link>} />
+    </div>
+  );
+}
+
+/* ─────────── 1:1 채팅 (스토어 톡 · 고객센터 1:1 상담) ─────────── */
+export function MyChats() {
+  return (
+    <div>
+      <H>1:1 채팅</H>
+      <ChatInbox kind="buyer" basePath="/mypage/chats" />
     </div>
   );
 }

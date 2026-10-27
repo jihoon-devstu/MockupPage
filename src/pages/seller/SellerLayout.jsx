@@ -1,5 +1,7 @@
-import { LayoutDashboard, Package, PlusSquare, ShoppingCart, RotateCcw, Star, MessageCircle, Wallet, Store } from 'lucide-react';
+import { LayoutDashboard, Package, PlusSquare, ShoppingCart, RotateCcw, Star, MessageCircle, MessagesSquare, Wallet, Store } from 'lucide-react';
 import ConsoleLayout from '../../layouts/ConsoleLayout';
+import NotificationBell from '../../components/NotificationBell';
+import { useChatUnread } from '../../lib/chat';
 import { storeById } from '../../data/catalog';
 import { sellerOrders } from '../../data/orders';
 import { qnas } from '../../data/reviews';
@@ -9,6 +11,7 @@ export const myStoreQna = qnas.filter((q) => ['p101', 'p102', 'p103', 'p104', 'p
 
 export default function SellerLayout() {
   const cnt = (s) => sellerOrders.filter((o) => o.status === s).length;
+  const chatUnread = useChatUnread('seller');
   const claims = sellerOrders.filter((o) => ['취소요청', '반품요청', '교환요청'].includes(o.status)).length;
   const groups = [
     { title: '홈', items: [{ to: '/seller', end: true, label: '대시보드', icon: LayoutDashboard }] },
@@ -23,17 +26,13 @@ export default function SellerLayout() {
     { title: '고객', items: [
       { to: '/seller/reviews', label: '리뷰 관리', icon: Star },
       { to: '/seller/qna', label: '상품 문의', icon: MessageCircle, count: myStoreQna.filter((q) => !q.a).length },
+      { to: '/seller/chats', label: '채팅', icon: MessagesSquare, count: chatUnread },
     ] },
     { title: '정산 · 스토어', items: [
       { to: '/seller/settlements', label: '정산 내역', icon: Wallet },
       { to: '/seller/store', label: '스토어 설정', icon: Store },
     ] },
   ];
-  const notices = [
-    { text: `신규 주문 ${cnt('결제완료')}건이 발주 확인을 기다리고 있어요`, time: '방금', to: '/seller/orders' },
-    { text: '반품 요청이 접수되었습니다 — 3영업일 내 처리 필요', time: '2시간 전', to: '/seller/claims' },
-    { text: '[공지] 10월 추석 연휴 정산 일정 안내', time: '어제', to: '/seller/settlements' },
-  ];
-  return <ConsoleLayout kind="seller" badge="판매자센터" groups={groups} notices={notices}
+  return <ConsoleLayout kind="seller" badge="판매자센터" groups={groups} bell={<NotificationBell to="STORE" dark />}
     account={{ name: MY_STORE.name, role: `${MY_STORE.owner} 대표 · ${MY_STORE.grade}`, avatar: '/images/avatar/u-6.jpg' }} />;
 }

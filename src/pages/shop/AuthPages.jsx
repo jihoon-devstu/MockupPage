@@ -5,6 +5,8 @@ import { Checkbox } from '../../components/ui';
 import { useApp } from '../../lib/store';
 import { cx } from '../../lib/format';
 import { faqs, FAQ_CATS } from '../../data/faq';
+import { OpenChatButton } from '../../components/Chat';
+import { CHAT_ME } from '../../data/chats';
 
 /* 목업: 로그인 / 회원가입은 화면 이동만. 실제로는 자체 폼 → user-service → Keycloak (역할 BUYER · SELLER · ADMIN) */
 export function Login() {
@@ -98,7 +100,15 @@ export function Help() {
         ))}
       </ul>
 
-      <div className="mt-12 grid sm:grid-cols-2 gap-px bg-line border border-line">
+      <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border border-ink p-6">
+        <div>
+          <div className="font-bold text-[16px]">1:1 상담</div>
+          <p className="mt-1 text-[13px] text-ink-2">주문 · 결제 · 계정 문제는 곳간 운영팀과 실시간으로 이야기해요.</p>
+        </div>
+        <OpenChatButton className="btn btn-ink btn-sm" basePath="/mypage/chats" by="BUYER" request={{ type: 'BUYER_SUPPORT', buyerId: CHAT_ME.userId }}>운영팀과 채팅</OpenChatButton>
+      </div>
+
+      <div className="mt-4 grid sm:grid-cols-2 gap-px bg-line border border-line">
         <div className="bg-white p-6">
           <div className="eyebrow">Q&amp;A</div>
           <div className="mt-1.5 font-bold text-[16px]">상품문의는 판매자에게</div>

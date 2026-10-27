@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-do
 import { Search, ShoppingBag, User, Menu, X } from 'lucide-react';
 import { categories } from '../data/catalog';
 import { useApp } from '../lib/store';
+import NotificationBell from '../components/NotificationBell';
 import { cx } from '../lib/format';
 import { useEffect } from 'react';
 
@@ -89,6 +90,7 @@ export default function ShopLayout() {
           </form>
           <div className="ml-auto sm:ml-0 flex items-center gap-3">
             <Link to="/products?q=" className="sm:hidden" aria-label="검색"><Search size={22} strokeWidth={1.6} /></Link>
+            <NotificationBell to="USER" />
             <Link to="/mypage" aria-label="마이페이지"><User size={22} strokeWidth={1.6} /></Link>
             <Link to="/cart" className="relative" aria-label="장바구니">
               <ShoppingBag size={22} strokeWidth={1.6} />

@@ -8,15 +8,15 @@ import { Cart, Checkout, OrderComplete } from './pages/shop/CartCheckout';
 import { Login, Signup, Help } from './pages/shop/AuthPages';
 import SellerApply from './pages/shop/SellerApply';
 import {
-  MyPageLayout, MyOrders, MyOrderDetail, ClaimRequest, MyClaims, MyReviews, MyQna, MyPoints, MyProfile, MyAddresses,
+  MyPageLayout, MyOrders, MyOrderDetail, ClaimRequest, MyClaims, MyReviews, MyQna, MyChats, MyPoints, MyProfile, MyAddresses,
 } from './pages/mypage/MyPage';
 import SellerLayout from './pages/seller/SellerLayout';
 import SellerDashboard from './pages/seller/SellerDashboard';
 import { SellerProductList, SellerProductForm } from './pages/seller/SellerProducts';
 import { SellerOrderList, SellerOrderDetail, SellerClaims } from './pages/seller/SellerOrders';
-import { SellerReviews, SellerQna, SellerSettlements, SellerStore } from './pages/seller/SellerMisc';
+import { SellerReviews, SellerQna, SellerChats, SellerSettlements, SellerStore } from './pages/seller/SellerMisc';
 import { AdminLayout, AdminDashboard, AdminApplications, AdminApplicationDetail } from './pages/admin/AdminCore';
-import { AdminStores, AdminStoreDetail, AdminSettlements, AdminUsers, AdminUserDetail, AdminReviews, AdminCategories } from './pages/admin/AdminMore';
+import { AdminStores, AdminStoreDetail, AdminChats, AdminSettlements, AdminUsers, AdminUserDetail, AdminReviews, AdminCategories } from './pages/admin/AdminMore';
 import { ToastHost } from './components/ui';
 import MockNav from './components/MockNav';
 
@@ -46,6 +46,8 @@ export default function App() {
             <Route path="claims" element={<MyClaims />} />
             <Route path="reviews" element={<MyReviews />} />
             <Route path="qna" element={<MyQna />} />
+            <Route path="chats" element={<MyChats />} />
+            <Route path="chats/:roomId" element={<MyChats />} />
             <Route path="points" element={<MyPoints />} />
             <Route path="profile" element={<MyProfile />} />
             <Route path="addresses" element={<MyAddresses />} />
@@ -63,6 +65,8 @@ export default function App() {
           <Route path="claims" element={<SellerClaims />} />
           <Route path="reviews" element={<SellerReviews />} />
           <Route path="qna" element={<SellerQna />} />
+          <Route path="chats" element={<SellerChats />} />
+          <Route path="chats/:roomId" element={<SellerChats />} />
           <Route path="settlements" element={<SellerSettlements />} />
           <Route path="store" element={<SellerStore />} />
         </Route>
@@ -78,6 +82,8 @@ export default function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/:id" element={<AdminUserDetail />} />
           <Route path="reviews" element={<AdminReviews />} />
+          <Route path="chats" element={<AdminChats />} />
+          <Route path="chats/:roomId" element={<AdminChats />} />
           <Route path="categories" element={<AdminCategories />} />
         </Route>
 
