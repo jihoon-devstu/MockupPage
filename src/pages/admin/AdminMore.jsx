@@ -7,7 +7,7 @@ import { userPointHistory } from '../../data/points';
 import { settlements } from '../../data/orders';
 import { reviews, reviewsOfStore, ratingSummary } from '../../data/reviews';
 import { useApp } from '../../lib/store';
-import { PageHead, Segments, StatusPill, Modal, KV, Kpi, Checkbox, Stars, Pill, Spark, GradeBadge } from '../../components/ui';
+import { PageHead, Segments, StatusPill, Modal, KV, Kpi, Checkbox, Stars, Pill, GradeBadge } from '../../components/ui';
 import { won, comma, ymd, ymdhm, pct, cx, shortWon } from '../../lib/format';
 import { ChatInbox, OpenChatButton } from '../../components/Chat';
 
@@ -15,33 +15,29 @@ import { ChatInbox, OpenChatButton } from '../../components/Chat';
 export function AdminStores() {
   const [tab, setTab] = useState('전체');
   const [q, setQ] = useState('');
-  const T = ['전체', '운영중', '휴면', '정지'];
+  const T = ['전체', '운영중', '정지'];
   const counts = Object.fromEntries(T.map((t) => [t, t === '전체' ? stores.length : stores.filter((s) => s.status === t).length]));
-  const list = stores.filter((s) => (tab === '전체' || s.status === tab) && (s.name + s.owner).includes(q));
+  const list = stores.filter((s) => (tab === '전체' || s.status === tab) && (s.name + s.owner + s.bizNo).includes(q));
   return (
     <div>
       <PageHead title="스토어 관리" desc="입점 승인된 스토어 목록 · 등급은 최근 3개월 거래액과 페널티 점수로 매월 1일 갱신" right={<button className="btn btn-line btn-sm"><Download size={14} /> 엑셀</button>} />
       <div className="flex flex-wrap gap-3 items-center">
         <Segments items={T} value={tab} onChange={setTab} counts={counts} />
-        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="스토어명 · 대표자" className="flex-1 px-2 text-[13px] outline-none" /></div>
+        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="스토어명 · 대표자 · 사업자번호" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
-          <thead><tr><th>스토어</th><th>대표자</th><th>카테고리</th><th>등급</th><th className="text-right">상품</th><th className="text-right">8주 거래액</th><th>추이</th><th>평점</th><th>입점일</th><th>상태</th></tr></thead>
+          <thead><tr><th>스토어</th><th>대표자</th><th>사업자번호</th><th>등급</th><th>평점</th><th>입점일</th><th>상태</th></tr></thead>
           <tbody>
             {list.map((s) => {
-              const ss = settlements.filter((x) => x.storeId === s.id);
               const sum = ratingSummary(reviewsOfStore(s.id));
               return (
                 <tr key={s.id}>
                   <td><Link to={`/admin/stores/${s.id}`} className="flex items-center gap-2 font-semibold hover:underline"><span className="w-7 h-7 text-white text-[12px] font-bold flex items-center justify-center" style={{ background: s.color }}>{s.name[0]}</span>{s.name}</Link></td>
                   <td>{s.owner}</td>
-                  <td className="text-ink-2">{catById[s.cat].name}</td>
+                  <td className="num text-ink-2">{s.bizNo}</td>
                   <td>{s.grade}</td>
-                  <td className="text-right num">{productsOfStore(s.id).length}</td>
-                  <td className="text-right num">{shortWon(ss.reduce((a, x) => a + x.gross, 0))}원</td>
-                  <td><Spark values={ss.map((x) => x.gross).reverse()} /></td>
-                  <td>★ {sum.avg.toFixed(1)}</td>
+                  <td>{sum.total ? `★ ${sum.avg.toFixed(1)} (${sum.total})` : <span className="text-mute">리뷰 없음</span>}</td>
                   <td className="num text-ink-2">{ymd(s.since)}</td>
                   <td><StatusPill s={s.status} /></td>
                 </tr>
@@ -68,7 +64,7 @@ export function AdminStoreDetail() {
     <div>
       <PageHead crumbs="판매자 > 스토어 관리" title={s.name} desc={`${c.name} · ${s.owner} · 입점 ${ymd(s.since)}`}
         right={<><Link to={`/store/${s.id}`} className="btn btn-line btn-sm">쇼핑몰에서 보기 <ExternalLink size={13} /></Link>
-          <OpenChatButton basePath="/admin/chats" by="ADMIN" request={{ type: 'SELLER_SUPPORT', storeId: s.id, context: { type: 'STORE', id: s.id } }}>판매자와 상담</OpenChatButton><button onClick={() => setModal(true)} className="btn btn-ink btn-sm">상태 변경</button></>} />
+          <OpenChatButton basePath="/admin/chats" by="ADMIN" request={{ type: 'SELLER_SUPPORT', storeId: s.id, context: { type: 'STORE', id: s.id } }}>판매자와 상담</OpenChatButton>{s.status !== '폐점' && <button onClick={() => setModal(true)} className="btn btn-ink btn-sm">상태 변경</button>}</>} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <Kpi label="8주 거래액" value={shortWon(ss.reduce((a, x) => a + x.gross, 0))} unit="원" />
         <Kpi label="8주 수수료 수익" value={comma(ss.reduce((a, x) => a + x.commission, 0) / 10000)} unit="만원" sub={`판매수수료 ${pct(c.commission)}`} />
@@ -106,16 +102,11 @@ export function AdminStoreDetail() {
             <img src={s.cover} alt="" className="w-full h-28 object-cover" />
             <div className="p-5"><KV rows={[['상태', <StatusPill s={status} />], ['등급', s.grade], ['사업자번호', s.bizNo], ['연락처', s.phone], ['이메일', s.email], ['배송', `${s.courier} · ${won(s.shipFee)}`]]} /></div>
           </div>
-          <div className="panel p-5 space-y-3">
-            <div className="panel-title">수수료 개별 설정</div>
-            <div className="flex items-center gap-2"><input className="field num w-24" defaultValue={(c.commission * 100).toFixed(1)} /><span>%</span><button onClick={() => toast('개별 수수료율이 다음 정산부터 적용됩니다')} className="btn btn-line btn-sm">적용</button></div>
-            <p className="text-[12px] text-mute">카테고리 기본값 {pct(c.commission)} · 프로모션/협의 시 개별 조정</p>
-          </div>
           <div className="panel p-5">
             <div className="panel-title mb-2">관리 메모</div>
             <ul className="text-[12.5px] text-ink-2 space-y-1.5">
               <li><span className="num text-mute">2026.09.12</span> 추석 기획전 참여 확정</li>
-              {s.id === 's5' && <li><span className="num text-mute">2026.09.25</span> 반품 미처리 3건 → 정산 보류 / 휴면 전환</li>}
+              {s.id === 's5' && <li><span className="num text-mute">2026.09.25</span> 반품 미처리 3건 → 정산 보류 / 운영 정지</li>}
               <li><span className="num text-mute">{ymd(s.since)}</span> 입점 승인</li>
             </ul>
           </div>
@@ -123,13 +114,12 @@ export function AdminStoreDetail() {
       </div>
       <Modal open={modal} onClose={() => setModal(false)} title="스토어 상태 변경" width={460}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(false)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setModal(false); toast(`스토어 상태: ${status}`); }}>변경</button></>}>
-        <Segments items={['운영중', '휴면', '정지']} value={status} onChange={setStatus} />
+        <Segments items={['운영중', '정지']} value={status} onChange={setStatus} />
         <div className="mt-4 text-[13px] text-ink-2 bg-cream p-3 leading-relaxed">
           {status === '운영중' && '스토어와 판매중 상품이 쇼핑몰에 노출됩니다.'}
-          {status === '휴면' && '스토어/상품이 비노출됩니다. 진행 중 주문은 처리 가능하며, 정산은 클레임 완료 후 지급됩니다.'}
-          {status === '정지' && '즉시 비노출 + 판매자센터 기능 제한. 미정산 금액은 지급보류되며, 분쟁 해소 후 지급됩니다.'}
+          {status === '정지' && '상품이 쇼핑몰에서 즉시 숨겨지고 새 스토어 톡이 막힙니다. 지급예정 정산은 자동 보류되고, 해제하면 자동 보류만 풀립니다(직접 건 보류는 그대로).'}
         </div>
-        {status !== '운영중' && <><label className="label mt-4">사유 (판매자에게 통보)</label><textarea rows={3} className="field" /></>}
+        <label className="label mt-4">사유 (스토어 이력에 기록)</label><textarea rows={3} maxLength={255} className="field" />
       </Modal>
     </div>
   );

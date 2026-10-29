@@ -199,7 +199,7 @@ for (const s of stores) {
       storeId: s.id, start, end, pay, orders: Math.round(gross / 52000),
       gross, refund, commission, pgFee, rate: cat.commission,
       payout: net - commission - pgFee, status,
-      holdReason: status === '지급보류' ? '스토어 휴면 전환 및 미처리 반품 3건 — 처리 완료 시 지급' : null,
+      holdReason: status === '지급보류' ? '스토어 정지 및 미처리 반품 3건 — 처리 완료 시 지급' : null,
       bank: s.id === 's1' ? '기업은행 010-****-8812 (주)오롯이' : '등록 계좌',
     });
   }
