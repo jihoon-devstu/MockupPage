@@ -28,6 +28,16 @@ export const stores = [
   { id: 's8', name: '피부정원', slug: 'skin-garden', cat: 'beauty', owner: '강예린', bizNo: '000-00-00008', phone: '02-0000-0008', email: 'garden@skingarden.example.com', intro: '성분은 줄이고 효과는 그대로. 민감 피부를 위한 저자극 스킨케어.', since: daysAgo(720), grade: '파워', color: '#6f8f7a', cover: cover(8), status: '운영중', courier: '롯데택배', shipFee: 2500, freeOver: 30000, dispatch: '결제 후 1영업일 출고' },
   { id: 's9', name: '데스크테리어랩', slug: 'deskterior-lab', cat: 'digital', owner: '서준호', bizNo: '000-00-00009', phone: '070-0000-0009', email: 'lab@deskterior.example.com', intro: '하루 8시간 앉는 책상을 위한 도구들.', since: daysAgo(210), grade: '새싹', color: '#34495e', cover: cover(9), status: '운영중', courier: 'CJ대한통운', shipFee: 3000, freeOver: 50000, dispatch: '평일 15시 이전 결제 시 당일 출고' },
 ];
+// 관리자 스토어 상세 — 상호 · 입점 신청서 번호 · 상태 이력 (시드 scenario.mjs · gen.mjs 와 같게: 상호 = 스토어명, 신청서 id = store_id)
+//   history: { from, to, actor(ADMIN · SELLER · SYSTEM), reason, at } — 개설(운영중)부터 오래된 순
+const SEED_STORE_ID = { s1: 11, s2: 12, s3: 13, s4: 2, s5: 15, s6: 1, s7: 17, s8: 18, s9: 19 };
+for (const s of stores) {
+  s.company = s.name;
+  s.applicationId = SEED_STORE_ID[s.id];
+  s.history = [{ from: null, to: '운영중', actor: 'ADMIN', reason: null, at: s.since }];
+}
+stores[4].statusReason = '반품 미처리 3건 — 처리 완료 후 해제'; // s5 볕드는집
+stores[4].history.push({ from: '운영중', to: '정지', actor: 'ADMIN', reason: stores[4].statusReason, at: daysAgo(31) });
 export const storeById = Object.fromEntries(stores.map((s) => [s.id, s]));
 
 /* ─────────── 상품 ───────────

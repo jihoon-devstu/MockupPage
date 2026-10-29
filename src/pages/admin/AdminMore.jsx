@@ -51,68 +51,142 @@ export function AdminStores() {
   );
 }
 
+// 상품 상태 표시 — 실제 constants productStatusLabel 과 같은 순서 (강제중지 > 판매중지 > 품절 > 판매중)
+const productStatusLabel = (p) => (p.blocked ? '강제중지' : p.status === '판매중지' ? '판매중지' : p.status === '품절' ? '품절' : '판매중');
+// 처리자는 종류만 — 관리자 개인 이름은 저장하지 않음 (실제 constants ACTOR_LABEL)
+const ACTOR_LABEL = { APPLICANT: '신청자', ADMIN: '곳간 운영팀', SYSTEM: '자동 처리', SELLER: '판매자' };
+
+function TableSearch({ value, onChange, placeholder }) {
+  return (
+    <div className="flex items-center border border-line-2 h-8 px-2.5 ml-auto w-full sm:w-56 bg-white"><Search size={14} className="text-mute" />
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="flex-1 px-2 text-[12.5px] outline-none" /></div>
+  );
+}
+
 export function AdminStoreDetail() {
   const { id } = useParams();
-  const { toast } = useApp();
   const s = storeById[id] || stores[0];
+  return <StoreDetailBody key={s.id} s={s} />; // key: 다른 스토어로 이동하면 모달 · 표 상태 초기화
+}
+
+function StoreDetailBody({ s }) {
+  const { toast } = useApp();
   const [status, setStatus] = useState(s.status);
   const [modal, setModal] = useState(false);
-  const ss = settlements.filter((x) => x.storeId === s.id);
-  const prods = productsOfStore(s.id);
+  const [prods, setProds] = useState(() => productsOfStore(s.id).map((p) => ({ ...p })));
+  const [blockTarget, setBlockTarget] = useState(null); // { product, blocked } — 강제중지 · 해제 확인 모달
+  const [blockReason, setBlockReason] = useState('');
+  const [prodQ, setProdQ] = useState('');
+  const [settleQ, setSettleQ] = useState('');
+  const ss = settlements.filter((x) => x.storeId === s.id).sort((a, b) => b.start - a.start); // 최근 8주 · 최신 먼저
   const sum = ratingSummary(reviewsOfStore(s.id));
-  const c = catById[s.cat];
+  const onSale = prods.filter((p) => productStatusLabel(p) === '판매중').length;
+  const prodRows = prods.filter((p) => (p.name + productStatusLabel(p)).includes(prodQ));
+  const settleRows = ss.filter((x) => x.status.includes(settleQ));
+
+  const closeBlock = () => { setBlockTarget(null); setBlockReason(''); };
+  const submitBlock = () => {
+    const { product, blocked } = blockTarget;
+    // 강제중지 → 쇼핑몰에서 숨김 · 사유 기록 / 해제 → 판매중지(STOPPED)로 돌아가고 판매자가 직접 재개
+    setProds(prods.map((p) => (p.id === product.id ? { ...p, blocked, status: '판매중지', statusReason: blocked ? blockReason.trim() : null } : p)));
+    closeBlock();
+    toast(blocked ? `${product.name} — 강제 판매중지했어요 (쇼핑몰에서 숨겨지고 판매자는 재개할 수 없어요)` : `${product.name} — 강제 판매중지를 풀었어요 (판매중지 상태 — 판매자가 점검 후 재개)`);
+  };
+
   return (
     <div>
-      <PageHead crumbs="판매자 > 스토어 관리" title={s.name} desc={`${c.name} · ${s.owner} · 입점 ${ymd(s.since)}`}
+      <PageHead crumbs="판매자 > 스토어 관리" title={s.name} desc={`${s.owner} · ${s.company} · 입점 ${ymd(s.since)}`}
         right={<><Link to={`/store/${s.id}`} className="btn btn-line btn-sm">쇼핑몰에서 보기 <ExternalLink size={13} /></Link>
           <OpenChatButton basePath="/admin/chats" by="ADMIN" request={{ type: 'SELLER_SUPPORT', storeId: s.id, context: { type: 'STORE', id: s.id } }}>판매자와 상담</OpenChatButton>{s.status !== '폐점' && <button onClick={() => setModal(true)} className="btn btn-ink btn-sm">상태 변경</button>}</>} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <Kpi label="8주 거래액" value={shortWon(ss.reduce((a, x) => a + x.gross, 0))} unit="원" />
-        <Kpi label="8주 수수료 수익" value={comma(ss.reduce((a, x) => a + x.commission, 0) / 10000)} unit="만원" sub={`판매수수료 ${pct(c.commission)}`} />
-        <Kpi label="평균 평점" value={sum.avg.toFixed(2)} sub={`리뷰 ${sum.total}건`} />
-        <Kpi label="페널티 점수" value={s.id === 's5' ? '7' : '0'} unit="/ 10점" sub="10점 도달 시 판매 제한" />
+        <Kpi label="8주 거래액" value={shortWon(ss.reduce((a, x) => a + x.gross, 0))} unit="원" sub={`정산서 ${comma(ss.length)}건 · 이번 주 포함`} />
+        <Kpi label="8주 수수료 수익" value={comma(Math.floor(ss.reduce((a, x) => a + x.commission, 0) / 10000))} unit="만원" sub="정산서 기준 · 상위 카테고리별 판매수수료" />
+        <Kpi label="평균 평점" value={sum.total ? sum.avg.toFixed(2) : '-'} sub={`리뷰 ${comma(sum.total)}건`} />
+        <Kpi label="판매중 상품" value={comma(onSale)} unit="개" sub={`등록 ${comma(prods.length)}개 · 삭제 제외`} />
       </div>
       <div className="grid xl:grid-cols-[1fr_380px] gap-4 mt-4">
         <div className="space-y-4">
-          <div className="panel overflow-x-auto">
-            <div className="panel-head"><span className="panel-title">등록 상품 {prods.length}</span></div>
-            <table className="tbl">
-              <thead><tr><th>상품</th><th className="text-right">판매가</th><th className="text-right">재고</th><th className="text-right">판매량</th><th>상태</th><th /></tr></thead>
-              <tbody>
-                {prods.map((p) => (
-                  <tr key={p.id}>
-                    <td><div className="flex items-center gap-2.5"><img src={p.images[0]} alt="" className="w-9 h-9 object-cover" />{p.name}</div></td>
-                    <td className="text-right num">{comma(p.price)}</td><td className="text-right num">{p.stock}</td><td className="text-right num">{comma(p.sold)}</td>
-                    <td><StatusPill s={p.status} /></td>
-                    <td><button onClick={() => toast('상품을 강제 판매중지했어요 (판매자에게 사유 통보)')} className="btn btn-ghost btn-xs text-rust">강제중지</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div>
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <span className="panel-title">등록 상품 {prods.length}</span>
+              <TableSearch value={prodQ} onChange={setProdQ} placeholder="상품명 · 상태" />
+            </div>
+            <div className="panel overflow-x-auto">
+              <table className="tbl">
+                <thead><tr><th>상품</th><th className="text-right">판매가</th><th className="text-right">재고</th><th>상태</th><th /></tr></thead>
+                <tbody>
+                  {prodRows.map((p) => (
+                    <tr key={p.id}>
+                      <td><div className="flex items-center gap-2.5"><img src={p.images[0]} alt="" className="w-9 h-9 object-cover bg-cream" />
+                        <div><div>{p.name}</div><div className="text-[11.5px] text-mute">{catById[p.cat].name} · {p.sub}</div></div></div></td>
+                      <td className="text-right num">{comma(p.price)}</td>
+                      <td className="text-right num">{comma(p.stock)}</td>
+                      <td><StatusPill s={productStatusLabel(p)} />{p.statusReason && <div className="text-[11.5px] text-mute mt-0.5">{p.statusReason}</div>}</td>
+                      <td>{p.blocked
+                        ? <button onClick={() => setBlockTarget({ product: p, blocked: false })} className="btn btn-ghost btn-xs">해제</button>
+                        : <button onClick={() => setBlockTarget({ product: p, blocked: true })} className="btn btn-ghost btn-xs text-rust">강제중지</button>}</td>
+                    </tr>
+                  ))}
+                  {!prodRows.length && <tr><td colSpan={5} className="text-center text-mute py-8">등록된 상품이 없어요</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div className="panel overflow-x-auto">
-            <div className="panel-head"><span className="panel-title">정산 이력</span><Link to="/admin/settlements" className="text-[12px] text-mute">정산 관리</Link></div>
-            <table className="tbl">
-              <thead><tr><th>기간</th><th className="text-right">매출</th><th className="text-right">수수료</th><th className="text-right">지급액</th><th>지급일</th><th>상태</th></tr></thead>
-              <tbody>{ss.map((x) => <tr key={x.id}><td className="num">{ymd(x.start)} ~ {ymd(x.end).slice(5)}</td><td className="text-right num">{comma(x.gross)}</td><td className="text-right num">{comma(x.commission + x.pgFee)}</td><td className="text-right num font-semibold">{comma(x.payout)}</td><td className="num">{ymd(x.pay)}</td><td><StatusPill s={x.status} /></td></tr>)}</tbody>
-            </table>
+          <div>
+            <div className="flex flex-wrap items-center gap-3 mb-2">
+              <span className="panel-title">정산 이력</span>
+              <Link to="/admin/settlements" className="text-[12px] text-mute">정산 관리</Link>
+              <TableSearch value={settleQ} onChange={setSettleQ} placeholder="상태" />
+            </div>
+            <div className="panel overflow-x-auto">
+              <table className="tbl">
+                <thead><tr><th>기간</th><th className="text-right">매출</th><th className="text-right">수수료</th><th className="text-right">지급액</th><th>지급일(예정)</th><th>상태</th></tr></thead>
+                <tbody>
+                  {settleRows.map((x) => <tr key={x.id}><td className="num">{ymd(x.start)} ~ {ymd(x.end).slice(5)}</td><td className="text-right num">{comma(x.gross)}</td><td className="text-right num">{comma(x.commission + x.pgFee)}</td><td className="text-right num font-semibold">{comma(x.payout)}</td><td className="num">{ymd(x.pay)}</td><td><StatusPill s={x.status} /></td></tr>)}
+                  {!settleRows.length && <tr><td colSpan={6} className="text-center text-mute py-8">최근 8주 정산 이력이 없어요</td></tr>}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         <div className="space-y-4">
-          <div className="panel">
-            <img src={s.cover} alt="" className="w-full h-28 object-cover" />
-            <div className="p-5"><KV rows={[['상태', <StatusPill s={status} />], ['등급', s.grade], ['사업자번호', s.bizNo], ['연락처', s.phone], ['이메일', s.email], ['배송', `${s.courier} · ${won(s.shipFee)}`]]} /></div>
+          <div className="panel p-5">
+            <div className="panel-title mb-3">기본 정보</div>
+            <KV rows={[
+              ['상태', <span><StatusPill s={status} />{s.statusReason && <span className="block text-[11.5px] text-mute mt-1">{s.statusReason}</span>}</span>],
+              ['등급', s.grade], ['상호', s.company], ['사업자번호', s.bizNo], ['고객 문의', s.phone || '-'],
+              ['배송', `${s.courier || '택배사 미지정'} · ${won(s.shipFee)} · ${s.freeOver ? `${won(s.freeOver)} 이상 무료` : '무료배송 없음'}`],
+              ['출고 안내', s.dispatch || '-'],
+              ['입점 신청', s.applicationId ? <Link to={`/admin/applications/${s.applicationId}`} className="hover:underline">신청서 #{s.applicationId}</Link> : '-'],
+            ]} />
           </div>
           <div className="panel p-5">
-            <div className="panel-title mb-2">관리 메모</div>
-            <ul className="text-[12.5px] text-ink-2 space-y-1.5">
-              <li><span className="num text-mute">2026.09.12</span> 추석 기획전 참여 확정</li>
-              {s.id === 's5' && <li><span className="num text-mute">2026.09.25</span> 반품 미처리 3건 → 정산 보류 / 운영 정지</li>}
-              <li><span className="num text-mute">{ymd(s.since)}</span> 입점 승인</li>
-            </ul>
+            <div className="panel-title mb-2">상태 이력</div>
+            <ol className="text-[12.5px] space-y-2">
+              {[...s.history].reverse().map((h) => (
+                <li key={h.at.getTime()} className="text-ink-2">
+                  <div><span className="num text-mute">{ymdhm(h.at)}</span> · <b className="text-ink">{h.from ? `${h.from} → ${h.to}` : `개설 (${h.to})`}</b> · {ACTOR_LABEL[h.actor] ?? h.actor}</div>
+                  {h.reason && <div className="text-mute mt-0.5">{h.reason}</div>}
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </div>
+      <Modal open={!!blockTarget} onClose={closeBlock} title={blockTarget?.blocked ? '상품 강제 판매중지' : '강제 판매중지 해제'} width={460}
+        footer={<><button className="btn btn-line btn-sm" onClick={closeBlock}>취소</button>
+          <button className="btn btn-ink btn-sm" onClick={submitBlock} disabled={blockTarget?.blocked && blockReason.trim() === ''}>{blockTarget?.blocked ? '판매중지' : '해제'}</button></>}>
+        <p className="text-[13.5px] font-semibold">{blockTarget?.product.name}</p>
+        <div className="mt-3 text-[13px] text-ink-2 bg-cream p-3 leading-relaxed">
+          {blockTarget?.blocked
+            ? '쇼핑몰에서 즉시 숨겨지고 구매할 수 없어요. 판매자는 수정 · 재고 변경 · 삭제는 할 수 있지만 판매를 재개할 수 없어요.'
+            : '판매중지(STOPPED) 상태로 돌아가요. 판매자가 내용을 점검한 뒤 직접 재개합니다.'}
+        </div>
+        {blockTarget?.blocked && <>
+          <label className="label mt-4" htmlFor="product-block-reason">사유 (판매자 상품 목록에 표시)</label>
+          <textarea id="product-block-reason" rows={3} maxLength={255} value={blockReason} onChange={(e) => setBlockReason(e.target.value)} className="field" />
+        </>}
+      </Modal>
       <Modal open={modal} onClose={() => setModal(false)} title="스토어 상태 변경" width={460}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(false)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setModal(false); toast(`스토어 상태: ${status}`); }}>변경</button></>}>
         <Segments items={['운영중', '정지']} value={status} onChange={setStatus} />
@@ -662,7 +736,7 @@ export function AdminCategories() {
       </div>
       <div className="panel overflow-x-auto">
         <table className="tbl">
-          <thead><tr><th>카테고리</th><th>코드</th><th className="text-right">상품</th><th className="text-right">스토어</th><th className="w-36">판매수수료</th><th className="text-right">결제수수료</th><th className="text-right">합계</th><th className="text-center">관리</th></tr></thead>
+          <thead><tr><th>카테고리</th><th>코드</th><th className="text-right">상품</th><th className="w-36">판매수수료</th><th className="text-right">결제수수료</th><th className="text-right">합계</th><th className="text-center">관리</th></tr></thead>
           <tbody>
             {categories.map((c) => {
               const on = open.has(c.id);
@@ -676,7 +750,6 @@ export function AdminCategories() {
                   </td>
                   <td className="font-mono text-[11.5px] text-mute">{c.id}</td>
                   <td className="text-right num">{prodCount(c.id)}</td>
-                  <td className="text-right num">{stores.filter((s) => s.cat === c.id).length}</td>
                   <td><div className="flex items-center gap-1"><input className="field field-sm num w-20" defaultValue={(c.commission * 100).toFixed(1)} /> %</div></td>
                   <td className="text-right num">{pct(PAYMENT_FEE, 1)}</td>
                   <td className="text-right num font-semibold">{pct(c.commission + PAYMENT_FEE, 1)}</td>
@@ -687,7 +760,6 @@ export function AdminCategories() {
                     <td className="pl-10 text-ink-2"><span className="text-line-2 mr-1.5">└</span>{s}</td>
                     <td className="font-mono text-[11.5px] text-mute">{c.id}/{s}</td>
                     <td className="text-right num">{prodCount(c.id, s)}</td>
-                    <td className="text-right text-mute">-</td>
                     <td className="text-[12.5px] text-mute">상위와 동일 ({pct(c.commission)})</td>
                     <td className="text-right num text-mute">{pct(PAYMENT_FEE, 1)}</td>
                     <td className="text-right num text-mute">{pct(c.commission + PAYMENT_FEE, 1)}</td>

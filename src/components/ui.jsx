@@ -41,7 +41,7 @@ export function Pill({ tone = 'mute', children, className = '' }) {
 const STATUS = {
   운영중: 'moss', 정지: 'rust', 정상: 'moss', 이용정지: 'rust',
   심사대기: 'sky', 보완요청: 'amber', 승인: 'moss', 반려: 'rust',
-  판매중: 'moss', 품절: 'amber', 판매중지: 'mute',
+  판매중: 'moss', 품절: 'amber', 판매중지: 'mute', 강제중지: 'rust',
   지급예정: 'sky', 지급완료: 'mute', 지급보류: 'rust', 집계중: 'line',
   결제대기: 'amber', 결제실패: 'rust', 주문완료: 'line',
   결제완료: 'sky', 배송준비: 'amber', 배송중: 'moss', 배송완료: 'ink', 구매확정: 'mute',
