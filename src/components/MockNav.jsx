@@ -12,7 +12,7 @@ export const SCREENS = [
     ['/login', '로그인'], ['/signup', '회원가입'], ['/auth/callback', '소셜 로그인 콜백'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'],
   ]],
   ['구매자 · 마이페이지', [
-    ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/20260928-000017', '주문 상세 (포인트 사용)'],
+    ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/20260928-000017', '주문 상세 (포인트 사용)'], ['/mypage/orders/20261001-000058', '주문 상세 (결제대기)'],
     ['/mypage/claim/20260930-000031-01?type=취소', '취소 신청'], ['/mypage/claim/20260924-000042-01?type=반품', '반품 신청'], ['/mypage/claim/20260924-000042-01?type=교환', '교환 신청'],
     ['/mypage/claims', '취소/반품/교환 내역'], ['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'],
     ['/mypage/chats', '1:1 채팅'], ['/mypage/chats/101', '스토어 톡 (상품 문의 카드)'], ['/mypage/chats/103', '고객센터 상담 (도움 요청)'], ['/mypage/points', '포인트'],
@@ -25,9 +25,9 @@ export const SCREENS = [
     ['/seller/settlements', '정산 내역'], ['/seller/store', '스토어 설정'],
   ]],
   ['스토어 관리자', [
-    ['/admin', '운영 대시보드'], ['/admin/applications', '입점 심사 목록'], ['/admin/applications/AP-2609-031', '입점 심사 상세'], ['/admin/stores', '스토어 관리'],
+    ['/admin', '운영 대시보드'], ['/admin/applications', '입점 심사 목록'], ['/admin/applications/31', '입점 심사 상세'], ['/admin/stores', '스토어 관리'],
     ['/admin/stores/s5', '스토어 상세 (정지)'], ['/admin/settlements', '정산 관리'], ['/admin/users', '회원 관리'], ['/admin/users/u11', '회원 상세 (정지)'],
-    ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reviews', '리뷰 관리'],
+    ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reports', '신고 관리'],
     ['/admin/chats', '상담함'], ['/admin/chats/103', '고객 상담 (도움 요청 카드)'], ['/admin/chats/102', '스토어 톡 열람 (읽기 전용)'], ['/admin/chats/106', '판매자 상담 (종료)'],
     ['/admin/categories', '카테고리 · 수수료'],
   ]],

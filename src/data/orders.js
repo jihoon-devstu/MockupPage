@@ -218,6 +218,7 @@ for (const s of stores) {
       gross, commission, pgFee, rate: cat.commission,
       payout: net - commission - pgFee, status,
       holdReason: status === '지급보류' ? '스토어 정지 및 미처리 반품 3건 — 처리 완료 시 지급' : null,
+      carriedOver: ['s1', 's3', 's6'].includes(s.id) && k % 3 === 0 ? 2 : 0, // 이월 — 지난 주차 집계 뒤 늦게 들어온 구매확정 건
       bank: s.id === 's1' ? '기업은행 010-****-8812 (주)오롯이' : '등록 계좌',
     });
   }
