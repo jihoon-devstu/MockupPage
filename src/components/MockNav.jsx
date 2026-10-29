@@ -8,7 +8,8 @@ export const SCREENS = [
   ['구매자 · 쇼핑몰', [
     ['/', '메인'], ['/products?cat=fashion', '상품 목록 (카테고리)'], ['/products?q=리넨', '검색 결과'], ['/products/p101', '상품 상세 (옵션·리뷰)'],
     ['/products/p103', '상품 상세 (품절)'], ['/stores', '스토어 목록'], ['/store/s1', '스토어 홈'], ['/cart', '장바구니'], ['/checkout', '주문/결제'],
-    ['/order/complete', '주문 완료'], ['/login', '로그인'], ['/signup', '회원가입'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'],
+    ['/order/complete', '주문 완료'], ['/order/complete?pay=checking', '결제 확인 중'], ['/order/complete?pay=failed', '결제 실패'],
+    ['/login', '로그인'], ['/signup', '회원가입'], ['/auth/callback', '소셜 로그인 콜백'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'],
   ]],
   ['구매자 · 마이페이지', [
     ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/20260928-000017', '주문 상세 (포인트 사용)'],

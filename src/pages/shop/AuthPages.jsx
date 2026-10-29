@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronDown, Search } from 'lucide-react';
 import { Checkbox } from '../../components/ui';
 import { useApp } from '../../lib/store';
@@ -7,54 +7,142 @@ import { cx } from '../../lib/format';
 import { faqs, FAQ_CATS } from '../../data/faq';
 import { OpenChatButton } from '../../components/Chat';
 import { CHAT_ME } from '../../data/chats';
+import { ME } from '../../data/people';
 
-/* 목업: 로그인 / 회원가입은 화면 이동만. 실제로는 자체 폼 → user-service → Keycloak (역할 BUYER · SELLER · ADMIN) */
+// 로그인 탭 — 고른 역할이 계정에 없으면 로그인시키지 않고 안내 (실제 features/auth/constants.js LOGIN_TABS)
+const LOGIN_TABS = [
+  { role: 'BUYER', label: '구매회원', home: '/' },
+  { role: 'SELLER', label: '판매자', home: '/seller' },
+  { role: 'ADMIN', label: '운영자', home: '/admin' },
+];
+const roleMismatchMessage = (tab) => `${tab.label} 계정이 아니에요. 위에서 로그인 유형을 확인해주세요`;
+// 목업 계정: 이메일에 seller · admin 이 들어 있으면 그 역할, 아니면 구매회원
+const MOCK_ACCOUNTS = {
+  BUYER: { name: ME.name, roles: ['BUYER'] },
+  SELLER: { name: '한지우', roles: ['SELLER'] },
+  ADMIN: { name: '곳간 운영팀', roles: ['ADMIN'] },
+};
+const accountOf = (email) => MOCK_ACCOUNTS[/admin/i.test(email) ? 'ADMIN' : /seller/i.test(email) ? 'SELLER' : 'BUYER'];
+
+// 소셜 로그인 — 카카오 · 네이버 · Google (실제는 제공자 가이드의 버튼 이미지 · 심볼, 목업은 같은 색의 글자 버튼)
+const SOCIAL_PROVIDERS = [
+  { id: 'kakao', label: '카카오 로그인', className: 'bg-[#FEE500] text-black/85 rounded-[12px]' },
+  { id: 'naver', label: '네이버 로그인', className: 'bg-[#03C75A] text-white rounded-[6px]' },
+  { id: 'google', label: 'Google 계정으로 로그인', className: 'bg-white text-[#1F1F1F] border border-[#747775] rounded-[4px]' },
+];
+
+function SocialLoginButtons() {
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-3 text-[12px] text-mute">
+        <div className="h-px flex-1 bg-line" />간편 로그인<div className="h-px flex-1 bg-line" />
+      </div>
+      <div className="mt-4 space-y-2">
+        {/* 실제: 백엔드 /api/auth/social/{id} → 제공자 로그인 → /auth/callback. 목업은 바로 콜백 화면으로 */}
+        {SOCIAL_PROVIDERS.map((p) => (
+          <Link key={p.id} to="/auth/callback" className={cx('flex h-12 w-full items-center justify-center text-[15px] font-medium', p.className)}>{p.label}</Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const SOCIAL_ERROR_MESSAGES = {
+  AUTH_EMAIL_DUPLICATE: '이미 가입된 이메일이에요. 탈퇴한 계정의 이메일은 다시 쓸 수 없어요',
+  AUTH_ACCOUNT_DISABLED: '이용이 정지된 계정이에요. 고객센터로 문의해주세요',
+  AUTH_SOCIAL_LOGIN_FAILED: '소셜 로그인에 실패했어요. 다시 시도해주세요',
+};
+
+/* /auth/callback — 소셜 로그인 결과 (실제 features/auth/components/SocialCallback.jsx). ?error=코드 면 안내 후 로그인 화면으로 */
+export function AuthCallback() {
+  const nav = useNavigate();
+  const [params] = useSearchParams();
+  const { login, toast } = useApp();
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    const error = params.get('error');
+    const t = setTimeout(() => {
+      if (error) {
+        toast(SOCIAL_ERROR_MESSAGES[error] ?? SOCIAL_ERROR_MESSAGES.AUTH_SOCIAL_LOGIN_FAILED);
+        nav('/login', { replace: true });
+        return;
+      }
+      login(MOCK_ACCOUNTS.BUYER);
+      toast(`${MOCK_ACCOUNTS.BUYER.name}님, 반가워요`);
+      nav('/', { replace: true });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [nav, params, login, toast]);
+  return <p className="pt-32 text-center text-sm text-mute">로그인 중이에요…</p>;
+}
+
+/* 로그인 — 자체 폼 → user-service → Keycloak (역할 BUYER · SELLER · ADMIN). 목업: 이메일로 역할을 정해 로그인 */
 export function Login() {
   const nav = useNavigate();
-  const [tab, setTab] = useState('buyer');
-  const dest = { buyer: '/mypage', seller: '/seller', admin: '/admin' }[tab];
+  const { login, toast } = useApp();
+  const [tab, setTab] = useState(LOGIN_TABS[0]);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const submit = (e) => {
+    e.preventDefault();
+    const account = accountOf(email);
+    if (!account.roles.includes(tab.role)) { setError(roleMismatchMessage(tab)); return; } // 로그인 상태로 두지 않음
+    login(account);
+    toast(`${account.name}님, 반가워요`);
+    nav(tab.home, { replace: true });
+  };
   return (
     <div className="max-w-[400px] mx-auto px-4 pt-16">
       <h1 className="text-[26px] font-bold tracking-tight text-center">로그인</h1>
       <div className="mt-8 grid grid-cols-3 border border-line-2 text-[13px]">
-        {[['buyer', '구매회원'], ['seller', '판매자'], ['admin', '운영자']].map(([k, l], i) => (
-          <button key={k} onClick={() => setTab(k)} className={cx('h-10', i && 'border-l border-line-2', tab === k ? 'bg-ink text-white font-semibold' : 'text-ink-2')}>{l}</button>
+        {LOGIN_TABS.map((t, i) => (
+          <button key={t.role} type="button" onClick={() => { setTab(t); setError(''); }} className={cx('h-10', i && 'border-l border-line-2', tab.role === t.role ? 'bg-ink text-white font-semibold' : 'text-ink-2')}>{t.label}</button>
         ))}
       </div>
-      <form className="mt-6 space-y-2.5" onSubmit={(e) => { e.preventDefault(); nav(dest); }}>
-        <input className="field h-12" placeholder="이메일" />
+      <form className="mt-6 space-y-2.5" onSubmit={submit} noValidate>
+        <input className="field h-12" type="email" placeholder="이메일" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className="field h-12" type="password" placeholder="비밀번호" />
-        <div className="flex justify-between items-center py-1 text-[13px]">
-          <Checkbox checked label="로그인 상태 유지" />
-          <span className="text-mute">아이디 · 비밀번호 찾기</span>
+        {error && <p role="alert" className="pt-1 text-[13px] text-rust">{error}</p>}
+        <div className="pt-1.5">
+          <button type="submit" className="btn btn-ink btn-lg w-full">로그인</button>
         </div>
-        <button className="btn btn-ink btn-lg w-full">로그인</button>
       </form>
-      {tab === 'buyer' && (
+      {tab.role === 'BUYER' && (
         <>
+          <SocialLoginButtons />
           <p className="mt-8 text-center text-[13px] text-ink-2">아직 회원이 아니신가요? <Link to="/signup" className="font-bold underline">회원가입</Link></p>
         </>
       )}
-      {tab === 'seller' && <p className="mt-8 text-center text-[13px] text-ink-2">아직 입점 전이신가요? <Link to="/seller/apply" className="font-bold underline">입점 신청하기</Link></p>}
-      {tab === 'admin' && <p className="mt-8 text-center text-[12px] text-mute">운영자 계정은 곳간 운영팀에서 발급합니다.</p>}
+      {tab.role === 'SELLER' && <p className="mt-8 text-center text-[13px] text-ink-2">아직 입점 전이신가요? <Link to="/seller/apply" className="font-bold underline">입점 신청하기</Link></p>}
+      {tab.role === 'ADMIN' && <p className="mt-8 text-center text-[12px] text-mute">운영자 계정은 곳간 운영팀에서 발급합니다.</p>}
     </div>
   );
 }
 
 export function Signup() {
   const nav = useNavigate();
-  const { toast } = useApp();
+  const { toast, login } = useApp();
   const [all, setAll] = useState(false);
+  const [name, setName] = useState('');
   return (
     <div className="max-w-[440px] mx-auto px-4 pt-16">
       <h1 className="text-[26px] font-bold tracking-tight">회원가입</h1>
       <p className="mt-1 text-sm text-mute">결제할 때마다 실결제금액의 5%가 포인트로 적립돼요.</p>
-      <form className="mt-8 space-y-4" onSubmit={(e) => { e.preventDefault(); toast('가입을 환영해요! 로그인해주세요'); nav('/login'); }}>
+      <form className="mt-8 space-y-4" onSubmit={(e) => {
+        e.preventDefault();
+        // 가입하면 바로 로그인 → 홈
+        const n = name.trim() || ME.name;
+        login({ name: n, roles: ['BUYER'] });
+        toast(`${n}님, 가입을 환영해요!`);
+        nav('/', { replace: true });
+      }}>
         <div><label className="label">이메일</label><div className="flex gap-2"><input className="field" placeholder="example@email.com" /><button type="button" className="btn btn-line shrink-0">중복확인</button></div></div>
-        <div><label className="label">비밀번호</label><input type="password" className="field" placeholder="영문, 숫자, 특수문자 포함 8자 이상" /></div>
+        <div><label className="label">비밀번호</label><input type="password" className="field" placeholder="영문 · 특수문자 포함 8자 이상" /></div>
         <div><label className="label">비밀번호 확인</label><input type="password" className="field" /></div>
-        <div><label className="label">이름</label><input className="field" /></div>
-        <div><label className="label">휴대폰 번호</label><div className="flex gap-2"><input className="field" placeholder="010-0000-0000" /><button type="button" onClick={() => toast('인증번호를 보냈어요 (목업)')} className="btn btn-line shrink-0">인증요청</button></div></div>
+        <div><label className="label">이름</label><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div><label className="label">휴대폰 번호</label><input type="tel" className="field" placeholder="010-0000-0000" /></div>
         <div className="border border-line p-4 space-y-2.5 text-[13px]">
           <Checkbox checked={all} onChange={setAll} label={<b>전체 동의</b>} />
           <div className="h-px bg-line" />

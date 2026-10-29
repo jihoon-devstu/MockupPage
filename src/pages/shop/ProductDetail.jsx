@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Share2, X, Minus, Plus, Lock, ThumbsUp, ChevronRight, Truck, Camera } from 'lucide-react';
+import { Share2, X, Minus, Plus, Lock, ChevronRight, Truck, Camera } from 'lucide-react';
 import { productById, storeById, catById, visibleProducts } from '../../data/catalog';
 import { reviewsOf, ratingSummary, qnas } from '../../data/reviews';
 import { userById } from '../../data/people';
 import { earnOf } from '../../data/orders';
 import { useApp } from '../../lib/store';
-import { Stars, Price, Modal, Checkbox, Pager, Pill, GradeBadge } from '../../components/ui';
+import { Stars, Price, Modal, Checkbox, Pager, Pill } from '../../components/ui';
 import ProductCard from '../../components/ProductCard';
 import { OpenChatButton } from '../../components/Chat';
 import { CHAT_ME } from '../../data/chats';
@@ -37,7 +37,6 @@ export default function ProductDetail() {
   const [photoOnly, setPhotoOnly] = useState(false);
   const [starFilter, setStarFilter] = useState(0);
   const [rsort, setRsort] = useState('recent');
-  const [helped, setHelped] = useState(new Set());
 
   useEffect(() => { setImg(0); setPick({}); setLines([]); }, [id]);
   useEffect(() => { if (loc.hash) setTimeout(() => document.getElementById(loc.hash.slice(1))?.scrollIntoView(), 50); }, [loc.hash]);
@@ -46,7 +45,7 @@ export default function ProductDetail() {
   const sum = ratingSummary(revs);
   const filtered = useMemo(() => {
     let l = revs.filter((r) => (!photoOnly || r.photos.length) && (!starFilter || r.rating === starFilter));
-    const by = { recent: (a, b) => b.date - a.date, helpful: (a, b) => b.helpful - a.helpful, high: (a, b) => b.rating - a.rating, low: (a, b) => a.rating - b.rating };
+    const by = { recent: (a, b) => b.date - a.date, high: (a, b) => b.rating - a.rating, low: (a, b) => a.rating - b.rating };
     return [...l].sort(by[rsort]);
   }, [revs, photoOnly, starFilter, rsort]);
 
@@ -122,7 +121,7 @@ export default function ProductDetail() {
           <div className="mt-5 pb-5 border-b border-line"><Price p={p} size="lg" /></div>
 
           <dl className="py-4 border-b border-line text-[13px] grid grid-cols-[72px_1fr] gap-y-2.5">
-            <dt className="text-mute">적립</dt><dd>결제 시 실결제금액의 5% · 약 <b className="num">{comma(earnOf(unit))}P</b></dd>
+            <dt className="text-mute">적립</dt><dd>구매확정 시 실결제금액의 5% · 약 <b className="num">{comma(earnOf(unit))}P</b></dd>
             <dt className="text-mute">배송</dt>
             <dd>
               <div className="flex items-center gap-1.5"><Truck size={14} strokeWidth={1.6} /> {store.courier} · {store.shipFee ? `${comma(store.shipFee)}원` : '무료배송'}</div>
@@ -215,7 +214,6 @@ export default function ProductDetail() {
               <div className="text-center sm:border-r border-line sm:pr-8">
                 <div className="text-[46px] font-bold leading-none num">{p.rating.toFixed(1)}</div>
                 <Stars value={p.rating} size={16} className="mt-2" />
-                <div className="text-[12px] text-mute mt-2">상위 {p.rating >= 4.8 ? 3 : 12}% 만족도</div>
               </div>
               <ul className="space-y-1.5 text-[12.5px]">
                 {sum.dist.map((d) => (
@@ -266,7 +264,7 @@ export default function ProductDetail() {
                 {starFilter > 0 && <button onClick={() => setStarFilter(0)} className="inline-flex items-center gap-1 h-7 px-2 bg-sand">{starFilter}점만<X size={12} /></button>}
               </div>
               <div className="flex gap-3">
-                {[['recent', '최신순'], ['helpful', '도움순'], ['high', '평점 높은순'], ['low', '평점 낮은순']].map(([k, l]) => (
+                {[['recent', '최신순'], ['high', '평점 높은순'], ['low', '평점 낮은순']].map(([k, l]) => (
                   <button key={k} onClick={() => setRsort(k)} className={rsort === k ? 'font-bold' : 'text-mute'}>{l}</button>
                 ))}
               </div>
@@ -274,32 +272,21 @@ export default function ProductDetail() {
 
             <ul>
               {filtered.map((r) => {
-                const u = userById[r.userId];
                 return (
                   <li key={r.id} className="py-6 border-b border-line">
-                    <div className="flex items-center gap-2.5">
-                      <img src={u.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
-                      <div>
-                        <div className="text-[13px] font-semibold">{maskName(u.nick)} <GradeBadge grade={u.grade} className="ml-1 align-middle" /></div>
-                        <div className="flex items-center gap-2 text-[11.5px] text-mute"><Stars value={r.rating} size={11} /> {ymd(r.date)}</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 text-[12px] text-mute">{r.option && <>옵션: {r.option}</>}{r.fit && <> · 사이즈 <b className="text-ink-2">{r.fit}</b></>}</div>
+                    {/* 작성자는 writerDisplayName 글자만 — 아바타 · 등급 없음 */}
+                    <div className="text-[13px] font-semibold">{r.writer}</div>
+                    <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-mute"><Stars value={r.rating} size={11} /> {ymd(r.date)}</div>
+                    <div className="mt-3 text-[12px] text-mute">{r.option && <>옵션: {r.option}</>}{r.fit && <>{r.option && ' · '}사이즈 <b className="text-ink-2">{r.fit}</b></>}</div>
                     <p className="mt-2 text-[14px] font-semibold">{r.title}</p>
                     <p className="mt-1 text-[14px] leading-relaxed text-ink-2">{r.body}</p>
-                    {r.photos.length > 0 && <img src={r.photos[0]} alt="" className="mt-3 w-28 h-28 object-cover" />}
+                    {r.photos.length > 0 && <div className="mt-3 flex gap-2">{r.photos.map((src) => <img key={src} src={src} alt="" className="w-28 h-28 object-cover" />)}</div>}
                     {r.reply && (
                       <div className="mt-4 bg-cream p-4 text-[13px]">
                         <div className="font-bold mb-1">{store.name} <span className="font-normal text-mute text-[11px] ml-1">판매자 답글</span></div>
                         <p className="text-ink-2 leading-relaxed">{r.reply}</p>
                       </div>
                     )}
-                    <div className="mt-4 flex items-center gap-4 text-[12px]">
-                      <button onClick={() => setHelped((h) => { const n = new Set(h); n.has(r.id) ? n.delete(r.id) : n.add(r.id); return n; })}
-                        className={cx('inline-flex items-center gap-1.5 h-7 px-2.5 border', helped.has(r.id) ? 'border-ink bg-ink text-white' : 'border-line-2 text-ink-2')}>
-                        <ThumbsUp size={12} /> 도움돼요 <span className="num">{r.helpful + (helped.has(r.id) ? 1 : 0)}</span>
-                      </button>
-                    </div>
                   </li>
                 );
               })}
@@ -347,7 +334,7 @@ export default function ProductDetail() {
                   ['반품 배송비', `단순 변심: 왕복 ${won((store.shipFee || 3000) * 2)} / 상품 하자·오배송: 판매자 부담`],
                   ['교환/반품 불가', '착용 흔적·세탁·택 제거 시, 신선식품 단순 변심, 주문 제작 상품'],
                   ['구매 확정', '배송 완료 7일 후 자동 구매확정 (확정 이후에는 교환/반품 불가)'],
-                  ['포인트', '취소 · 반품 완료 시 그 상품분 사용 포인트는 환원, 적립 포인트는 회수'],
+                  ['포인트', '적립은 구매확정 때 · 취소 · 반품 완료 시 그 상품분 사용 포인트는 환원'],
                 ].map(([k, v]) => (
                   <tr key={k} className="border-b border-line"><th className="w-40 bg-cream text-left font-medium px-3 py-3 text-ink-2 align-top">{k}</th><td className="px-3 py-3 leading-relaxed">{v}</td></tr>
                 ))}
@@ -369,9 +356,8 @@ export default function ProductDetail() {
                 </div>
               </div>
               <p className="mt-3 text-[12.5px] text-ink-2 leading-relaxed">{store.intro}</p>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <button onClick={() => toast(`${store.name} 알림받기 완료`)} className="btn btn-line btn-sm">+ 알림받기</button>
-                <Link to={`/store/${store.id}`} className="btn btn-ink btn-sm">스토어 홈</Link>
+              <div className="mt-4">
+                <Link to={`/store/${store.id}`} className="btn btn-ink btn-sm w-full">스토어 홈</Link>
               </div>
             </div>
           </div>

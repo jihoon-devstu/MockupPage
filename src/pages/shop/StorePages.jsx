@@ -16,7 +16,7 @@ export function StoreHome() {
   const [sub, setSub] = useState('전체');
   if (!s) return <Empty title="존재하지 않는 스토어입니다" />;
   if (s.status !== '운영중') {
-    return <Empty title={`${s.name}은(는) 현재 휴면 상태입니다`} desc="판매자가 스토어 운영을 일시 중단했어요. 알림을 받으면 재오픈 시 알려드려요." action={<Link to="/stores" className="btn btn-line btn-sm">다른 스토어 보기</Link>} />;
+    return <Empty title={`${s.name}은(는) 현재 운영하지 않는 스토어입니다`} desc="운영이 정지되었거나 폐점한 스토어예요." action={<Link to="/stores" className="btn btn-line btn-sm">다른 스토어 보기</Link>} />;
   }
   const items = visibleProducts.filter((p) => p.storeId === id);
   const subs = ['전체', ...new Set(items.map((p) => p.sub))];

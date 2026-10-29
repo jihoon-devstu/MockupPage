@@ -92,7 +92,8 @@ for (const p of products) {
       option: opt,
       photos: hasPhoto ? p.images.slice(1, 1 + 1 + Math.floor(rnd() * 3)).slice(0, 3) : [],
       date: daysAgo(Math.floor(rnd() * 90), Math.floor(rnd() * 20)),
-      helpful: Math.floor(rnd() * 40),
+      // (도움돼요 없음 — 난수 순서만 유지)
+      _: rnd(),
       fit: pick(rnd, ['작아요', '정사이즈', '정사이즈', '정사이즈', '커요']),
       reply: rnd() < 0.45 ? pick(rnd, REPLIES) : null,
       flag: null,
