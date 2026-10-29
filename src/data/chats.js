@@ -47,14 +47,15 @@ const r105 = [
   text('BUYER', '쇼핑백도 같이 받을 수 있는지 궁금해요.', daysAgo(0, 3)),
 ];
 const r106 = [
-  card('ADMIN', { type: 'STORE', id: 's5', title: '스토어 볕드는집' }, daysAgo(6)),
-  text('ADMIN', '휴면 신청이 접수됐어요. 진행 중인 주문 2건은 처리 후 휴면이 적용됩니다.', daysAgo(6)),
+  card('SELLER', { type: 'SETTLEMENT', id: 3815, title: '정산 9/14~9/20 · 지급 보류' }, daysAgo(6)),
+  text('SELLER', '지난 주차 정산이 지급 보류됐는데 언제 지급되나요?', daysAgo(6)),
+  text('ADMIN', '미처리 반품 3건이 남아 보류됐어요. 처리가 끝나면 보류를 풀고 다음 지급일에 지급됩니다.', daysAgo(6)),
   text('SELLER', '네, 확인했습니다. 감사합니다.', daysAgo(5)),
   system(RESOLVED_NOTICE, daysAgo(5)),
 ];
 const r107 = [
   text('BUYER', '포인트가 적립이 안 된 것 같아요. 9/30 에 결제한 주문이에요.', daysAgo(0, 1)),
-  text('BUYER', '주문번호는 2026093021034417 입니다.', daysAgo(0, 1)),
+  text('BUYER', '주문번호는 20260930-000044 입니다.', daysAgo(0, 1)),
 ];
 const last = (ms) => ms.at(-1).id;
 

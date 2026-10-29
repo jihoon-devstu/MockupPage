@@ -18,6 +18,9 @@ const flaggedReviews = () => reviews.filter((r) => r.flag);
 
 export function AdminLayout() {
   const chatUnread = useChatUnread('admin');
+  const { logout } = useApp();
+  const nav = useNavigate();
+  const onLogout = () => { logout(); nav('/', { replace: true }); };
   const groups = [
     { title: '홈', items: [{ to: '/admin', end: true, label: '대시보드', icon: LayoutDashboard }] },
     { title: '판매자', items: [
@@ -32,7 +35,7 @@ export function AdminLayout() {
     ] },
     { title: '설정', items: [{ to: '/admin/categories', label: '카테고리 · 수수료', icon: Tags }] },
   ];
-  return <ConsoleLayout kind="admin" badge="운영관리" groups={groups} bell={<NotificationBell to="ADMIN" dark />} account={{ name: '곳간 운영팀', role: '파트너운영 · 최고관리자', avatar: '/images/avatar/u-2.jpg' }} />;
+  return <ConsoleLayout kind="admin" badge="운영관리" groups={groups} onLogout={onLogout} bell={<NotificationBell to="ADMIN" dark />} account={{ name: '곳간 운영팀', role: '파트너운영 · 최고관리자', avatar: '/images/avatar/u-2.jpg' }} />;
 }
 
 /* ─────────── 대시보드 ─────────── */

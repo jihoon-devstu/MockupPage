@@ -9,7 +9,7 @@ import { cx } from '../lib/format';
  * - 상단: 먹색 바 (콘솔 이름 + 알림 벨(bell — 레이아웃이 알림 센터 벨을 넘김) + 계정)
  * - 좌측: 그룹형 메뉴 (네이버 스마트스토어센터 / Shopify Admin 구성 참고)
  */
-export default function ConsoleLayout({ kind, groups, account, badge, bell }) {
+export default function ConsoleLayout({ kind, groups, account, badge, bell, onLogout }) {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   useEffect(() => { setOpen(false); window.scrollTo(0, 0); }, [loc.pathname]);
@@ -51,6 +51,7 @@ export default function ConsoleLayout({ kind, groups, account, badge, bell }) {
             </div>
             <ChevronDown size={14} className="text-white/50" />
           </div>
+          {onLogout && <button type="button" onClick={onLogout} className="cursor-pointer text-white/70 hover:text-white">로그아웃</button>}
         </div>
       </header>
 

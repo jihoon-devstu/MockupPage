@@ -5,6 +5,8 @@ import { useChatUnread } from '../../lib/chat';
 import { storeById } from '../../data/catalog';
 import { sellerOrders } from '../../data/orders';
 import { qnas } from '../../data/reviews';
+import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../lib/store';
 
 export const MY_STORE = storeById.s1; // 목업: 로그인한 판매자 = 오롯이 리넨
 export const myStoreQna = qnas.filter((q) => ['p101', 'p102', 'p103', 'p104', 'p105'].includes(q.productId));
@@ -12,6 +14,9 @@ export const myStoreQna = qnas.filter((q) => ['p101', 'p102', 'p103', 'p104', 'p
 export default function SellerLayout() {
   const cnt = (s) => sellerOrders.filter((o) => o.status === s).length;
   const chatUnread = useChatUnread('seller');
+  const { logout } = useApp();
+  const nav = useNavigate();
+  const onLogout = () => { logout(); nav('/', { replace: true }); };
   const claims = sellerOrders.filter((o) => ['취소요청', '반품요청', '교환요청'].includes(o.status)).length;
   const groups = [
     { title: '홈', items: [{ to: '/seller', end: true, label: '대시보드', icon: LayoutDashboard }] },
@@ -33,6 +38,6 @@ export default function SellerLayout() {
       { to: '/seller/store', label: '스토어 설정', icon: Store },
     ] },
   ];
-  return <ConsoleLayout kind="seller" badge="판매자센터" groups={groups} bell={<NotificationBell to="STORE" dark />}
+  return <ConsoleLayout kind="seller" badge="판매자센터" groups={groups} onLogout={onLogout} bell={<NotificationBell to="STORE" dark />}
     account={{ name: MY_STORE.name, role: `${MY_STORE.owner} 대표 · ${MY_STORE.grade}`, avatar: '/images/avatar/u-6.jpg' }} />;
 }

@@ -79,6 +79,7 @@ function contextTitle(ctx) {
     const s = settlements.find((x) => x.id === ctx.id);
     return s ? `정산 ${s.id} · ${s.payout.toLocaleString()}원` : `정산 #${ctx.id}`;
   }
+  if (ctx.type === 'REPORT') return `신고 #${ctx.id}`;
   return `${ctx.type} #${ctx.id}`;
 }
 

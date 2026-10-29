@@ -39,10 +39,11 @@ export function Pill({ tone = 'mute', children, className = '' }) {
 }
 
 const STATUS = {
-  운영중: 'moss', 휴면: 'amber', 정지: 'rust', 정상: 'moss', 이용정지: 'rust',
+  운영중: 'moss', 정지: 'rust', 정상: 'moss', 이용정지: 'rust',
   심사대기: 'sky', 보완요청: 'amber', 승인: 'moss', 반려: 'rust',
   판매중: 'moss', 품절: 'amber', 판매중지: 'mute',
   지급예정: 'sky', 지급완료: 'mute', 지급보류: 'rust', 집계중: 'line',
+  결제대기: 'amber', 결제실패: 'rust', 주문완료: 'line',
   결제완료: 'sky', 배송준비: 'amber', 배송중: 'moss', 배송완료: 'ink', 구매확정: 'mute',
   취소요청: 'rust', 취소완료: 'mute', 반품요청: 'rust', 반품완료: 'mute', 교환요청: 'rust',
   답변완료: 'mute', 미답변: 'rust', 블라인드: 'rust', 검토대기: 'amber', 정상노출: 'moss', 교환완료: 'mute',

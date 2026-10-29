@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { productById } from '../data/catalog';
+import { ME } from '../data/people';
 import { salePrice } from './format';
 
 /* 목업 전용 전역 상태 (새로고침하면 초기화)
-   - 장바구니, 토스트 알림
+   - 장바구니, 토스트 알림, 로그인 사용자 (목업은 구매자 김서연으로 로그인된 상태로 시작)
    실제 개발 시: 장바구니는 order-service (Redis cart:{userId}) */
 const Ctx = createContext(null);
 
@@ -16,6 +17,7 @@ const INITIAL_CART = [
 export function AppProvider({ children }) {
   const [cart, setCart] = useState(INITIAL_CART);
   const [toastMsg, setToastMsg] = useState(null);
+  const [user, setUser] = useState({ name: ME.name, roles: ['BUYER'] });
 
   const toast = useCallback((msg) => {
     setToastMsg({ msg, id: Date.now() });
@@ -44,8 +46,11 @@ export function AppProvider({ children }) {
       clearChecked: () => setCart((c) => c.filter((i) => !i.checked)),
       toast,
       toastMsg,
+      user,
+      login: setUser,
+      logout: () => { setUser(null); toast('로그아웃되었어요'); },
     };
-  }, [cart, toast, toastMsg, addToCart]);
+  }, [cart, toast, toastMsg, addToCart, user]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

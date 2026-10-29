@@ -43,55 +43,55 @@ const L = (o) => {
 
 export const myOrders = [
   {
-    id: '2026093014582201', date: daysAgo(0, 18), userId: 'u1',
+    id: '20260930-000031', date: daysAgo(0, 18), userId: 'u1',
     payment: { method: '신용카드', detail: '현대카드 (일시불)', point: 0 },
     items: [
-      L({ lineId: '2026093014582201-1', productId: 'p601', option: '로얄과 (S~M)', qty: 2, status: '결제완료', date: daysAgo(0, 18) }),
-      L({ lineId: '2026093014582201-2', productId: 'p701', option: '핸드드립', status: '결제완료', date: daysAgo(0, 18) }),
+      L({ lineId: '20260930-000031-01', productId: 'p601', option: '로얄과 (S~M)', qty: 2, status: '결제완료', date: daysAgo(0, 18) }),
+      L({ lineId: '20260930-000031-02', productId: 'p701', option: '핸드드립', status: '결제완료', date: daysAgo(0, 18) }),
     ],
   },
   {
-    id: '2026092809114007', date: daysAgo(2, 6), userId: 'u1',
-    payment: { method: '곳간페이', detail: '국민은행 계좌', point: 2000 },
+    id: '20260928-000017', date: daysAgo(2, 6), userId: 'u1',
+    payment: { method: '토스페이', detail: '토스페이', point: 2000 },
     items: [
-      L({ lineId: '2026092809114007-1', productId: 'p101', option: '오트밀 / M', status: '배송중', date: daysAgo(2, 6), invoice: '651248820193' }),
-      L({ lineId: '2026092809114007-2', productId: 'p102', option: '샌드 / M', status: '배송준비', date: daysAgo(2, 6) }),
+      L({ lineId: '20260928-000017-01', productId: 'p101', option: '오트밀 / M', status: '배송중', date: daysAgo(2, 6), invoice: '651248820193' }),
+      L({ lineId: '20260928-000017-02', productId: 'p102', option: '샌드 / M', status: '배송준비', date: daysAgo(2, 6) }),
     ],
   },
   {
-    id: '2026092419502215', date: daysAgo(6, 3), userId: 'u1',
+    id: '20260924-000042', date: daysAgo(6, 3), userId: 'u1',
     payment: { method: '신용카드', detail: '신한카드 (3개월 무이자)', point: 0 },
-    items: [L({ lineId: '2026092419502215-1', productId: 'p501', option: '전구색 2700K', status: '배송완료', date: daysAgo(6, 3), invoice: '530981200477' })],
+    items: [L({ lineId: '20260924-000042-01', productId: 'p501', option: '전구색 2700K', status: '배송완료', date: daysAgo(6, 3), invoice: '530981200477' })],
   },
   {
-    id: '2026091711220098', date: daysAgo(14), userId: 'u1',
+    id: '20260917-000008', date: daysAgo(14), userId: 'u1',
     payment: { method: '카카오페이', detail: '카카오페이 머니', point: 1000 },
     items: [
-      L({ lineId: '2026091711220098-1', productId: 'p401', option: '재유', qty: 2, status: '구매확정', date: daysAgo(14), invoice: '651200917732', reviewed: false }),
-      L({ lineId: '2026091711220098-2', productId: 'p404', option: '', status: '구매확정', date: daysAgo(14), invoice: '651200917732', reviewed: true }),
+      L({ lineId: '20260917-000008-01', productId: 'p401', option: '재유', qty: 2, status: '구매확정', date: daysAgo(14), invoice: '651200917732', reviewed: false }),
+      L({ lineId: '20260917-000008-02', productId: 'p404', option: '', status: '구매확정', date: daysAgo(14), invoice: '651200917732', reviewed: true }),
     ],
   },
   {
-    id: '2026090820013311', date: daysAgo(23), userId: 'u1',
+    id: '20260908-000023', date: daysAgo(23), userId: 'u1',
     payment: { method: '신용카드', detail: '삼성카드 (일시불)', point: 3000 },
-    items: [L({ lineId: '2026090820013311-1', productId: 'p203', option: '오트 / M', status: '반품요청', date: daysAgo(23), invoice: '247001931255', claim: { type: '반품', reason: '사이즈가 맞지 않음 (단순변심)', fee: 6000, requested: daysAgo(2) } })],
+    items: [L({ lineId: '20260908-000023-01', productId: 'p203', option: '오트 / M', status: '반품요청', date: daysAgo(23), invoice: '247001931255', claim: { type: '반품', reason: '사이즈가 맞지 않음 (단순변심)', fee: 6000, requested: daysAgo(2) } })],
   },
   {
-    id: '2026090412070352', date: daysAgo(27), userId: 'u1',
+    id: '20260904-000011', date: daysAgo(27), userId: 'u1',
     payment: { method: '신용카드', detail: '신한카드 (일시불)', point: 0 },
-    items: [L({ lineId: '2026090412070352-1', productId: 'p201', option: '블랙 / L', status: '교환요청', date: daysAgo(27), invoice: '247001877140', claim: { type: '교환', reason: '사이즈/색상 안 맞음', detail: 'L → M 교환 희망', fee: 0, requested: daysAgo(3) } })],
+    items: [L({ lineId: '20260904-000011-01', productId: 'p201', option: '블랙 / L', status: '교환요청', date: daysAgo(27), invoice: '247001877140', claim: { type: '교환', reason: '사이즈/색상 안 맞음', detail: 'L → M 교환 희망', fee: 0, requested: daysAgo(3) } })],
   },
   {
-    id: '2026082913400871', date: daysAgo(33), userId: 'u1',
+    id: '20260829-000036', date: daysAgo(33), userId: 'u1',
     payment: { method: '네이버페이', detail: '네이버페이 포인트', point: 1500 },
-    items: [L({ lineId: '2026082913400871-1', productId: 'p302', option: '내추럴 / 240', status: '취소완료', date: daysAgo(33), claim: { type: '취소', reason: '다른 상품 잘못 주문', fee: 0, requested: daysAgo(33) } })],
+    items: [L({ lineId: '20260829-000036-01', productId: 'p302', option: '내추럴 / 240', status: '취소완료', date: daysAgo(33), claim: { type: '취소', reason: '다른 상품 잘못 주문', fee: 0, requested: daysAgo(33) } })],
   },
   {
-    id: '2026081002210045', date: daysAgo(52), userId: 'u1',
+    id: '20260810-000005', date: daysAgo(52), userId: 'u1',
     payment: { method: '신용카드', detail: '현대카드 (일시불)', point: 0 },
     items: [
-      L({ lineId: '2026081002210045-1', productId: 'p801', option: '1+1', status: '구매확정', date: daysAgo(52), invoice: '247009915520', reviewed: true }),
-      L({ lineId: '2026081002210045-2', productId: 'p903', option: '600mm', status: '구매확정', date: daysAgo(52), invoice: '651299001834', reviewed: false }),
+      L({ lineId: '20260810-000005-01', productId: 'p801', option: '1+1', status: '구매확정', date: daysAgo(52), invoice: '247009915520', reviewed: true }),
+      L({ lineId: '20260810-000005-02', productId: 'p903', option: '600mm', status: '구매확정', date: daysAgo(52), invoice: '651299001834', reviewed: false }),
     ],
   },
 ];
@@ -100,9 +100,9 @@ export const orderTotal = (o) => o.items.reduce((a, l) => a + l.unitPrice * l.qt
 export const shipFeeFor = (store, subtotal) => (store.freeOver && subtotal >= store.freeOver ? 0 : store.shipFee);
 
 /* ─────────── 포인트 (user-service) ───────────
-   - 결제 시 실결제금액(포인트 사용분 제외)의 5% 적립 (OrderPaid 후 비동기)
+   - 구매확정 시 그 상품주문의 실결제금액(포인트 사용분 제외) 5% 적립
    - 사용 · 적립 포인트는 상품주문 단위로 금액 비율 배분해 기록
-   - 취소 · 반품 시 그 상품주문분 사용 포인트 환원 + 적립 포인트 회수 */
+   - 취소 · 반품 완료 시 그 상품주문분 사용 포인트 환원 (구매확정 전이라 적립분은 없음) */
 export const POINT_RATE = 0.05;
 export const earnOf = (paid) => Math.floor(paid * POINT_RATE);
 
@@ -151,9 +151,10 @@ function genStoreOrders(storeId, count, seedDays = 20) {
     else status = pick(rnd, ['구매확정', '구매확정', '구매확정', '반품완료', '취소완료', '교환완료']);
     const b = pick(rnd, buyers);
     const qty = rnd() < 0.8 ? 1 : 2;
-    const no = `2026${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}${String(10000000 + Math.floor(rnd() * 8.9e7)).slice(0, 8)}`;
+    // 주문번호 yyyyMMdd-NNNNNN · 상품주문번호 주문번호-NN
+    const no = `2026${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${String(1 + Math.floor(rnd() * 400)).padStart(6, '0')}`;
     list.push({
-      lineId: `${no}-1`, orderId: no, date, storeId, productId: p.id,
+      lineId: `${no}-01`, orderId: no, date, storeId, productId: p.id,
       option: p.options.map((o) => pick(rnd, o.values)).join(' / '),
       qty, unitPrice: salePrice(p), status, courier: store.courier,
       invoice: ['배송중', '배송완료', '구매확정', '반품요청', '반품완료', '교환요청', '교환완료'].includes(status) ? invoiceOf(store, rnd) : null,
@@ -173,7 +174,7 @@ export const sellerOrders = genStoreOrders('s1', 42, 24);
 /* ─────────── 정산 ───────────
    - 정산 기준: 구매확정일
    - 주기: 주 1회 (월~일 구매확정분) → 다음 주 목요일 지급
-   - 지급액 = 구매확정 매출 − 환불 − 판매수수료(카테고리) − 결제수수료(2.2%) */
+   - 지급액 = 구매확정 매출 − 판매수수료(카테고리) − 결제수수료(2.2%) */
 const POP = { s1: 1.0, s2: 2.4, s3: 1.6, s4: 0.55, s5: 0.4, s6: 2.9, s7: 0.9, s8: 1.2, s9: 0.7 };
 const srnd = seeded(9);
 const WEEKS = 8;
@@ -188,8 +189,8 @@ for (const s of stores) {
     const end = new Date(start.getTime() + 6 * 864e5);
     const pay = new Date(end.getTime() + 4 * 864e5);
     const gross = Math.round((2600000 + srnd() * 2400000) * POP[s.id] / 100) * 100;
-    const refund = Math.round(gross * (srnd() * 0.05) / 100) * 100;
-    const net = gross - refund;
+    srnd(); // (환불 없음 — 구매확정분만 정산. 난수 순서 유지)
+    const net = gross;
     const commission = Math.round(net * cat.commission);
     const pgFee = Math.round(net * PAYMENT_FEE);
     let status = k === 0 ? '지급예정' : '지급완료';
@@ -197,7 +198,7 @@ for (const s of stores) {
     settlements.push({
       id: `ST-${s.id.toUpperCase()}-${String(start.getMonth() + 1).padStart(2, '0')}${String(start.getDate()).padStart(2, '0')}`,
       storeId: s.id, start, end, pay, orders: Math.round(gross / 52000),
-      gross, refund, commission, pgFee, rate: cat.commission,
+      gross, commission, pgFee, rate: cat.commission,
       payout: net - commission - pgFee, status,
       holdReason: status === '지급보류' ? '스토어 정지 및 미처리 반품 3건 — 처리 완료 시 지급' : null,
       bank: s.id === 's1' ? '기업은행 010-****-8812 (주)오롯이' : '등록 계좌',

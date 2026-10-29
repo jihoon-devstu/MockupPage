@@ -88,7 +88,7 @@ export const products = [
   P({ id: 'p703', storeId: 's7', cat: 'food', sub: '커피', name: '콜드브루 원액 500ml × 2', price: 26000, rating: 4.6, reviews: 770, sold: 4100, stock: 0, status: '품절', created: daysAgo(100), options: [], material: '커피추출액 100%', origin: '국내 제조' }),
   P({ id: 'p704', storeId: 's7', cat: 'food', sub: '커피', name: '스테인리스 구스넥 드립 케틀 600ml', price: 54000, discount: 0.15, rating: 4.8, reviews: 410, sold: 1500, stock: 60, created: daysAgo(50), options: [{ name: '컬러', values: ['실버', '매트블랙'] }], material: 'STS304', origin: '대만' }),
 
-  // s8 피부정원 (휴면 스토어)
+  // s8 피부정원
   P({ id: 'p801', storeId: 's8', cat: 'beauty', sub: '스킨케어', name: '시카 9 진정 토너 200ml', price: 24000, discount: 0.2, rating: 4.7, reviews: 4410, sold: 22000, stock: 800, created: daysAgo(420), options: [{ name: '구성', values: ['단품', '1+1'] }], material: '병풀추출물 외', origin: '대한민국' }),
   P({ id: 'p802', storeId: 's8', cat: 'beauty', sub: '스킨케어', name: '세라마이드 장벽 수분크림 50ml', price: 32000, discount: 0.1, rating: 4.8, reviews: 2890, sold: 13100, stock: 600, created: daysAgo(380), options: [], material: '세라마이드NP 외', origin: '대한민국' }),
   P({ id: 'p803', storeId: 's8', cat: 'beauty', sub: '바디·핸드', name: '시어버터 핸드크림 50ml 3입', price: 19000, rating: 4.6, reviews: 1320, sold: 9400, stock: 900, created: daysAgo(150), options: [{ name: '향', values: ['무향', '베르가못', '라벤더'] }], material: '시어버터 외', origin: '대한민국' }),
@@ -103,7 +103,7 @@ export const products = [
 ];
 export const productById = Object.fromEntries(products.map((p) => [p.id, p]));
 
-/** 쇼핑몰에 노출되는 상품: 판매중지 상품 & 휴면/정지 스토어 상품 제외 */
+/** 쇼핑몰에 노출되는 상품: 판매중지 상품 & 정지 스토어 상품 제외 */
 export const visibleProducts = products.filter(
   (p) => p.status !== '판매중지' && storeById[p.storeId].status === '운영중',
 );

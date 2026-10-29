@@ -11,8 +11,8 @@ export const SCREENS = [
     ['/order/complete', '주문 완료'], ['/login', '로그인'], ['/signup', '회원가입'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'],
   ]],
   ['구매자 · 마이페이지', [
-    ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/2026092809114007', '주문 상세 (포인트 사용)'],
-    ['/mypage/claim/2026093014582201-1?type=취소', '취소 신청'], ['/mypage/claim/2026092419502215-1?type=반품', '반품 신청'], ['/mypage/claim/2026092419502215-1?type=교환', '교환 신청'],
+    ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/20260928-000017', '주문 상세 (포인트 사용)'],
+    ['/mypage/claim/20260930-000031-01?type=취소', '취소 신청'], ['/mypage/claim/20260924-000042-01?type=반품', '반품 신청'], ['/mypage/claim/20260924-000042-01?type=교환', '교환 신청'],
     ['/mypage/claims', '취소/반품/교환 내역'], ['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'],
     ['/mypage/chats', '1:1 채팅'], ['/mypage/chats/101', '스토어 톡 (상품 문의 카드)'], ['/mypage/chats/103', '고객센터 상담 (도움 요청)'], ['/mypage/points', '포인트'],
     ['/mypage/profile', '회원정보 · 등급'], ['/mypage/addresses', '배송지'],

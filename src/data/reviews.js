@@ -3,9 +3,11 @@ import { users } from './people';
 import { seeded, pick, daysAgo } from '../lib/format';
 
 /* 리뷰 정책 (review-service)
-   - 구매확정된 주문상품 1건당 1개 작성 가능 (작성 기한: 구매확정 후 30일) · 별점 1~5 · 사진
-   - 판매자는 답글만 가능 (삭제 불가)
-   - 운영 정책 위반이 의심되는 리뷰는 관리자 검토 대상 → 블라인드 / 정상 노출 */
+   - 구매확정된 주문상품 1건당 1개 작성 가능 (작성 기한: 구매확정 후 30일) · 별점 1~5 · 본문 20~2,000자 · 사진 최대 3장
+   - 사이즈 체감(작아요 · 정사이즈 · 커요)은 모든 상품에서 고른다
+   - 작성자는 writerDisplayName(닉네임, 없으면 마스킹 실명)만 — 아바타 · 등급 없음
+   - 판매자는 답글만 가능 (삭제 불가), 블라인드된 리뷰엔 답글 불가
+   - 신고가 들어온 리뷰는 관리자 신고 처리에서 블라인드 / 신고 기각 */
 
 const POOL = {
   fashion: [
@@ -77,22 +79,25 @@ for (const p of products) {
     const rating = r < 0.62 ? 5 : r < 0.86 ? 4 : r < 0.94 ? 3 : r < 0.98 ? 2 : 1;
     const opt = p.options.map((o) => pick(rnd, o.values)).join(' / ');
     const hasPhoto = rnd() < 0.42;
+    const writer = pick(rnd, author);
     reviews.push({
       id: `r${seq++}`,
       productId: p.id,
       storeId: p.storeId,
-      userId: pick(rnd, author).id,
+      userId: writer.id,
+      writer: writer.nick, // writerDisplayName
       rating,
       title,
       body,
       option: opt,
-      photos: hasPhoto ? [p.images[1 + Math.floor(rnd() * 2)]] : [],
+      photos: hasPhoto ? p.images.slice(1, 1 + 1 + Math.floor(rnd() * 3)).slice(0, 3) : [],
       date: daysAgo(Math.floor(rnd() * 90), Math.floor(rnd() * 20)),
       helpful: Math.floor(rnd() * 40),
-      fit: p.cat === 'fashion' || p.cat === 'shoes-bags' ? pick(rnd, ['작아요', '정사이즈', '정사이즈', '정사이즈', '커요']) : null,
+      fit: pick(rnd, ['작아요', '정사이즈', '정사이즈', '정사이즈', '커요']),
       reply: rnd() < 0.45 ? pick(rnd, REPLIES) : null,
       flag: null,
       blinded: false,
+      blindReason: null,
     });
   }
 }
@@ -106,7 +111,7 @@ const flagged = [
   { idx: 40, reason: '개인정보 노출', blinded: true, body: '판매자 번호 010-XXXX-XXXX 로 연락하니 바로 환불 해주네요' },
 ];
 for (const r of flagged) {
-  Object.assign(reviews[r.idx], { flag: r.reason, body: r.body, rating: 1, blinded: r.blinded, userId: 'u11' });
+  Object.assign(reviews[r.idx], { flag: r.reason, body: r.body, rating: 1, blinded: r.blinded, blindReason: r.blinded ? r.reason : null, userId: 'u11', writer: '블랙컨슈머아님' });
 }
 
 export const reviewsOf = (pid) => reviews.filter((r) => r.productId === pid && !r.blinded);

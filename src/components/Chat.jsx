@@ -19,6 +19,8 @@ const TABS = {
 };
 const when = (d) => (d ? d.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' }) : '');
 const time = (d) => d.toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+const CONNECTION_TEXT = { connecting: '연결 중…', disconnected: '연결이 끊겼어요. 다시 연결하는 중…', stopped: '실시간 연결이 멈췄어요. 새로고침해 주세요.' };
+const PAGE = 20; // 한 번에 보이는 메시지 수 — 실제는 서버 페이지(위로 더 보기)
 const REPLY = { BUYER: '네, 확인했어요. 감사합니다!', SELLER: '확인해 보고 바로 안내드릴게요. 잠시만 기다려 주세요!', ADMIN: '곳간 운영팀입니다. 내용 확인 후 바로 답변드릴게요.' };
 
 /** 채팅함 — 왼쪽 방 목록 · 오른쪽 열린 방(/…/chats/:roomId). 좁은 화면은 하나씩 */
@@ -86,6 +88,8 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
   const navigate = useNavigate();
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(false);
+  const [shown, setShown] = useState(PAGE);
+  const [conn, setConn] = useState('connecting'); // 목업: 방을 열면 잠깐 '연결 중…' 뒤 연결됨
   const timers = useRef([]);
   const listRef = useRef(null);
   const other = otherSide(room, side);
@@ -96,6 +100,8 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
     ? (side === 'ADMIN' ? '종료된 상담이에요. 다시 열거나 답장하면 이어집니다.' : '종료된 상담이에요. 메시지를 보내면 다시 열려요.') : null;
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  useEffect(() => { const t = setTimeout(() => setConn('connected'), 700); return () => clearTimeout(t); }, []);
+  const visible = room.messages.slice(-shown);
   // 새 메시지가 보이면 맨 아래로 + 읽음
   useLayoutEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -107,6 +113,7 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
   const submit = () => {
     const trimmed = text.trim();
     if (!trimmed) return toast('메시지를 입력해 주세요.');
+    if (conn !== 'connected') return toast('연결 중이에요. 잠시 뒤 다시 보내 주세요.');
     sendMessage(room.roomId, side, trimmed);
     setText('');
     // 목업: 상대가 읽고(읽음) → 입력 중… → 답장
@@ -142,9 +149,16 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
         </div>
       </header>
 
+      {CONNECTION_TEXT[conn] && <div className="px-4 py-1.5 text-[12px] bg-amber-soft text-amber shrink-0">{CONNECTION_TEXT[conn]}</div>}
+
       <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-2 bg-cream">
+        {room.messages.length > shown && (
+          <div className="text-center">
+            <button className="btn btn-ghost btn-xs" onClick={() => setShown((n) => n + PAGE)}>이전 메시지 더 보기</button>
+          </div>
+        )}
         {room.messages.length === 0 && <p className="text-center text-mute text-sm py-10">첫 메시지를 보내 보세요.</p>}
-        {room.messages.map((m) => (
+        {visible.map((m) => (
           <MessageItem key={m.id} m={m} mine={!readOnly && m.sender === side} basePath={basePath}
             read={m.id === lastMineId && (room.read[other] ?? 0) >= m.id} />
         ))}

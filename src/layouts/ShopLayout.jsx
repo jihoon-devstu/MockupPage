@@ -23,12 +23,14 @@ const NAV = [
 ];
 
 export default function ShopLayout() {
-  const { cartCount } = useApp();
+  const { cartCount, user, logout } = useApp();
   const [q, setQ] = useState('');
   const [menu, setMenu] = useState(false);
   const nav = useNavigate();
   const loc = useLocation();
   useEffect(() => { window.scrollTo(0, 0); setMenu(false); }, [loc.pathname]);
+  const isAdmin = !!user?.roles?.includes('ADMIN'); // 운영자만 관리자 콘솔 바로가기
+  const onLogout = () => { logout(); nav('/', { replace: true }); };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -49,13 +51,23 @@ export default function ShopLayout() {
       {/* 유틸 바 */}
       <div className="hidden md:block border-b border-line">
         <div className="max-w-[1280px] mx-auto px-6 h-9 flex items-center justify-end gap-5 text-[12px] text-ink-2">
-          <Link to="/login" className="hover:text-ink">로그인</Link>
-          <Link to="/signup" className="hover:text-ink">회원가입</Link>
+          {user ? (
+            <>
+              <span className="text-ink font-semibold">{user.name}님</span>
+              <button type="button" onClick={onLogout} className="cursor-pointer hover:text-ink">로그아웃</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="hover:text-ink">로그인</Link>
+              <Link to="/signup" className="hover:text-ink">회원가입</Link>
+            </>
+          )}
           <Link to="/mypage/orders" className="hover:text-ink">주문조회</Link>
           <Link to="/help" className="hover:text-ink">고객센터</Link>
           <span className="w-px h-3 bg-line-2" />
           <Link to="/seller/apply" className="font-semibold text-ink hover:text-point">입점 신청</Link>
           <Link to="/seller" className="hover:text-ink">판매자센터</Link>
+          {isAdmin && <Link to="/admin" className="font-semibold text-ink hover:text-point">운영관리</Link>}
         </div>
       </div>
 
@@ -90,7 +102,7 @@ export default function ShopLayout() {
           </form>
           <div className="ml-auto sm:ml-0 flex items-center gap-3">
             <Link to="/products?q=" className="sm:hidden" aria-label="검색"><Search size={22} strokeWidth={1.6} /></Link>
-            <NotificationBell to="USER" />
+            {user && <NotificationBell to="USER" />}
             <Link to="/mypage" aria-label="마이페이지"><User size={22} strokeWidth={1.6} /></Link>
             <Link to="/cart" className="relative" aria-label="장바구니">
               <ShoppingBag size={22} strokeWidth={1.6} />
@@ -106,8 +118,11 @@ export default function ShopLayout() {
           <div className="w-[82%] max-w-[340px] h-full bg-white p-5 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6"><Wordmark /><button onClick={() => setMenu(false)}><X size={22} /></button></div>
             <div className="grid grid-cols-2 gap-2 mb-6">
-              <Link to="/login" className="btn btn-line btn-sm">로그인</Link>
+              {user
+                ? <button type="button" onClick={onLogout} className="btn btn-line btn-sm cursor-pointer">로그아웃</button>
+                : <Link to="/login" className="btn btn-line btn-sm">로그인</Link>}
               <Link to="/seller/apply" className="btn btn-ink btn-sm">입점 신청</Link>
+              {isAdmin && <Link to="/admin" className="btn btn-point btn-sm col-span-2">운영관리</Link>}
             </div>
             {categories.map((c) => (
               <Link key={c.id} to={`/products?cat=${c.id}`} className="flex justify-between py-3 border-b border-line text-[15px] font-semibold">{c.name}<span className="text-mute text-xs font-mono">{c.en}</span></Link>
