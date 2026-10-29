@@ -41,57 +41,74 @@ const L = (o) => {
   return { qty: 1, ...o, storeId: p.storeId, unitPrice: salePrice(p), courier: storeById[p.storeId].courier };
 };
 
+// 주문에 저장된 배송지 (주문 상세는 이 값을 보여 준다 — 회원 배송지를 나중에 바꿔도 그대로)
+const SHIP_HOME = { name: '김서연', phone: '010-0000-0010', zip: '04779', addr: '서울특별시 성동구 왕십리로 115', detail: '헤이그라운드 9층 902호', memo: '문 앞에 놓아주세요' };
+const SHIP_OFFICE = { name: '김서연', phone: '010-0000-0010', zip: '06236', addr: '서울특별시 강남구 테헤란로 152', detail: '강남파이낸스센터 21층', memo: '' };
+
+/* status: 주문 상태 — PAID(결제완료 이후) · PENDING(결제대기) · FAILED(결제실패). 대기 · 실패 주문의 상품주문은 '주문완료'로 남는다
+   claim.step: 클레임 단계 — REQUESTED 요청 · APPROVED 승인 · COLLECTED 수거완료 · RESHIPPED 재배송중 · REJECTED 거부 · WITHDRAWN 철회 · COMPLETED 완료 */
 export const myOrders = [
   {
-    id: '20260930-000031', date: daysAgo(0, 18), userId: 'u1',
-    payment: { method: '신용카드', detail: '현대카드 (일시불)', point: 0 },
+    id: '20261001-000058', date: daysAgo(0, 1), userId: 'u1', status: 'PENDING', ship: SHIP_HOME,
+    payment: { method: 'CARD', point: 0 },
+    items: [L({ lineId: '20261001-000058-01', productId: 'p702', option: '하루 (산미)', status: '주문완료', date: daysAgo(0, 1) })],
+  },
+  {
+    id: '20260930-000031', date: daysAgo(0, 18), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
+    payment: { method: 'CARD', point: 0 },
     items: [
       L({ lineId: '20260930-000031-01', productId: 'p601', option: '로얄과 (S~M)', qty: 2, status: '결제완료', date: daysAgo(0, 18) }),
       L({ lineId: '20260930-000031-02', productId: 'p701', option: '핸드드립', status: '결제완료', date: daysAgo(0, 18) }),
     ],
   },
   {
-    id: '20260928-000017', date: daysAgo(2, 6), userId: 'u1',
-    payment: { method: '토스페이', detail: '토스페이', point: 2000 },
+    id: '20260928-000017', date: daysAgo(2, 6), userId: 'u1', status: 'PAID', ship: SHIP_OFFICE,
+    payment: { method: 'EASY_PAY', point: 2000 },
     items: [
       L({ lineId: '20260928-000017-01', productId: 'p101', option: '오트밀 / M', status: '배송중', date: daysAgo(2, 6), invoice: '651248820193' }),
       L({ lineId: '20260928-000017-02', productId: 'p102', option: '샌드 / M', status: '배송준비', date: daysAgo(2, 6) }),
     ],
   },
   {
-    id: '20260924-000042', date: daysAgo(6, 3), userId: 'u1',
-    payment: { method: '신용카드', detail: '신한카드 (3개월 무이자)', point: 0 },
+    id: '20260924-000042', date: daysAgo(6, 3), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
+    payment: { method: 'CARD', point: 0 },
     items: [L({ lineId: '20260924-000042-01', productId: 'p501', option: '전구색 2700K', status: '배송완료', date: daysAgo(6, 3), invoice: '530981200477' })],
   },
   {
-    id: '20260917-000008', date: daysAgo(14), userId: 'u1',
-    payment: { method: '카카오페이', detail: '카카오페이 머니', point: 1000 },
+    id: '20260926-000019', date: daysAgo(4, 2), userId: 'u1', status: 'FAILED', ship: SHIP_HOME,
+    payment: { method: 'EASY_PAY', point: 0 },
+    items: [L({ lineId: '20260926-000019-01', productId: 'p402', option: 'S+M+L', status: '주문완료', date: daysAgo(4, 2) })],
+  },
+  {
+    id: '20260917-000008', date: daysAgo(14), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
+    payment: { method: 'EASY_PAY', point: 1000 },
     items: [
       L({ lineId: '20260917-000008-01', productId: 'p401', option: '재유', qty: 2, status: '구매확정', date: daysAgo(14), invoice: '651200917732', reviewed: false }),
       L({ lineId: '20260917-000008-02', productId: 'p404', option: '', status: '구매확정', date: daysAgo(14), invoice: '651200917732', reviewed: true }),
     ],
   },
   {
-    id: '20260908-000023', date: daysAgo(23), userId: 'u1',
-    payment: { method: '신용카드', detail: '삼성카드 (일시불)', point: 3000 },
-    items: [L({ lineId: '20260908-000023-01', productId: 'p203', option: '오트 / M', status: '반품요청', date: daysAgo(23), invoice: '247001931255', claim: { type: '반품', reason: '사이즈가 맞지 않음 (단순변심)', fee: 6000, requested: daysAgo(2) } })],
+    id: '20260908-000023', date: daysAgo(23), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
+    payment: { method: 'CARD', point: 3000 },
+    items: [L({ lineId: '20260908-000023-01', productId: 'p203', option: '오트 / M', status: '반품요청', date: daysAgo(23), invoice: '247001931255', claim: { type: '반품', step: 'REQUESTED', reason: '단순 변심', detail: '사이즈가 맞지 않아요', requested: daysAgo(2) } })],
   },
   {
-    id: '20260904-000011', date: daysAgo(27), userId: 'u1',
-    payment: { method: '신용카드', detail: '신한카드 (일시불)', point: 0 },
-    items: [L({ lineId: '20260904-000011-01', productId: 'p201', option: '블랙 / L', status: '교환요청', date: daysAgo(27), invoice: '247001877140', claim: { type: '교환', reason: '사이즈/색상 안 맞음', detail: 'L → M 교환 희망', fee: 0, requested: daysAgo(3) } })],
+    id: '20260904-000011', date: daysAgo(27), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
+    payment: { method: 'CARD', point: 0 },
+    items: [L({ lineId: '20260904-000011-01', productId: 'p201', option: '블랙 / L', status: '교환요청', date: daysAgo(27), invoice: '247001877140', claim: { type: '교환', step: 'RESHIPPED', reason: '상품 불량 · 파손', detail: '밑창 접착이 떨어져 있어요', requested: daysAgo(5), reship: { courier: '우체국택배', trackingNo: '609112450093' } } })],
   },
   {
-    id: '20260829-000036', date: daysAgo(33), userId: 'u1',
-    payment: { method: '네이버페이', detail: '네이버페이 포인트', point: 1500 },
-    items: [L({ lineId: '20260829-000036-01', productId: 'p302', option: '내추럴 / 240', status: '취소완료', date: daysAgo(33), claim: { type: '취소', reason: '다른 상품 잘못 주문', fee: 0, requested: daysAgo(33) } })],
+    id: '20260829-000036', date: daysAgo(33), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
+    payment: { method: 'EASY_PAY', point: 1500 },
+    items: [L({ lineId: '20260829-000036-01', productId: 'p302', option: '내추럴 / 240', status: '취소완료', date: daysAgo(33), claim: { type: '취소', step: 'COMPLETED', reason: '단순 변심', detail: '다른 사이즈로 다시 주문할게요', requested: daysAgo(33) } })],
   },
   {
-    id: '20260810-000005', date: daysAgo(52), userId: 'u1',
-    payment: { method: '신용카드', detail: '현대카드 (일시불)', point: 0 },
+    id: '20260810-000005', date: daysAgo(52), userId: 'u1', status: 'PAID', ship: SHIP_OFFICE,
+    payment: { method: 'CARD', point: 0 },
     items: [
       L({ lineId: '20260810-000005-01', productId: 'p801', option: '1+1', status: '구매확정', date: daysAgo(52), invoice: '247009915520', reviewed: true }),
-      L({ lineId: '20260810-000005-02', productId: 'p903', option: '600mm', status: '구매확정', date: daysAgo(52), invoice: '651299001834', reviewed: false }),
+      L({ lineId: '20260810-000005-02', productId: 'p903', option: '600mm', status: '구매확정', date: daysAgo(52), invoice: '651299001834', reviewed: false,
+        claim: { type: '반품', step: 'REJECTED', reason: '단순 변심', detail: '생각보다 커요', requested: daysAgo(48), rejectReason: '회수된 상품에 사용 흔적이 있어 반품이 어려워요' } }),
     ],
   },
 ];
