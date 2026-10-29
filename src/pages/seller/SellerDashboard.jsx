@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, AlertTriangle } from 'lucide-react';
-import { productsOfStore, productById } from '../../data/catalog';
+import { productsOfStore, productById, catById, PAYMENT_FEE } from '../../data/catalog';
 import { sellerOrders, sellerDaily, settlements, pendingThisWeek } from '../../data/orders';
 import { reviewsOfStore, ratingSummary } from '../../data/reviews';
 import { userById } from '../../data/people';
@@ -20,7 +20,10 @@ export default function SellerDashboard() {
     ['미답변 문의', myStoreQna.filter((q) => !q.a).length, '/seller/qna', true],
   ];
   const today = sellerDaily.at(-1), yday = sellerDaily.at(-2);
-  const mySet = settlements.filter((s) => s.storeId === MY_STORE.id);
+  // 다음 지급 = 정산 내역 화면과 같은 '지급예정' 정산서 (없으면 '-')
+  const next = settlements.find((s) => s.storeId === MY_STORE.id && s.status === '지급예정');
+  const c = catById[MY_STORE.cat];
+  const pendingPayout = pendingThisWeek.s1.confirmed * (1 - c.commission - PAYMENT_FEE);
   const revs = reviewsOfStore(MY_STORE.id);
   const sum = ratingSummary(revs);
   const prods = productsOfStore(MY_STORE.id);
@@ -46,7 +49,7 @@ export default function SellerDashboard() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
         <Kpi label="오늘 결제금액" value={comma(today.amount)} unit="원" delta={((today.amount - yday.amount) / yday.amount) * 100} sub="전일 대비" />
         <Kpi label="최근 30일 매출" value={comma(month / 10000)} unit="만원" delta={12.4} sub="직전 30일 대비" />
-        <Kpi label="이번 주 정산 예정" value={comma(mySet[0].payout)} unit="원" sub={`${ymd(mySet[0].pay)} 지급`} />
+        <Kpi label="다음 지급 예정" value={next ? comma(next.payout) : '-'} unit="원" sub={next ? `${ymd(next.pay)} 지급` : '지급 예정 없음'} />
         <Kpi label="스토어 평점" value={sum.avg.toFixed(2)} unit="/ 5" sub={`리뷰 ${comma(sum.total)}개 (최근 90일)`} />
       </div>
 
@@ -116,7 +119,7 @@ export default function SellerDashboard() {
           </div>
         </div>
       </div>
-      <p className="text-[12px] text-mute mt-4">이번 주(9/28~) 구매확정 누적 {won(pendingThisWeek.s1.confirmed)} · 다음 주 목요일 정산 예정</p>
+      <p className="text-[12px] text-mute mt-4">이번 주 구매확정분 정산 예정 {won(pendingPayout)} · 다음 주 목요일 지급</p>
     </div>
   );
 }

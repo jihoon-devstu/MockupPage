@@ -178,7 +178,7 @@ function genStoreOrders(storeId, count, seedDays = 20) {
       buyerId: b.id, receiver: b.name, phone: b.phone.replace(/-(\d{4})-/, '-****-'),
       addr: pick(rnd, ADDR), memo: pick(rnd, ['문 앞에 놓아주세요', '부재 시 경비실', '', '배송 전 연락 부탁드립니다', '']),
       claim: CLAIMS.includes(status)
-        ?{ type: CLAIM_TYPE[status], reason: pick(rnd, CLAIM_TYPE[status] === '취소' ? ['단순 변심', '배송 지연', '다른 상품 잘못 주문'] : ['단순 변심', '사이즈 맞지 않음', '상품 불량 (오염)']), requested: daysAgo(Math.max(0, d - 1)) }
+        ?{ type: CLAIM_TYPE[status], reason: pick(rnd, CLAIM_TYPE[status] === '취소' ? ['단순 변심', '배송 지연', '기타'] : ['단순 변심', '상품 불량 · 파손', '오배송']), requested: daysAgo(Math.max(0, d - 1)) }
         : null,
       usedPoint: prnd() < 0.4 ? Math.round((unitPriceOf(p) * qty * 0.04) / 100) * 100 : 0,
     });
