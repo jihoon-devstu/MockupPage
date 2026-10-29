@@ -9,6 +9,7 @@ import { useApp } from '../../lib/store';
 import { Stars, Price, Modal, Checkbox, Pager, Pill } from '../../components/ui';
 import ProductCard from '../../components/ProductCard';
 import InquiryModal from '../../components/InquiryModal';
+import ReportModal from '../../components/ReportModal';
 import { OpenChatButton } from '../../components/Chat';
 import { CHAT_ME } from '../../data/chats';
 import { cx, comma, won, salePrice, ymd } from '../../lib/format';
@@ -36,6 +37,7 @@ export default function ProductDetail() {
   const [cartModal, setCartModal] = useState(false);
   const [qnaTarget, setQnaTarget] = useState(null); // { productId } 작성 · { inquiry } 수정
   const [qs, setQs] = useState(qnas);
+  const [reportTarget, setReportTarget] = useState(null);
   const [photoOnly, setPhotoOnly] = useState(false);
   const [starFilter, setStarFilter] = useState(0);
   const [rsort, setRsort] = useState('recent');
@@ -57,6 +59,7 @@ export default function ProductDetail() {
   const unit = salePrice(p);
   const soldOut = p.status === '품절';
   const fits = p.cat === 'fashion' || p.cat === 'shoes-bags' ? ['작아요', '정사이즈', '커요'].map((f) => ({ f, n: revs.filter((r) => r.fit === f).length })) : null;
+  const canReport = !!user?.roles?.includes('BUYER'); // 리뷰 신고는 구매자만 — 판매자는 판매자센터의 '관리자 검토 요청'
   const myQna = qs.filter((q) => q.productId === id).sort((a, b) => b.date - a.date);
   const submitQna = ({ content, secret }) => {
     const editing = qnaTarget.inquiry;
@@ -289,7 +292,10 @@ export default function ProductDetail() {
                 return (
                   <li key={r.id} className="py-6 border-b border-line">
                     {/* 작성자는 writerDisplayName 글자만 — 아바타 · 등급 없음 */}
-                    <div className="text-[13px] font-semibold">{r.writer}</div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="text-[13px] font-semibold">{r.writer}</div>
+                      {canReport && <button onClick={() => setReportTarget({ type: 'REVIEW', id: r.id, label: '리뷰' })} className="text-[11.5px] text-mute hover:text-ink shrink-0">신고</button>}
+                    </div>
                     <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-mute"><Stars value={r.rating} size={11} /> {ymd(r.date)}</div>
                     <div className="mt-3 text-[12px] text-mute">{r.option && <>옵션: {r.option}</>}{r.fit && <>{r.option && ' · '}사이즈 <b className="text-ink-2">{r.fit}</b></>}</div>
                     <p className="mt-2 text-[14px] font-semibold">{r.title}</p>
@@ -402,6 +408,7 @@ export default function ProductDetail() {
         </div>
       </Modal>
 
+      <ReportModal target={reportTarget} onClose={() => setReportTarget(null)} />
       <InquiryModal target={qnaTarget} onClose={() => setQnaTarget(null)} onSubmit={submitQna} />
     </div>
   );

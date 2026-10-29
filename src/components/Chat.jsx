@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Empty, Pill, Segments } from './ui';
 import { useApp } from '../lib/store';
+import ReportModal from './ReportModal';
 import { cx } from '../lib/format';
 import { ROOM_TYPE_LABEL, CHAT_MAX_LENGTH } from '../data/chats';
 import {
@@ -90,6 +91,7 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
   const [typing, setTyping] = useState(false);
   const [shown, setShown] = useState(PAGE);
   const [conn, setConn] = useState('connecting'); // 목업: 방을 열면 잠깐 '연결 중…' 뒤 연결됨
+  const [reportTarget, setReportTarget] = useState(null); // 판매자의 구매자 신고 (회원 신고)
   const timers = useRef([]);
   const listRef = useRef(null);
   const other = otherSide(room, side);
@@ -141,6 +143,9 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
           {side === 'BUYER' && room.type === 'STORE_INQUIRY' && (
             <button className="btn btn-line btn-xs" onClick={askHelp}>운영팀에 도움 요청</button>
           )}
+          {side === 'SELLER' && room.type === 'STORE_INQUIRY' && room.buyerId && (
+            <button className="btn btn-line btn-xs" onClick={() => setReportTarget({ type: 'USER', id: room.buyerId, label: '구매자' })}>구매자 신고</button>
+          )}
           {side === 'ADMIN' && room.status && !readOnly && (
             <button className="btn btn-line btn-xs" onClick={() => setRoomStatus(room.roomId, room.status === 'OPEN' ? 'RESOLVED' : 'OPEN')}>
               {room.status === 'OPEN' ? '상담 종료' : '다시 열기'}
@@ -185,6 +190,7 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
           </div>
         </div>
       )}
+      <ReportModal target={reportTarget} onClose={() => setReportTarget(null)} />
     </section>
   );
 }
