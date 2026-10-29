@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Download, Lock, MessagesSquare, Search } from 'lucide-react';
 import { productById, catById, productsOfStore, PAYMENT_FEE } from '../../data/catalog';
-import { reviewsOfStore, ratingSummary } from '../../data/reviews';
+import { reviewsOfStore, ratingSummary, qnaWriter } from '../../data/reviews';
 import { settlements, pendingThisWeek } from '../../data/orders';
-import { userById } from '../../data/people';
 import { useApp } from '../../lib/store';
 import { PageHead, Segments, Stars, StatusPill, Modal, Kpi, KV, Pill, HBars } from '../../components/ui';
 import { won, comma, ymd, ymdhm, cx, pct, salePrice } from '../../lib/format';
@@ -121,35 +120,58 @@ export function SellerReviews() {
 }
 
 /* ─────────── 상품 문의 ─────────── */
+// 실제 review/components/SellerQnaList.jsx — 표(상태 · 상품 · 문의·답변 · 작성자 · 작성일), 답변은 등록 뒤에도 "수정"으로 다시 열어 덮어씀
+const ANSWER_MAX = 1000;
+function AnswerBox({ q, onSubmit }) {
+  const [editing, setEditing] = useState(!q.a);
+  const [draft, setDraft] = useState(q.a ?? '');
+  if (!editing) {
+    return (
+      <div className="mt-2 text-[14px] text-ink-2 bg-cream p-3">
+        <p className="whitespace-pre-line"><b className="mr-2 text-point">A</b>{q.a}</p>
+        <button onClick={() => { setDraft(q.a); setEditing(true); }} className="mt-1 text-[12px] text-mute underline">수정</button>
+      </div>
+    );
+  }
+  const content = draft.trim();
+  return (
+    <div className="mt-3 flex gap-2">
+      <input value={draft} maxLength={ANSWER_MAX} onChange={(e) => setDraft(e.target.value)} className="field" placeholder="답변을 입력하세요" />
+      {q.a && <button onClick={() => setEditing(false)} className="btn btn-ghost shrink-0">취소</button>}
+      <button disabled={!content} onClick={() => { onSubmit(q.id, content); setEditing(false); }} className="btn btn-ink shrink-0">{q.a ? '답변 저장' : '답변 등록'}</button>
+    </div>
+  );
+}
+
 export function SellerQna() {
   const { toast } = useApp();
-  const [rows, setRows] = useState(myStoreQna);
+  const [rows, setRows] = useState(() => [...myStoreQna].sort((a, b) => b.date - a.date));
   const [tab, setTab] = useState('미답변');
-  const [draft, setDraft] = useState({});
   const list = rows.filter((q) => tab === '전체' || (tab === '미답변' ? !q.a : q.a));
+  const onAnswer = (id, content) => { setRows(rows.map((x) => (x.id === id ? { ...x, a: content } : x))); toast('답변을 등록했어요'); };
   return (
     <div>
       <PageHead title="상품 문의" desc="평균 답변 시간은 스토어 신뢰도 지표에 반영됩니다. (목표: 24시간 이내)" />
       <Segments items={['미답변', '답변완료', '전체']} value={tab} onChange={setTab} counts={{ 미답변: rows.filter((q) => !q.a).length, 답변완료: rows.filter((q) => q.a).length, 전체: rows.length }} />
-      <div className="panel mt-3 divide-y divide-line">
-        {list.length === 0 && <div className="py-12 text-center text-mute text-sm">문의가 없습니다.</div>}
-        {list.map((q) => (
-          <div key={q.id} className="p-5">
-            <div className="flex items-center gap-2 text-[12px] text-mute">
-              <StatusPill s={q.a ? '답변완료' : '미답변'} />{q.secret && <Lock size={12} />}
-              {userById[q.userId].name} · {ymd(q.date)} · <span className="text-ink-2">{productById[q.productId].name}</span>
-            </div>
-            <p className="mt-2 text-[14px]"><b className="mr-2">Q</b>{q.q}</p>
-            {q.a ? (
-              <p className="mt-2 text-[14px] text-ink-2 bg-cream p-3"><b className="mr-2 text-point">A</b>{q.a}</p>
-            ) : (
-              <div className="mt-3 flex gap-2">
-                <input value={draft[q.id] || ''} onChange={(e) => setDraft({ ...draft, [q.id]: e.target.value })} className="field" placeholder="답변을 입력하세요" />
-                <button disabled={!draft[q.id]} onClick={() => { setRows(rows.map((x) => (x.id === q.id ? { ...x, a: draft[q.id] } : x))); toast('답변을 등록했어요 (구매자 알림 발송)'); }} className="btn btn-ink shrink-0">답변 등록</button>
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="panel mt-3 overflow-x-auto">
+        <table className="tbl">
+          <thead><tr><th>상태</th><th>상품</th><th>문의 · 답변</th><th>작성자</th><th>작성일</th></tr></thead>
+          <tbody>
+            {list.map((q) => (
+              <tr key={q.id}>
+                <td className="whitespace-nowrap"><span className="inline-flex items-center gap-1.5 text-mute"><StatusPill s={q.a ? '답변완료' : '미답변'} />{q.secret && <Lock size={12} aria-label="비밀글" />}</span></td>
+                <td className="text-ink-2 min-w-[160px]">{productById[q.productId].name}</td>
+                <td><div className="min-w-[320px] py-2">
+                  <p className="text-[14px] whitespace-pre-line"><b className="mr-2">Q</b>{q.q}</p>
+                  <AnswerBox key={`${q.id}-${q.a ?? ''}`} q={q} onSubmit={onAnswer} />
+                </div></td>
+                <td className="whitespace-nowrap">{qnaWriter(q.userId)}</td>
+                <td className="num text-ink-2 whitespace-nowrap">{ymd(q.date)}</td>
+              </tr>
+            ))}
+            {list.length === 0 && <tr><td colSpan={5} className="py-12 text-center text-mute text-sm">문의가 없습니다.</td></tr>}
+          </tbody>
+        </table>
       </div>
     </div>
   );

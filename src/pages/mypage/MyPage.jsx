@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Star, Camera, Upload, X } from 'lucide-react';
+import { ChevronRight, Star, Camera, Upload, X, Lock } from 'lucide-react';
 import { productById, storeById } from '../../data/catalog';
 import { ME, myAddresses, GRADES, gradeById, nextGrade } from '../../data/people';
 import { myOrders, FLOW, orderPay, linePoints, orderOfLine, shipFeeFor, POINT_RATE } from '../../data/orders';
 import { myPointHistory, myPointBalance, pointSum, POINT_TYPES } from '../../data/points';
-import { reviews } from '../../data/reviews';
+import { reviews, qnas } from '../../data/reviews';
 import { useApp } from '../../lib/store';
 import { StatusPill, Modal, Checkbox, Stars, Empty, Pill, GradeBadge, Segments } from '../../components/ui';
 import { ChatInbox, OpenChatButton } from '../../components/Chat';
+import InquiryModal from '../../components/InquiryModal';
 import { CHAT_ME } from '../../data/chats';
 import { cx, won, comma, ymd, ymdhm } from '../../lib/format';
 
@@ -625,11 +626,56 @@ export function MyReviews() {
   );
 }
 
+// 상품 문의 — 내가 쓴 문의 · 판매자 답변 (카드형 목록). 답변 전까지만 수정, 삭제는 언제든 (실제 review/components/MyQna.jsx)
 export function MyQna() {
+  const { toast } = useApp();
+  const [list, setList] = useState(() => qnas.filter((q) => q.userId === ME.id).sort((a, b) => b.date - a.date));
+  const [target, setTarget] = useState(null); // { inquiry } 수정
+  const [deleting, setDeleting] = useState(null);
+  const submit = ({ content, secret }) => {
+    setList(list.map((q) => (q.id === target.inquiry.id ? { ...q, q: content, secret } : q)));
+    toast('문의를 수정했어요');
+    setTarget(null);
+  };
+  const confirmDelete = () => { setList(list.filter((q) => q.id !== deleting.id)); toast('문의를 삭제했어요'); setDeleting(null); };
   return (
     <div>
       <H>상품 문의</H>
-      <Empty title="작성한 문의가 없어요" desc="상품 상세 페이지의 Q&A 탭에서 문의할 수 있어요." action={<Link to="/help" className="btn btn-line btn-sm">고객센터 FAQ 보기</Link>} />
+      {list.length === 0 && (
+        <Empty title="작성한 문의가 없어요" desc="상품 상세 페이지의 Q&A 탭에서 문의할 수 있어요." action={<Link to="/help" className="btn btn-line btn-sm">고객센터 FAQ 보기</Link>} />
+      )}
+      <ul>
+        {list.map((q) => {
+          const p = productById[q.productId];
+          return (
+            <li key={q.id} className="py-5 border-b border-line flex gap-4">
+              <Link to={`/products/${p.id}#qna`}><img src={p.images[0]} alt="" className="w-16 h-20 object-cover" /></Link>
+              <div className="flex-1 text-[13px] min-w-0">
+                <Link to={`/products/${p.id}#qna`} className="font-medium hover:underline">{p.name}</Link>
+                <div className="flex items-center gap-2 text-mute mt-0.5">
+                  <Pill tone={q.a ? 'mute' : 'line'}>{q.a ? '답변완료' : '답변대기'}</Pill>
+                  {ymd(q.date)}
+                  {q.secret && <span className="inline-flex items-center gap-1"><Lock size={12} /> 비밀글</span>}
+                </div>
+                <p className="mt-2 text-ink-2 whitespace-pre-line"><b className="mr-2 text-ink">Q</b>{q.q}</p>
+                {q.a && <p className="mt-2 bg-cream p-3 text-ink-2 whitespace-pre-line"><b className="mr-2 text-point">A</b>{q.a}</p>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {!q.a && <button onClick={() => setTarget({ inquiry: q })} className="btn btn-line btn-xs">수정</button>}
+                <button onClick={() => setDeleting(q)} className="btn btn-ghost btn-xs">삭제</button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <InquiryModal target={target} onClose={() => setTarget(null)} onSubmit={submit} />
+      <Modal open={!!deleting} onClose={() => setDeleting(null)} title="문의 삭제"
+        footer={<>
+          <button onClick={() => setDeleting(null)} className="btn btn-line btn-sm">취소</button>
+          <button onClick={confirmDelete} className="btn btn-ink btn-sm">삭제</button>
+        </>}>
+        <p className="text-[13px] text-ink-2">삭제하면 되돌릴 수 없어요. 판매자 답변도 함께 보이지 않게 돼요.</p>
+      </Modal>
     </div>
   );
 }

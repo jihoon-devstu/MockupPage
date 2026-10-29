@@ -2,15 +2,16 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Share2, X, Minus, Plus, Lock, ChevronRight, Truck, Camera } from 'lucide-react';
 import { productById, storeById, catById, visibleProducts } from '../../data/catalog';
-import { reviewsOf, ratingSummary, qnas } from '../../data/reviews';
-import { userById } from '../../data/people';
+import { reviewsOf, ratingSummary, qnas, qnaWriter } from '../../data/reviews';
+import { ME } from '../../data/people';
 import { earnOf } from '../../data/orders';
 import { useApp } from '../../lib/store';
 import { Stars, Price, Modal, Checkbox, Pager, Pill } from '../../components/ui';
 import ProductCard from '../../components/ProductCard';
+import InquiryModal from '../../components/InquiryModal';
 import { OpenChatButton } from '../../components/Chat';
 import { CHAT_ME } from '../../data/chats';
-import { cx, comma, won, salePrice, ymd, maskName } from '../../lib/format';
+import { cx, comma, won, salePrice, ymd } from '../../lib/format';
 
 function Qty({ value, onChange }) {
   return (
@@ -27,13 +28,14 @@ export default function ProductDetail() {
   const p = productById[id];
   const nav = useNavigate();
   const loc = useLocation();
-  const { addToCart, toast } = useApp();
+  const { addToCart, toast, user } = useApp();
   const [img, setImg] = useState(0);
   const [pick, setPick] = useState({});
   const [lines, setLines] = useState([]);
   const [tab, setTab] = useState('info');
   const [cartModal, setCartModal] = useState(false);
-  const [qnaModal, setQnaModal] = useState(false);
+  const [qnaTarget, setQnaTarget] = useState(null); // { productId } 작성 · { inquiry } 수정
+  const [qs, setQs] = useState(qnas);
   const [photoOnly, setPhotoOnly] = useState(false);
   const [starFilter, setStarFilter] = useState(0);
   const [rsort, setRsort] = useState('recent');
@@ -55,7 +57,19 @@ export default function ProductDetail() {
   const unit = salePrice(p);
   const soldOut = p.status === '품절';
   const fits = p.cat === 'fashion' || p.cat === 'shoes-bags' ? ['작아요', '정사이즈', '커요'].map((f) => ({ f, n: revs.filter((r) => r.fit === f).length })) : null;
-  const myQna = qnas.filter((q) => q.productId === id);
+  const myQna = qs.filter((q) => q.productId === id).sort((a, b) => b.date - a.date);
+  const submitQna = ({ content, secret }) => {
+    const editing = qnaTarget.inquiry;
+    if (editing) setQs(qs.map((q) => (q.id === editing.id ? { ...q, q: content, secret } : q)));
+    else setQs([{ id: `q-new-${Date.now()}`, productId: id, userId: ME.id, q: content, a: null, date: new Date(), secret }, ...qs]);
+    toast(editing ? '문의를 수정했어요' : '문의가 등록되었어요. 판매자가 답변하면 Q&A 에서 확인할 수 있어요');
+    setQnaTarget(null);
+  };
+  const deleteQna = (q) => {
+    if (!window.confirm('문의를 삭제할까요?')) return;
+    setQs(qs.filter((x) => x.id !== q.id));
+    toast('문의를 삭제했어요');
+  };
   const photos = revs.filter((r) => r.photos.length);
   const total = lines.reduce((a, l) => a + l.qty * unit, 0);
   const ship = store.freeOver && total >= store.freeOver ? 0 : store.shipFee;
@@ -294,30 +308,39 @@ export default function ProductDetail() {
             <Pager total={5} className="mt-8" />
           </section>
 
-          {/* Q&A */}
+          {/* Q&A — 비밀글은 작성자(나)에게만 내용이 보이고 남에게는 "비밀글입니다". 내 문의는 답변 전까지 수정, 삭제는 언제든 */}
           <section id="qna" className="scroll-mt-32 pt-16">
             <div className="flex items-center justify-between border-b border-ink pb-3">
-              <h3 className="text-[20px] font-bold">Q&A <span className="num">{myQna.length}</span></h3>
-              <button onClick={() => setQnaModal(true)} className="btn btn-line btn-sm">문의하기</button>
+              <h3 className="text-[20px] font-bold">Q&A <span className="num">{comma(myQna.length)}</span></h3>
+              <button onClick={() => (user ? setQnaTarget({ productId: id }) : nav('/login'))} className="btn btn-line btn-sm">문의하기</button>
             </div>
             <ul>
               {myQna.length === 0 && <li className="py-10 text-center text-sm text-mute">등록된 문의가 없습니다.</li>}
-              {myQna.map((q) => (
-                <li key={q.id} className="py-4 border-b border-line text-[13.5px]">
-                  <div className="flex items-center gap-2 text-[12px] text-mute">
-                    <Pill tone={q.a ? 'mute' : 'line'}>{q.a ? '답변완료' : '답변대기'}</Pill>
-                    {maskName(userById[q.userId].name)} · {ymd(q.date)}
-                  </div>
-                  {q.secret ? (
-                    <p className="mt-2 flex items-center gap-1.5 text-mute"><Lock size={13} /> 비밀글입니다.</p>
-                  ) : (
-                    <>
-                      <p className="mt-2"><b className="mr-2">Q</b>{q.q}</p>
-                      {q.a && <p className="mt-2 text-ink-2"><b className="mr-2 text-point">A</b>{q.a}</p>}
-                    </>
-                  )}
-                </li>
-              ))}
+              {myQna.map((q) => {
+                const mine = !!user && q.userId === ME.id;
+                return (
+                  <li key={q.id} className="py-4 border-b border-line text-[13.5px]">
+                    <div className="flex items-center gap-2 text-[12px] text-mute">
+                      <Pill tone={q.a ? 'mute' : 'line'}>{q.a ? '답변완료' : '답변대기'}</Pill>
+                      {qnaWriter(q.userId)} · {ymd(q.date)}
+                      {mine && (
+                        <span className="ml-auto flex gap-2">
+                          {!q.a && <button onClick={() => setQnaTarget({ inquiry: q })} className="underline">수정</button>}
+                          <button onClick={() => deleteQna(q)} className="underline">삭제</button>
+                        </span>
+                      )}
+                    </div>
+                    {q.secret && !mine ? (
+                      <p className="mt-2 flex items-center gap-1.5 text-mute"><Lock size={13} /> 비밀글입니다.</p>
+                    ) : (
+                      <>
+                        <p className="mt-2 whitespace-pre-line"><b className="mr-2">Q</b>{q.secret && <Lock size={12} className="inline mr-1 text-mute" />}{q.q}</p>
+                        {q.a && <p className="mt-2 text-ink-2 whitespace-pre-line"><b className="mr-2 text-point">A</b>{q.a}</p>}
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
@@ -379,14 +402,7 @@ export default function ProductDetail() {
         </div>
       </Modal>
 
-      <Modal open={qnaModal} onClose={() => setQnaModal(false)} title="상품 문의하기"
-        footer={<><button className="btn btn-line btn-sm" onClick={() => setQnaModal(false)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { setQnaModal(false); toast('문의가 등록되었어요. 판매자 답변 시 알림을 드려요.'); }}>등록</button></>}>
-        <label className="label">문의 유형</label>
-        <select className="field mb-4"><option>상품</option><option>배송</option><option>교환/반품</option><option>기타</option></select>
-        <label className="label">내용</label>
-        <textarea rows={5} className="field" placeholder="상품에 대해 궁금한 점을 남겨주세요. (개인정보 입력 금지)" />
-        <Checkbox className="mt-3" checked label="비밀글로 문의하기" />
-      </Modal>
+      <InquiryModal target={qnaTarget} onClose={() => setQnaTarget(null)} onSubmit={submitQna} />
     </div>
   );
 }
