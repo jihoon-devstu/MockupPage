@@ -6,20 +6,18 @@ import ProductCard from '../../components/ProductCard';
 import { Checkbox, Empty, Pager } from '../../components/ui';
 import { cx, salePrice } from '../../lib/format';
 
+// 실제 구현(frontend #61): 서버 정렬은 신상품 · 가격 2종(판매량 · 리뷰 · 평점 정렬은 범위 밖), 24개씩 서버 페이징
 const SORTS = [
-  ['rank', '판매량순'],
   ['new', '신상품순'],
   ['low', '낮은 가격순'],
   ['high', '높은 가격순'],
-  ['review', '리뷰 많은순'],
-  ['rating', '평점 높은순'],
 ];
 const PRICES = [[0, 30000, '3만원 이하'], [30000, 80000, '3만 ~ 8만원'], [80000, 150000, '8만 ~ 15만원'], [150000, 1e9, '15만원 이상']];
 
 export default function ProductList() {
   const [sp, setSp] = useSearchParams();
   const cat = sp.get('cat'), sub = sp.get('sub'), q = sp.get('q') || '';
-  const sort = sp.get('sort') || 'rank';
+  const sort = SORTS.some(([k]) => k === sp.get('sort')) ? sp.get('sort') : 'new';
   const [price, setPrice] = useState(null);
   const [excludeSoldOut, setExcludeSoldOut] = useState(false);
   const [mobileFilter, setMobileFilter] = useState(false);
@@ -33,15 +31,14 @@ export default function ProductList() {
       (!price || (salePrice(p) >= price[0] && salePrice(p) < price[1])) &&
       (!excludeSoldOut || p.status !== '품절'));
     const by = {
-      rank: (a, b) => b.sold - a.sold, new: (a, b) => b.created - a.created,
+      new: (a, b) => b.created - a.created,
       low: (a, b) => salePrice(a) - salePrice(b), high: (a, b) => salePrice(b) - salePrice(a),
-      review: (a, b) => b.reviews - a.reviews, rating: (a, b) => b.rating - a.rating,
     };
     return l.sort(by[sort]);
   }, [cat, sub, q, price, excludeSoldOut, sort]);
 
   const c = cat && catById[cat];
-  const title = q ? `‘${q}’ 검색 결과` : c ? c.name : sort === 'new' ? '신상품' : sort === 'rank' ? '랭킹' : '전체 상품';
+  const title = q ? `‘${q}’ 검색 결과` : c ? c.name : '전체 상품';
 
   const Filters = (
     <div className="space-y-8 text-sm">
@@ -108,12 +105,12 @@ export default function ProductList() {
           </div>
           {list.length ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-10">
-              {list.map((p, i) => <ProductCard key={p.id} p={p} rank={sort === 'rank' && !q ? i + 1 : undefined} />)}
+              {list.map((p) => <ProductCard key={p.id} p={p} />)}
             </div>
           ) : (
             <Empty title="조건에 맞는 상품이 없어요" desc="필터를 줄이거나 다른 검색어를 입력해보세요." action={<Link to="/products" className="btn btn-line btn-sm">전체 상품 보기</Link>} />
           )}
-          {list.length > 8 && <Pager total={3} className="mt-14" />}
+          {list.length > 24 && <Pager total={Math.ceil(list.length / 24)} className="mt-14" />}
         </div>
       </div>
 

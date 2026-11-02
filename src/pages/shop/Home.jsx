@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import { categories, products, visibleProducts, stores, storeById, productById } from '../../data/catalog';
-import { reviews } from '../../data/reviews';
-import { userById } from '../../data/people';
+import { categories, products, visibleProducts, stores } from '../../data/catalog';
 import ProductCard from '../../components/ProductCard';
-import { SectionHead, Stars } from '../../components/ui';
-import { cx, comma, maskName } from '../../lib/format';
+import { SectionHead } from '../../components/ui';
+import { cx, comma } from '../../lib/format';
 
 const BANNERS = [
   { img: '/images/banner/b1-1.jpg', kicker: 'LIVING · 10월 기획전', title: '해가 짧아지는 계절,\n방 안을 데우는 물건들', sub: '조명 · 패브릭 · 캔들 최대 30%', to: '/products?cat=living' },
@@ -45,15 +43,15 @@ function Hero() {
 }
 
 export default function Home() {
-  const [rankCat, setRankCat] = useState('all');
-  const ranked = [...visibleProducts]
-    .filter((p) => rankCat === 'all' || p.cat === rankCat)
-    .sort((a, b) => b.sold - a.sold)
-    .slice(0, 10);
+  // 실제 구현(frontend #61): 상위 카테고리별 신상품 8개(PRD-14) — 판매량 랭킹 · 포토 리뷰 영역은 범위 밖이라 없음
+  const [newCat, setNewCat] = useState(categories[0].id);
+  const catNew = [...visibleProducts]
+    .filter((p) => p.cat === newCat)
+    .sort((a, b) => b.created - a.created)
+    .slice(0, 8);
   const fresh = [...visibleProducts].sort((a, b) => b.created - a.created).slice(0, 8);
   const featured = stores[3]; // 토담공방
   const featuredItems = visibleProducts.filter((p) => p.storeId === featured.id).slice(0, 3);
-  const photoReviews = reviews.filter((r) => r.photos.length && r.rating >= 4 && !r.blinded && storeById[r.storeId].status === '운영중').slice(0, 10);
 
   return (
     <div>
@@ -77,17 +75,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 랭킹 */}
+      {/* 카테고리별 신상품 (PRD-14) */}
       <section className="max-w-[1280px] mx-auto px-4 md:px-6 mt-16">
-        <SectionHead eyebrow="Ranking · 최근 7일 판매량" title="지금 가장 많이 담기는 상품" right={<Link to="/products?sort=rank" className="text-[13px] text-ink-2 flex items-center gap-1 hover:text-ink">전체보기 <ArrowRight size={14} /></Link>} />
+        <SectionHead eyebrow="New by category" title="카테고리별 신상품" right={<Link to={`/products?cat=${newCat}`} className="text-[13px] text-ink-2 flex items-center gap-1 hover:text-ink">전체보기 <ArrowRight size={14} /></Link>} />
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-6">
-          {[{ id: 'all', name: '전체' }, ...categories].map((c) => (
-            <button key={c.id} onClick={() => setRankCat(c.id)} className={cx('h-9 px-4 text-[13px] border shrink-0', rankCat === c.id ? 'bg-ink text-white border-ink font-semibold' : 'border-line-2 text-ink-2 hover:border-ink')}>{c.name}</button>
+          {categories.map((c) => (
+            <button key={c.id} onClick={() => setNewCat(c.id)} className={cx('h-9 px-4 text-[13px] border shrink-0', newCat === c.id ? 'bg-ink text-white border-ink font-semibold' : 'border-line-2 text-ink-2 hover:border-ink')}>{c.name}</button>
           ))}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-9">
-          {ranked.map((p, i) => <ProductCard key={p.id} p={p} rank={i + 1} />)}
-        </div>
+        {catNew.length ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-9">
+            {catNew.map((p) => <ProductCard key={p.id} p={p} />)}
+          </div>
+        ) : <p className="py-16 text-center text-sm text-mute">이 카테고리에 새로 들어온 상품이 아직 없어요.</p>}
       </section>
 
       {/* 이번 주의 가게 */}
@@ -120,27 +120,6 @@ export default function Home() {
         <SectionHead eyebrow="New in" title="이번 주 새로 들어온 상품" right={<Link to="/products?sort=new" className="text-[13px] text-ink-2 flex items-center gap-1 hover:text-ink">더보기 <ArrowRight size={14} /></Link>} />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-9">
           {fresh.map((p) => <ProductCard key={p.id} p={p} />)}
-        </div>
-      </section>
-
-      {/* 포토 리뷰 */}
-      <section className="max-w-[1280px] mx-auto px-4 md:px-6 mt-20">
-        <SectionHead eyebrow="Real reviews" title="구매자들이 직접 찍은 사진" />
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4 md:mx-0 md:px-0">
-          {photoReviews.map((r) => {
-            const p = productById[r.productId];
-            return (
-              <Link to={`/products/${p.id}#reviews`} key={r.id} className="w-[220px] shrink-0 group">
-                <img src={r.photos[0]} alt="" className="w-full aspect-square object-cover" />
-                <div className="mt-2.5 flex items-center gap-2"><Stars value={r.rating} size={11} /><span className="text-[11px] text-mute">{maskName(userById[r.userId].name)}</span></div>
-                <p className="mt-1 text-[13px] leading-snug line-clamp-2 text-ink-2">{r.body}</p>
-                <div className="mt-2 flex items-center gap-2 border-t border-line pt-2">
-                  <img src={p.images[0]} alt="" className="w-8 h-8 object-cover" />
-                  <span className="text-[11.5px] text-mute line-clamp-1 group-hover:text-ink">{p.name}</span>
-                </div>
-              </Link>
-            );
-          })}
         </div>
       </section>
 

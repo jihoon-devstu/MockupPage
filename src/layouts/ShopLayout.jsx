@@ -17,7 +17,7 @@ export function Wordmark({ dark = false, sub }) {
 }
 
 const NAV = [
-  { to: '/products?sort=rank', label: '랭킹' },
+  { to: '/products', label: '전체 상품' }, // 실제 구현(frontend #61): 판매량(랭킹) 정렬 없음
   { to: '/products?sort=new', label: '신상' },
   { to: '/stores', label: '스토어' },
 ];
