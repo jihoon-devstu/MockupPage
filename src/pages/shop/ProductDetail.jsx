@@ -356,12 +356,12 @@ export default function ProductDetail() {
             <table className="w-full text-[13px] mt-0">
               <tbody>
                 {[
-                  ['배송 방법', `${store.courier} 택배`],
-                  ['배송비', store.shipFee ? `${won(store.shipFee)} (${won(store.freeOver)} 이상 무료) · 제주/도서산간 3,000원 추가` : '무료배송'],
+                  ['배송 방법', store.courier],
+                  ['배송비', store.shipFee ? `${won(store.shipFee)} (${won(store.freeOver)} 이상 무료)` : '무료배송'],
                   ['출고', store.dispatch],
                   ['교환/반품 신청', '배송 완료 후 7일 이내, 마이페이지 > 주문/배송에서 신청'],
                   ['반품 배송비', `단순 변심: 왕복 ${won((store.shipFee || 3000) * 2)} / 상품 하자·오배송: 판매자 부담`],
-                  ['교환/반품 불가', '착용 흔적·세탁·택 제거 시, 신선식품 단순 변심, 주문 제작 상품'],
+                  ['교환/반품 불가', '사용 · 훼손으로 상품 가치가 떨어진 경우, 신선식품 · 주문 제작 상품의 단순 변심'],
                   ['구매 확정', '배송 완료 7일 후 자동 구매확정 (확정 이후에는 교환/반품 불가)'],
                   ['포인트', '적립은 구매확정 때 · 취소 · 반품 완료 시 그 상품분 사용 포인트는 환원'],
                 ].map(([k, v]) => (

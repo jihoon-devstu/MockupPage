@@ -371,7 +371,7 @@ export function AdminSettlements() {
                     <td>
                       <span className="inline-flex gap-1">
                         <button onClick={() => setDetail(s)} className="btn btn-line btn-xs">상세</button>
-                        {s.status === '지급보류' && <button onClick={() => setHold(s)} className="btn btn-line btn-xs">사유</button>}
+                        {s.status === '지급보류' && <button onClick={() => setHold(s)} className="btn btn-line btn-xs">사유 · 해제</button>}
                       </span>
                     </td>
                   </tr>
@@ -389,7 +389,7 @@ export function AdminSettlements() {
         )}>
         {d && <SettlementDetailBody d={d} />}
       </Modal>
-      <Modal open={!!hold} onClose={() => setHold(null)} title="지급 보류 사유" width={440}
+      <Modal open={!!hold} onClose={() => setHold(null)} title="지급 보류 사유 · 해제" width={440}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setHold(null)}>닫기</button><button className="btn btn-ink btn-sm" onClick={releaseHold}>보류 해제</button></>}>
         <p className="text-[14px]">{hold?.holdReason}</p>
       </Modal>

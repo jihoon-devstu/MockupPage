@@ -289,7 +289,7 @@ function ApplicationDetailBody({ a }) {
       <Modal open={modal === 'approve'} onClose={() => setModal(null)} title="입점 승인" width={480}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => decide('승인', `${a.storeName} 입점 승인 · 승인 안내 메일 발송`)}>승인 확정</button></>}>
         <div className="space-y-4 text-[14px]">
-          <KV rows={[['스토어', a.storeName], ['스토어 URL', <span className="num">gotgan.kr/store/{a.slug}</span>], ['판매수수료', `${pct(c.commission)} (카테고리 기본)`], ['결제수수료', pct(PAYMENT_FEE, 1)], ['판매자 등급', '새싹 (시작 등급)']]} />
+          <KV rows={[['스토어', a.storeName], ['판매수수료', `${pct(c.commission)} (카테고리 기본)`], ['결제수수료', pct(PAYMENT_FEE, 1)], ['판매자 등급', '새싹 (시작 등급)']]} />
           <p className="text-[12px] text-mute">승인 시: ① 스토어 생성(상태: 운영중) ② 판매자 권한 부여(신청자의 다음 로그인부터) ③ 승인 안내 메일 발송</p>
         </div>
       </Modal>

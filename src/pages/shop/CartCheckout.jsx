@@ -237,12 +237,7 @@ export function Checkout() {
                 <button key={m} onClick={() => setMethod(m)} className={cx('h-12 border text-[14px]', method === m ? 'border-ink border-2 font-bold' : 'border-line-2 hover:border-ink')}>{m}</button>
               ))}
             </div>
-            {method === '신용/체크카드' && (
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                <select className="field"><option>카드사 선택</option><option>현대카드</option><option>신한카드</option><option>삼성카드</option><option>KB국민카드</option></select>
-                <select className="field"><option>일시불</option><option>2개월 무이자</option><option>3개월 무이자</option></select>
-              </div>
-            )}
+            <p className="text-[12px] text-mute mt-2">카드사 · 할부는 결제창에서 고릅니다</p>
           </Section>
 
           <section className="border-t border-ink pt-5 text-[13px] space-y-2">
@@ -257,7 +252,7 @@ export function Checkout() {
 
         <div className="lg:sticky lg:top-24 self-start">
           <Summary groups={groups} point={point} label="실결제금액" cta={(pay, earn) => (
-            <button disabled={!agree} onClick={() => { clearChecked(); nav('/order/complete', { state: { orderNo: '20261001-000052', pay, method, point, earn, address: `${addr.addr} ${addr.detail}` } }); }} className="btn btn-point btn-lg w-full">{won(pay)} 결제하기</button>
+            <button disabled={!agree} onClick={() => { clearChecked(); nav('/order/complete', { state: { orderNo: '20261001-000052', pay, point, earn, address: `${addr.addr} ${addr.detail}` } }); }} className="btn btn-point btn-lg w-full">{won(pay)} 결제하기</button>
           )} />
           {!agree && <p className="text-[12px] text-mute mt-2 text-center">약관에 동의해야 결제할 수 있어요</p>}
         </div>
@@ -304,7 +299,6 @@ export function OrderComplete() {
       <div className="mt-10 border-t border-ink text-left text-[14px]">
         {[
           ['주문번호', <span className="num">{st.orderNo ?? '20261001-000052'}</span>],
-          ['결제수단', st.method || '신용/체크카드'],
           ['사용 포인트', <span className="num">{comma(st.point || 0)}P</span>],
           ['실결제금액', <b className="num">{won(pay)}</b>],
           ['적립 예정 포인트', <span className="num text-moss font-semibold">+{comma(st.earn ?? earnOf(pay))}P <span className="text-mute font-normal text-[12px]">실결제금액의 {POINT_RATE * 100}% · 구매확정 시 적립</span></span>],
