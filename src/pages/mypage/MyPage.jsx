@@ -826,7 +826,7 @@ function WithdrawModal({ onClose }) {
 }
 
 /* ─────────── 배송지 관리 — 등록 / 수정 / 삭제 / 기본 지정 (최대 5개) ─────────── */
-const MAX_ADDRESSES = 5;
+export const MAX_ADDRESSES = 5;
 const EMPTY_ADDRESS = { label: '', name: '', phone: '', zip: '', addr: '', detail: '', main: false };
 // 목업: 카카오 우편번호 검색창 대신 예시 결과 (실제는 PostcodeSearch — 모달 안에 펼쳐 넣는 embed)
 const POSTCODE_SAMPLES = [
@@ -888,7 +888,8 @@ export function MyAddresses() {
 }
 
 // 등록 · 수정 — 같은 폼. 우편번호 · 기본 주소는 주소 검색으로만 채운다, 등록은 연락처를 내 휴대폰으로 미리 채운다
-function AddressFormModal({ address, onSave, onClose }) {
+// 주문서도 이 폼으로 바로 등록한다 (실제 ShopCheckout → MyAddresses.AddressFormModal)
+export function AddressFormModal({ address, onSave, onClose }) {
   const editMode = !!address;
   const [form, setForm] = useState(() => (address ? { ...EMPTY_ADDRESS, ...address } : { ...EMPTY_ADDRESS, phone: ME.phone }));
   const [searching, setSearching] = useState(false);

@@ -5,14 +5,14 @@ import { stores, storeById, catById, visibleProducts, productsOfStore } from '..
 import { reviewsOfStore, ratingSummary } from '../../data/reviews';
 import ProductCard from '../../components/ProductCard';
 import { Stars, Empty } from '../../components/ui';
-import { useApp } from '../../lib/store';
+import { OpenChatButton } from '../../components/Chat';
+import { CHAT_ME } from '../../data/chats';
 import { cx, comma, ymd } from '../../lib/format';
 
 /* 판매자 개별 스토어 홈 (스마트스토어의 '내 스토어' 개념) */
 export function StoreHome() {
   const { id } = useParams();
   const s = storeById[id];
-  const { toast } = useApp();
   const [sub, setSub] = useState('전체');
   if (!s) return <Empty title="존재하지 않는 스토어입니다" />;
   if (s.status !== '운영중') {
@@ -41,13 +41,17 @@ export function StoreHome() {
               <p className="mt-1.5 text-[14px] text-ink-2 max-w-xl leading-relaxed">{s.intro}</p>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[12.5px] text-mute">
                 <span>{catById[s.cat].name}</span>
-                <span className="flex items-center gap-1"><Stars value={sum.avg} size={11} /> <b className="text-ink">{sum.avg.toFixed(1)}</b></span>
+                <span className="flex items-center gap-1"><Stars value={sum.avg} size={11} /> <b className="text-ink">{sum.avg.toFixed(1)}</b> <span className="num">({comma(sum.total)})</span></span>
                 <span>{ymd(s.since)} 오픈</span>
               </div>
             </div>
           </div>
           <div className="flex md:flex-col gap-2 md:w-40">
-            <button onClick={() => toast('판매자 톡 연결 (목업)')} className="btn btn-line flex-1"><MessageSquare size={15} /> 문의하기</button>
+            {/* 문의하기 — 그 스토어 스토어 톡을 열고 "스토어 {이름}" 카드 (구매자 × 스토어 방은 하나) */}
+            <OpenChatButton className="btn btn-line flex-1" basePath="/mypage/chats" by="BUYER"
+              request={{ type: 'STORE_INQUIRY', buyerId: CHAT_ME.userId, storeId: s.id, context: { type: 'STORE', id: s.id } }}>
+              <MessageSquare size={15} /> 문의하기
+            </OpenChatButton>
           </div>
         </div>
 
@@ -60,7 +64,7 @@ export function StoreHome() {
 
         <div className="mt-16 grid md:grid-cols-3 gap-px bg-line border border-line text-[13px]">
           {[
-            ['배송', `${s.courier} · ${s.shipFee ? `${comma(s.shipFee)}원 (${comma(s.freeOver)}원 이상 무료)` : '무료배송'}`],
+            ['배송', [s.courier, s.shipFee ? `${comma(s.shipFee)}원${s.freeOver ? ` (${comma(s.freeOver)}원 이상 무료)` : ''}` : '무료배송'].filter(Boolean).join(' · ')],
             ['출고', s.dispatch],
             ['판매자 정보', `${s.owner} · 사업자 ${s.bizNo} · ${s.phone}`],
           ].map(([k, v]) => <div key={k} className="bg-white p-5"><div className="eyebrow mb-1.5">{k}</div>{v}</div>)}

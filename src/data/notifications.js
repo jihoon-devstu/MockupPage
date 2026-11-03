@@ -6,7 +6,7 @@
 export const NOTIFICATIONS = {
   USER: [
     { id: 'n-u1', type: 'CHAT_MESSAGE', title: '곳간 운영팀', body: '곳간 운영팀입니다. 스토어 톡 내용 확인했어요. 판매자에게 출고 일정을 확인하고…', link: '/mypage/chats/103', read: false, ago: '4시간 전' },
-    { id: 'n-u2', type: 'CHAT_MESSAGE', title: '오롯이 리넨', body: '재입고되면 상품 상세의 재입고 알림으로 바로 알려드릴게요!', link: '/mypage/chats/101', read: false, ago: '5시간 전' },
+    { id: 'n-u2', type: 'CHAT_MESSAGE', title: '오롯이 리넨', body: '재입고되면 이 톡으로 바로 알려드릴게요!', link: '/mypage/chats/101', read: false, ago: '5시간 전' },
     { id: 'n-u3', type: 'ORDER_SHIPPED', title: '배송이 시작됐어요', body: '프렌치 리넨 오버핏 셔츠 · CJ대한통운 송장 등록', link: '/mypage/orders/20260928-000017', read: false, ago: '어제' },
     { id: 'n-u4', type: 'ORDER_PAID', title: '결제가 완료됐어요', body: '프렌치 리넨 오버핏 셔츠 외 1건', link: '/mypage/orders/20260928-000017', read: true, ago: '3일 전' },
     { id: 'n-u5', type: 'ORDER_RETURNED', title: '반품이 완료됐어요', body: '환불 금액은 결제수단으로 돌려드렸어요', link: '/mypage/claims', read: true, ago: '5일 전' },

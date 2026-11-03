@@ -133,7 +133,7 @@ export const qnas = [
   { id: 'q3', productId: 'p102', userId: 'u10', q: '허리 밴딩인가요? 끈도 있나요?', a: '네, 뒷밴딩 + 내부 스트링 구성입니다.', date: daysAgo(4), secret: false },
   { id: 'q4', productId: 'p101', userId: 'u3', q: '배송지 변경 가능할까요? (비밀글)', a: null, date: daysAgo(0, 2), secret: true },
   { id: 'q5', productId: 'p104', userId: 'u12', q: '세탁기 사용 가능한가요?', a: null, date: daysAgo(0, 7), secret: false },
-  { id: 'q6', productId: 'p103', userId: 'u14', q: '아이보리 재입고 알림 신청했는데 언제쯤일까요?', a: '10월 둘째 주 재입고 예정입니다. 알림 드릴게요!', date: daysAgo(6), secret: false },
+  { id: 'q6', productId: 'p103', userId: 'u14', q: '아이보리 재입고는 언제쯤일까요?', a: '10월 둘째 주 재입고 예정입니다. 알림 드릴게요!', date: daysAgo(6), secret: false },
   { id: 'q7', productId: 'p102', userId: 'u1', q: '샌드 컬러 M 사이즈 총장이 몇 cm인가요? 키 160이에요.', a: null, date: daysAgo(0, 3), secret: true },
   // 스토어 1 · 2(목업 s6 · s4) 문의 — 시드 scenario.mjs INQUIRIES 와 같은 작성자 · 내용 (user 4 · 5 · 6 · 104 = u1 · u2 · u3 · u4)
   { id: 'q11', productId: 'p601', userId: 'u1', q: '로얄과랑 대과는 당도 차이가 있나요? 아이들 간식용으로 사려고 해요.', a: '당도는 거의 같고 크기만 달라요. 아이들 간식용이면 한 입에 쏙 들어가는 로얄과를 추천드립니다.', date: daysAgo(6), secret: false },

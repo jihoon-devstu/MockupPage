@@ -5,6 +5,7 @@ import { storeById } from '../../data/catalog';
 import { myAddresses } from '../../data/people';
 import { shipFeeFor, earnOf, POINT_RATE } from '../../data/orders';
 import { myPointBalance } from '../../data/points';
+import { AddressFormModal, MAX_ADDRESSES } from '../mypage/MyPage';
 import { useApp } from '../../lib/store';
 import { Checkbox, Empty, Modal } from '../../components/ui';
 import { cx, won, comma } from '../../lib/format';
@@ -152,8 +153,12 @@ export function Checkout() {
   const nav = useNavigate();
   const lines = cart.filter((l) => l.checked && purchasable(l));
   const groups = groupByStore(lines);
+  const [addresses, setAddresses] = useState(myAddresses);
   const [addr, setAddr] = useState(myAddresses[0]);
   const [addrModal, setAddrModal] = useState(false);
+  const [addingAddr, setAddingAddr] = useState(false);
+  const addrFull = addresses.length >= MAX_ADDRESSES;
+  const { toast } = useApp();
   const [point, setPoint] = useState(0);
   const [method, setMethod] = useState(PAY_METHODS[0]);
   const [agree, setAgree] = useState(false);
@@ -260,15 +265,23 @@ export function Checkout() {
 
       <Modal open={addrModal} onClose={() => setAddrModal(false)} title="배송지 선택">
         <div className="space-y-2">
-          {myAddresses.map((a) => (
+          {addresses.map((a) => (
             <button key={a.id} onClick={() => { setAddr(a); setAddrModal(false); }} className={cx('w-full text-left border p-4 text-[13px]', addr.id === a.id ? 'border-ink border-2' : 'border-line-2')}>
               <div className="font-bold">{a.label} · {a.name}{a.main && <span className="ml-2 text-point text-[11px]">기본</span>}</div>
               <div className="text-ink-2 mt-1">{a.addr} {a.detail}</div>
             </button>
           ))}
-          <Link to="/mypage/addresses" className="btn btn-line w-full">+ 새 배송지 추가</Link>
+          <button type="button" onClick={() => { setAddrModal(false); setAddingAddr(true); }} disabled={addrFull} className="btn btn-line w-full"
+            title={addrFull ? `배송지는 최대 ${MAX_ADDRESSES}개까지 등록할 수 있어요` : undefined}>+ 새 배송지 추가</button>
+          {addrFull && <p className="text-[12px] text-mute">배송지는 최대 {MAX_ADDRESSES}개까지 등록할 수 있어요. 마이페이지에서 하나를 삭제한 뒤 추가해주세요.</p>}
         </div>
       </Modal>
+      {/* 주문서를 떠나지 않고 바로 등록 — 저장하면 새 배송지로 고른다 */}
+      {addingAddr && <AddressFormModal onClose={() => setAddingAddr(false)} onSave={(form) => {
+        const saved = { ...form, id: `a${Date.now()}` };
+        setAddresses((list) => [...(form.main ? list.map((x) => ({ ...x, main: false })) : list), saved]);
+        setAddr(saved); setAddingAddr(false); toast('배송지를 추가했어요');
+      }} />}
     </div>
   );
 }

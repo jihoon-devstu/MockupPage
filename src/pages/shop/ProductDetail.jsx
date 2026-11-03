@@ -117,7 +117,7 @@ export default function ProductDetail() {
           </div>
           <div className="relative flex-1 bg-sand aspect-[4/5] overflow-hidden">
             <img src={p.images[img]} alt={p.name} className="absolute inset-0 w-full h-full object-cover" />
-            {soldOut && <span className="absolute left-4 top-4 bg-ink text-white text-xs font-bold px-3 py-1.5">일시품절 · 재입고 알림 신청 가능</span>}
+            {soldOut && <span className="absolute left-4 top-4 bg-ink text-white text-xs font-bold px-3 py-1.5">일시품절</span>}
           </div>
         </div>
 
@@ -182,7 +182,7 @@ export default function ProductDetail() {
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             {soldOut ? (
-              <button onClick={() => toast('재입고 알림을 신청했어요')} className="btn btn-ink btn-lg col-span-2">재입고 알림 신청</button>
+              <button disabled className="btn btn-line btn-lg col-span-2">일시품절</button>
             ) : (
               <>
                 <button onClick={onCart} className="btn btn-line btn-lg">장바구니</button>

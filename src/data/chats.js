@@ -23,7 +23,7 @@ const r101 = [
   card('BUYER', product('p101'), daysAgo(0, 6)),
   text('BUYER', '안녕하세요! 이 셔츠 오트밀 M 사이즈 재입고 예정이 있을까요?', daysAgo(0, 6)),
   text('SELLER', '안녕하세요, 오롯이 리넨입니다. 오트밀 M 은 다음 주 화요일 재입고 예정이에요.', daysAgo(0, 5)),
-  text('SELLER', '재입고되면 상품 상세의 재입고 알림으로 바로 알려드릴게요!', daysAgo(0, 5)),
+  text('SELLER', '재입고되면 이 톡으로 바로 알려드릴게요!', daysAgo(0, 5)),
 ];
 const r102 = [
   card('BUYER', product('p601'), daysAgo(4)),
