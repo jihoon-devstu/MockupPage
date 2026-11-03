@@ -27,13 +27,15 @@ export default function SellerDashboard() {
   const revs = reviewsOfStore(MY_STORE.id);
   const sum = ratingSummary(revs);
   const prods = productsOfStore(MY_STORE.id);
-  const lowStock = prods.filter((p) => p.stock < 20);
-  const top = [...prods].sort((a, b) => b.sold - a.sold).slice(0, 5);
+  // 상품 현황 — 판매중 · 재고 부족(1~19) · 품절 · 판매중지 수, 재고 부족은 적은 순 10개 (실제 GET /api/seller/dashboard 의 product)
+  const lowStock = prods.filter((p) => p.status !== '판매중지' && p.stock > 0 && p.stock < 20).sort((a, b) => a.stock - b.stock).slice(0, 10);
+  const productStat = [['판매중', prods.filter((p) => p.status === '판매중').length], ['재고 부족', lowStock.length], ['품절', prods.filter((p) => p.status === '품절').length], ['판매중지', prods.filter((p) => p.status === '판매중지').length]];
+  const pendingCount = sellerOrders.filter((o) => o.status === '구매확정').length;
   const month = sellerDaily.reduce((a, d) => a + d.amount, 0);
 
   return (
     <div>
-      <PageHead title={`${MY_STORE.owner} 대표님, 좋은 아침이에요`} desc={`${ymd(new Date('2026-10-01'))} (목) · ${MY_STORE.name} 스토어 현황`}
+      <PageHead title={`${MY_STORE.owner} 대표님, 좋은 하루예요`} desc={`${ymd(new Date('2026-10-01'))} (목) · ${MY_STORE.name} 스토어 현황`}
         right={<Link to="/seller/products/new" className="btn btn-ink btn-sm">+ 상품 등록</Link>} />
 
       {/* 할 일 */}
@@ -48,9 +50,9 @@ export default function SellerDashboard() {
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
         <Kpi label="오늘 결제금액" value={comma(today.amount)} unit="원" delta={((today.amount - yday.amount) / yday.amount) * 100} sub="전일 대비" />
-        <Kpi label="최근 30일 매출" value={comma(month / 10000)} unit="만원" delta={12.4} sub="직전 30일 대비" />
+        <Kpi label="최근 30일 결제금액" value={comma(month)} unit="원" sub="오늘 포함 30일" />
         <Kpi label="다음 지급 예정" value={next ? comma(next.payout) : '-'} unit="원" sub={next ? `${ymd(next.pay)} 지급` : '지급 예정 없음'} />
-        <Kpi label="스토어 평점" value={sum.avg.toFixed(2)} unit="/ 5" sub={`리뷰 ${comma(sum.total)}개 (최근 90일)`} />
+        <Kpi label="스토어 평점" value={sum.avg.toFixed(2)} unit="/ 5" sub={`리뷰 ${comma(sum.total)}개`} />
       </div>
 
       <div className="grid xl:grid-cols-[1fr_340px] gap-4 mt-4">
@@ -59,16 +61,14 @@ export default function SellerDashboard() {
           <div className="p-5"><BarChart data={sellerDaily} /></div>
         </div>
         <div className="panel">
-          <div className="panel-head"><span className="panel-title">많이 팔린 상품</span><Link to="/seller/products" className="text-[12px] text-mute">전체</Link></div>
-          <ol>
-            {top.map((p, i) => (
-              <li key={p.id} className="flex items-center gap-3 px-5 py-2.5 border-b border-line last:border-0">
-                <span className="w-4 num text-[13px] font-bold">{i + 1}</span>
-                <img src={p.images[0]} alt="" className="w-10 h-10 object-cover" />
-                <div className="flex-1 min-w-0"><div className="text-[13px] truncate">{p.name}</div><div className="text-[11.5px] text-mute num">{comma(p.sold)}개 · 재고 {p.stock}</div></div>
-              </li>
+          <div className="panel-head"><span className="panel-title">상품 현황</span><Link to="/seller/products" className="text-[12px] text-mute">전체</Link></div>
+          <dl className="grid grid-cols-2">
+            {productStat.map(([k, v], i) => (
+              <div key={k} className={cx('px-5 py-4 border-line', i % 2 && 'border-l', i >= 2 && 'border-t')}>
+                <dt className="text-[12.5px] text-ink-2">{k}</dt><dd className="mt-1 text-[22px] font-bold num">{comma(v)}</dd>
+              </div>
             ))}
-          </ol>
+          </dl>
         </div>
       </div>
 
@@ -98,7 +98,7 @@ export default function SellerDashboard() {
               <div className="panel-head"><span className="panel-title flex items-center gap-1.5"><AlertTriangle size={15} className="text-amber" /> 재고 부족</span></div>
               {lowStock.map((p) => (
                 <Link key={p.id} to={`/seller/products/${p.id}/edit`} className="flex items-center justify-between px-5 py-2.5 border-b border-line last:border-0 text-[13px] hover:bg-cream">
-                  <span className="truncate pr-3">{p.name}</span><span className={cx('num font-bold', p.stock === 0 ? 'text-rust' : 'text-amber')}>{p.stock === 0 ? '품절' : `${p.stock}개`}</span>
+                  <span className="truncate pr-3">{p.name}</span><span className="num font-bold text-amber">{p.stock}개</span>
                 </Link>
               ))}
             </div>
@@ -107,19 +107,14 @@ export default function SellerDashboard() {
             <div className="panel-head"><span className="panel-title">새 리뷰</span><Link to="/seller/reviews" className="text-[12px] text-mute">답글 달기</Link></div>
             {revs.slice(0, 3).map((r) => (
               <div key={r.id} className="px-5 py-3 border-b border-line last:border-0">
-                <div className="flex items-center gap-2 text-[12px]"><Stars value={r.rating} size={11} /><span className="text-mute">{maskName(userById[r.userId].name)} · {ymd(r.date)}</span></div>
+                <div className="flex items-center gap-2 text-[12px]"><Stars value={r.rating} size={11} /><span className="text-mute">{maskName(userById[r.userId].name)} · {productById[r.productId].name}</span></div>
                 <p className="text-[13px] mt-1 line-clamp-2 text-ink-2">{r.body}</p>
               </div>
             ))}
           </div>
-          <div className="panel p-5 bg-ink text-white border-ink">
-            <div className="text-[12px] text-white/60">곳간 공지</div>
-            <div className="font-semibold mt-1 text-[14px]">10월 추석 연휴 정산 일정 안내</div>
-            <p className="text-[12.5px] text-white/70 mt-1.5 leading-relaxed">10/5(월) ~ 10/9(금) 연휴 기간 구매확정분은 10/15(목)에 일괄 지급됩니다.</p>
-          </div>
         </div>
       </div>
-      <p className="text-[12px] text-mute mt-4">이번 주 구매확정분 정산 예정 {won(pendingPayout)} · 다음 주 목요일 지급</p>
+      <p className="text-[12px] text-mute mt-4">이번 주 구매확정분 정산 예정 {won(pendingPayout)}({comma(pendingCount)}건) · 다음 주 목요일 지급</p>
     </div>
   );
 }
