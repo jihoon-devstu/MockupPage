@@ -61,6 +61,7 @@ export function StoreHome() {
         <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10">
           {shown.map((p) => <ProductCard key={p.id} p={p} showStore={false} />)}
         </div>
+        {items.length === 0 && <p className="text-mute text-center py-10">아직 등록된 상품이 없어요</p>}
 
         <div className="mt-16 grid md:grid-cols-3 gap-px bg-line border border-line text-[13px]">
           {[
@@ -87,6 +88,7 @@ export function StoreList() {
           <button key={k} onClick={() => setCat(k)} className={cx('h-8 px-3.5 text-[13px] border shrink-0', cat === k ? 'bg-ink text-white border-ink' : 'border-line-2 hover:border-ink')}>{l}</button>
         ))}
       </div>
+      {list.length === 0 && <p className="py-16 text-center text-sm text-mute">이 카테고리에는 아직 가게가 없어요.</p>}
       <div className="grid md:grid-cols-2 gap-6">
         {list.map((s) => {
           const items = productsOfStore(s.id).filter((p) => p.status !== '판매중지').slice(0, 3);

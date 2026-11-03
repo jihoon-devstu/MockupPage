@@ -81,7 +81,7 @@ export function AdminDashboard() {
       </div>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
         <Kpi label="누적 거래액 (GMV)" value={shortWon(gmv)} unit="원" sub={`결제 완료 주문 ${comma(orderCount)}건`} />
-        <Kpi label="이번 달 수수료 수익" value={comma(commissionThisMonth / 10000)} unit="만원" sub="판매수수료 (결제수수료 제외)" />
+        <Kpi label="이번 달 수수료 수익" value={shortWon(commissionThisMonth)} unit="원" sub="판매수수료 (결제수수료 제외)" />
         <Kpi label="지급 예정 · 보류" value={shortWon(sum(scheduled, 'payout'))} unit="원" sub={`보류 ${won(sum(held, 'payout'))} · 이번 달 지급 ${shortWon(paidThisMonth)}원`} />
         <Kpi label="운영 스토어 / 회원" value={`${stores.filter((s) => s.status === '운영중').length}`} unit={`곳 · ${comma(users.length)}명`}
           sub={`판매중 상품 ${comma(products.filter((p) => p.status === '판매중').length)} · 품절 ${comma(products.filter((p) => p.status === '품절').length)} · 강제중지 ${comma(products.filter((p) => p.blocked).length)}`} />
@@ -141,13 +141,13 @@ export function AdminApplications() {
       <PageHead title="입점 심사" desc="심사 기준: 사업자 상태(국세청) · 통신판매업 신고 · 카테고리 적합성 · 중복 입점 여부 / 처리 기한: 접수 후 영업일 3일" />
       <div className="flex flex-wrap gap-3 items-center">
         <Segments items={T} value={tab} onChange={setTab} counts={counts} />
-        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-72 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="접수번호 · 스토어 · 대표자 · 카테고리" className="flex-1 px-2 text-[13px] outline-none" /></div>
+        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="접수번호 · 스토어 · 대표자 · 카테고리" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
           <thead><tr><th>접수번호</th><th>스토어명</th><th>대표자</th><th>카테고리</th><th>구분</th><th>월 예상매출</th><th>신청일시</th><th>상태</th><th /></tr></thead>
           <tbody>
-            {list.length === 0 && <tr><td colSpan={9} className="text-center text-mute py-10">해당하는 신청이 없습니다.</td></tr>}
+            {list.length === 0 && <tr><td colSpan={9} className="text-center text-mute py-10">조건에 맞는 항목이 없어요</td></tr>}
             {list.map((a) => (
               <tr key={a.id}>
                 <td className="num text-[12px]">{a.no}</td>

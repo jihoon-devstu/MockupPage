@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Download, Lock, MessagesSquare, Search } from 'lucide-react';
 import { productById, catById, productsOfStore, PAYMENT_FEE } from '../../data/catalog';
@@ -81,31 +81,37 @@ export function SellerReviews() {
         </select>
       </div>
 
-      <div className="panel mt-3 divide-y divide-line">
-        {list.map((r) => {
-          const p = productById[r.productId];
-          return (
-            <div key={r.id} className="p-5 grid md:grid-cols-[1fr_340px] gap-5">
-              <div>
-                <div className="flex items-center gap-2 text-[12px] flex-wrap">
-                  <Stars value={r.rating} size={12} /><b className="text-[13px]">{r.rating}.0</b>
-                  <span className="text-mute">{r.writer} · {ymd(r.date)} · {p.name} ({r.option || '단일상품'})</span>
-                  {r.blinded && <Pill tone="rust">블라인드</Pill>}
-                  {!r.blinded && r.flag && <Pill tone="amber">검토 요청됨</Pill>}
-                  {!r.blinded && !r.flag && (
-                    <button onClick={() => { setFlagTarget(r); setFlagReason(''); }} className="ml-auto text-[12px] text-mute underline">관리자 검토 요청</button>
-                  )}
-                </div>
-                {r.title && <p className="mt-2 text-[14px] font-semibold">{r.title}</p>}
-                <p className="mt-1 text-[13.5px] text-ink-2 leading-relaxed">{r.body}</p>
-                {r.photos.length > 0 && <div className="mt-2 flex gap-1.5">{r.photos.map((src) => <img key={src} src={src} alt="" className="w-20 h-20 object-cover" />)}</div>}
-              </div>
-              <div>
-                <ReplyBox key={`${r.id}-${r.reply ?? ''}`} r={r} onSubmit={(id, content) => { setRows(rows.map((x) => (x.id === id ? { ...x, reply: content } : x))); toast('답글을 등록했어요'); }} />
-              </div>
-            </div>
-          );
-        })}
+      {/* 실제 SellerReviewList — 표(평점 · 리뷰 · 상품 · 작성자 · 작성일 · 답글) */}
+      <div className="panel mt-3 overflow-x-auto">
+        <table className="tbl">
+          <thead><tr><th>평점</th><th>리뷰</th><th>상품</th><th>작성자</th><th>작성일</th><th>답글</th></tr></thead>
+          <tbody>
+            {list.length === 0 && <tr><td colSpan={6} className="text-center text-mute py-10">조건에 맞는 항목이 없어요</td></tr>}
+            {list.map((r) => (
+              <tr key={r.id}>
+                <td className="whitespace-nowrap"><div className="flex items-center gap-1.5 text-[12px]"><Stars value={r.rating} size={12} /><b className="text-[13px]">{r.rating}.0</b></div></td>
+                <td>
+                  <div className="min-w-[280px] max-w-[420px] whitespace-normal">
+                    <div className="flex items-center gap-2 text-[12px] flex-wrap">
+                      {r.blinded && <Pill tone="rust">블라인드</Pill>}
+                      {!r.blinded && r.flag && <Pill tone="amber">검토 요청됨</Pill>}
+                      {!r.blinded && !r.flag && <button onClick={() => { setFlagTarget(r); setFlagReason(''); }} className="text-[12px] text-mute underline">관리자 검토 요청</button>}
+                    </div>
+                    {r.title && <p className="mt-1 text-[14px] font-semibold">{r.title}</p>}
+                    <p className="mt-1 text-[13.5px] text-ink-2 leading-relaxed">{r.body}</p>
+                    {r.photos.length > 0 && <div className="mt-2 flex gap-1.5">{r.photos.map((src) => <img key={src} src={src} alt="" className="w-20 h-20 object-cover" />)}</div>}
+                  </div>
+                </td>
+                <td><div className="min-w-[160px] text-[13px]">{productById[r.productId].name}<div className="text-[11.5px] text-mute">{r.option}</div></div></td>
+                <td className="whitespace-nowrap">{r.writer}</td>
+                <td className="num text-ink-2 whitespace-nowrap">{ymd(r.date)}</td>
+                <td className="w-[340px] min-w-[280px]">
+                  <ReplyBox key={`${r.id}-${r.reply ?? ''}`} r={r} onSubmit={(id, content) => { setRows(rows.map((x) => (x.id === id ? { ...x, reply: content } : x))); toast('답글을 등록했어요'); }} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <Modal open={!!flagTarget} onClose={() => setFlagTarget(null)} title="관리자 검토 요청"
@@ -114,7 +120,7 @@ export function SellerReviews() {
           <button disabled={!flagReason.trim()} onClick={() => { setRows(rows.map((x) => (x.id === flagTarget.id ? { ...x, flag: flagReason.trim() } : x))); setFlagTarget(null); toast('검토 요청을 보냈어요. 관리자가 확인 후 블라인드 여부를 결정합니다'); }} className="btn btn-ink btn-sm">요청</button>
         </>}>
         <p className="text-[13px] text-ink-2">판매자는 리뷰를 삭제하거나 가릴 수 없습니다. 욕설 · 광고 · 허위 사실 등 정책 위반이 의심되면 사유를 적어 관리자에게 검토를 요청하세요.</p>
-        <textarea rows={3} value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="field text-[13px] mt-3" placeholder="예: 상품과 무관한 광고성 내용" />
+        <textarea rows={3} maxLength={500} value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="field text-[13px] mt-3" placeholder="예: 상품과 무관한 광고성 내용" />
       </Modal>
     </div>
   );
@@ -315,6 +321,7 @@ export function SellerSettlements() {
           <OpenChatButton by="SELLER" basePath="/seller/chats" request={{ type: 'SELLER_SUPPORT', storeId: MY_STORE.id, context: { type: 'SETTLEMENT', id: detail.id } }}>
             <MessagesSquare size={14} /> 이 정산 문의
           </OpenChatButton>
+          {/* 실제 기능 — 지급완료 건만 명세서(정산 명세서 Lambda 가 만든 CSV)를 10분 링크로 연다. 11/2 에 없앤 엑셀 다운로드와 다름 */}
           {detail.status === '지급완료' && <button className="btn btn-line btn-sm" onClick={() => toast('정산 명세서(CSV)를 새 탭에서 열어요 · 링크는 10분 동안 유효')}><Download size={14} /> 정산 명세서 (CSV)</button>}
         </>}>
         {detail && <SettlementDetailBody d={detail} />}
@@ -324,6 +331,7 @@ export function SellerSettlements() {
 }
 
 /* ─────────── 스토어 설정 ─────────── */
+const PALETTE = ['#5b6b4a', '#2b2b2b', '#7a4b2a', '#2f5f8a', '#b4371f', '#c08a2e']; // 지금 색이 밖이면 맨 앞에 함께 보여 준다 (실제 paletteWith)
 // 실제 SellerStoreSettings — 저장 · 대표(커버) 이미지 · 폐점. 기본 배송비 0원이면 무료배송 기준 칸을 막음
 export function SellerStore() {
   const { toast } = useApp();
@@ -336,6 +344,16 @@ export function SellerStore() {
   const [closedAt, setClosedAt] = useState(null);
   const allFree = shipFee !== '' && Number(shipFee) === 0;
   const digits = (v) => v.replace(/\D/g, '');
+  const fileRef = useRef(null);
+  // 커버 변경 — 파일 선택 → 형식 · 10MB 검사 → 미리보기 (실제: S3 업로드 후 저장을 눌러야 반영)
+  const pickCover = (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('JPG · PNG · WEBP 이미지만 올릴 수 있어요');
+    if (file.size > 10 * 1024 * 1024) return toast('이미지는 10MB 이하만 올릴 수 있어요');
+    setCover(URL.createObjectURL(file));
+  };
   return (
     <div>
       <PageHead title="스토어 설정" right={<button disabled={!!closedAt} onClick={() => toast('저장되었어요')} className="btn btn-ink btn-sm">저장</button>} />
@@ -348,12 +366,13 @@ export function SellerStore() {
               {cover && <img src={cover} alt="" className="w-full h-full object-cover" />}
               <div className="absolute right-2 bottom-2 flex gap-1">
                 {cover && <button disabled={!!closedAt} onClick={() => setCover(null)} className="btn btn-line btn-xs bg-white">이미지 삭제</button>}
-                <button disabled={!!closedAt} onClick={() => setCover(s.cover)} className="btn btn-line btn-xs bg-white">커버 변경</button>
+                <button disabled={!!closedAt} onClick={() => fileRef.current?.click()} className="btn btn-line btn-xs bg-white">커버 변경</button>
               </div>
+              <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={pickCover} />
             </div>
             <div className="flex items-center gap-4">
               <span className="w-14 h-14 text-white text-2xl font-black flex items-center justify-center" style={{ background: color }}>{s.name[0]}</span>
-              <div className="flex gap-1.5">{['#5b6b4a', '#2b2b2b', '#7a4b2a', '#2f5f8a', '#b4371f', '#c08a2e'].map((c) => <button key={c} onClick={() => setColor(c)} className={cx('w-7 h-7', color === c && 'ring-2 ring-offset-2 ring-ink')} style={{ background: c }} />)}</div>
+              <div className="flex gap-1.5">{(PALETTE.includes(s.color) ? PALETTE : [s.color, ...PALETTE]).map((c) => <button key={c} aria-label={`대표 색 ${c}`} onClick={() => setColor(c)} className={cx('w-7 h-7', color === c && 'ring-2 ring-offset-2 ring-ink')} style={{ background: c }} />)}</div>
             </div>
             <div><label className="label">스토어명</label><input className="field bg-cream" defaultValue={s.name} readOnly /><p className="text-[12px] text-mute mt-1">스토어명 변경은 관리자 승인이 필요합니다.</p></div>
             <div><label className="label">스토어 URL</label><input className="field bg-cream num" defaultValue={`gotgan.kr/store/${s.slug}`} readOnly /></div>

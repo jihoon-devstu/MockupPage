@@ -26,9 +26,9 @@ const accountOf = (email) => MOCK_ACCOUNTS[/admin/i.test(email) ? 'ADMIN' : /sel
 
 // 소셜 로그인 — 카카오 · 네이버 · Google (실제는 제공자 가이드의 버튼 이미지 · 심볼, 목업은 같은 색의 글자 버튼)
 const SOCIAL_PROVIDERS = [
-  { id: 'kakao', label: '카카오 로그인', className: 'bg-[#FEE500] text-black/85 rounded-[12px]' },
-  { id: 'naver', label: '네이버 로그인', className: 'bg-[#03C75A] text-white rounded-[6px]' },
-  { id: 'google', label: 'Google 계정으로 로그인', className: 'bg-white text-[#1F1F1F] border border-[#747775] rounded-[4px]' },
+  { id: 'kakao', label: '카카오 로그인', icon: '/images/social/kakao-symbol.svg', className: 'bg-[#FEE500] text-black/85 rounded-[12px]' },
+  { id: 'naver', label: '네이버 로그인', image: '/images/social/naver-login-wide.png' },
+  { id: 'google', label: 'Google 계정으로 로그인', icon: '/images/social/google-g.svg', className: 'bg-white text-[#1F1F1F] border border-[#747775] rounded-[4px]' },
 ];
 
 function SocialLoginButtons() {
@@ -40,7 +40,14 @@ function SocialLoginButtons() {
       <div className="mt-4 space-y-2">
         {/* 실제: 백엔드 /api/auth/social/{id} → 제공자 로그인 → /auth/callback. 목업은 바로 콜백 화면으로 */}
         {SOCIAL_PROVIDERS.map((p) => (
-          <Link key={p.id} to="/auth/callback" className={cx('flex h-12 w-full items-center justify-center text-[15px] font-medium', p.className)}>{p.label}</Link>
+          p.image ? (
+            <Link key={p.id} to="/auth/callback" className="block"><img src={p.image} alt={p.label} className="block h-auto w-full" /></Link>
+          ) : (
+            <Link key={p.id} to="/auth/callback" className={cx('relative flex h-12 w-full items-center justify-center text-[15px] font-medium', p.className)}>
+              {p.icon && <img src={p.icon} alt="" aria-hidden="true" className="absolute left-4 h-[18px] w-[18px]" />}
+              {p.label}
+            </Link>
+          )
         ))}
       </div>
     </div>
@@ -51,6 +58,7 @@ const SOCIAL_ERROR_MESSAGES = {
   AUTH_EMAIL_DUPLICATE: '이미 가입된 이메일이에요. 탈퇴한 계정의 이메일은 다시 쓸 수 없어요',
   AUTH_ACCOUNT_DISABLED: '이용이 정지된 계정이에요. 고객센터로 문의해주세요',
   AUTH_SOCIAL_LOGIN_FAILED: '소셜 로그인에 실패했어요. 다시 시도해주세요',
+  EXTERNAL_API_ERROR: '로그인 서버에 문제가 있어요. 잠시 후 다시 시도해주세요',
 };
 
 /* /auth/callback — 소셜 로그인 결과 (실제 features/auth/components/SocialCallback.jsx). ?error=코드 면 안내 후 로그인 화면으로 */
@@ -84,9 +92,14 @@ export function Login() {
   const { login, toast } = useApp();
   const [tab, setTab] = useState(LOGIN_TABS[0]);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const submit = (e) => {
     e.preventDefault();
+    // 실제 loginSchema 와 같은 안내
+    if (!email.trim()) { setError('이메일을 입력해주세요'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('이메일 형식이 올바르지 않아요'); return; }
+    if (!password) { setError('비밀번호를 입력해주세요'); return; }
     const account = accountOf(email);
     if (!account.roles.includes(tab.role)) { setError(roleMismatchMessage(tab)); return; } // 로그인 상태로 두지 않음
     login(account);
@@ -103,7 +116,7 @@ export function Login() {
       </div>
       <form className="mt-6 space-y-2.5" onSubmit={submit} noValidate>
         <input className="field h-12" type="email" placeholder="이메일" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="field h-12" type="password" placeholder="비밀번호" />
+        <input className="field h-12" type="password" placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <p role="alert" className="pt-1 text-[13px] text-rust">{error}</p>}
         <div className="pt-1.5">
           <button type="submit" className="btn btn-ink btn-lg w-full">로그인</button>
@@ -121,34 +134,61 @@ export function Login() {
   );
 }
 
+// 가입 약관 — 필수를 모두 체크해야 가입 (실제 features/auth/constants.js SIGNUP_AGREEMENTS)
+const SIGNUP_AGREEMENTS = [
+  { id: 'age', label: '(필수) 만 14세 이상입니다', required: true },
+  { id: 'terms', label: '(필수) 이용약관 동의', required: true },
+  { id: 'privacy', label: '(필수) 개인정보 수집·이용 동의', required: true },
+  { id: 'marketing', label: '(선택) 마케팅 정보 수신 동의', required: false },
+];
+
 export function Signup() {
   const nav = useNavigate();
   const { toast, login } = useApp();
-  const [all, setAll] = useState(false);
+  const [agreed, setAgreed] = useState({});
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [checkedEmail, setCheckedEmail] = useState(null); // 목업: 형식만 맞으면 사용 가능
+  const [emailError, setEmailError] = useState('');
+  const [formError, setFormError] = useState('');
+  const allAgreed = SIGNUP_AGREEMENTS.every((a) => agreed[a.id]);
+  const emailConfirmed = checkedEmail && checkedEmail === email.trim().toLowerCase();
+  const checkEmail = () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setEmailError(email.trim() ? '이메일 형식이 올바르지 않아요' : '이메일을 입력해주세요'); return; }
+    setEmailError(''); setCheckedEmail(email.trim().toLowerCase());
+  };
   return (
     <div className="max-w-[440px] mx-auto px-4 pt-16">
       <h1 className="text-[26px] font-bold tracking-tight">회원가입</h1>
       <p className="mt-1 text-sm text-mute">결제할 때마다 실결제금액의 5%가 포인트로 적립돼요.</p>
-      <form className="mt-8 space-y-4" onSubmit={(e) => {
+      <form className="mt-8 space-y-4" noValidate onSubmit={(e) => {
         e.preventDefault();
+        setFormError('');
+        if (!emailConfirmed) { setEmailError('이메일 중복확인을 해주세요'); return; }
+        if (!SIGNUP_AGREEMENTS.filter((a) => a.required).every((a) => agreed[a.id])) { setFormError('필수 약관에 모두 동의해주세요'); return; }
         // 가입하면 바로 로그인 → 홈
         const n = name.trim() || ME.name;
         login({ name: n, roles: ['BUYER'] });
         toast(`${n}님, 가입을 환영해요!`);
         nav('/', { replace: true });
       }}>
-        <div><label className="label">이메일</label><div className="flex gap-2"><input className="field" placeholder="example@email.com" /><button type="button" className="btn btn-line shrink-0">중복확인</button></div></div>
+        <div>
+          <label className="label">이메일</label>
+          <div className="flex gap-2"><input type="email" className="field" placeholder="example@email.com" value={email} onChange={(e) => { setEmail(e.target.value); setEmailError(''); }} /><button type="button" onClick={checkEmail} className="btn btn-line shrink-0">중복확인</button></div>
+          {emailConfirmed && !emailError && <p className="mt-1 text-[12px] text-ink-2">사용할 수 있는 이메일이에요</p>}
+          {emailError && <p className="mt-1 text-[12px] text-rust">{emailError}</p>}
+        </div>
         <div><label className="label">비밀번호</label><input type="password" className="field" placeholder="영문 · 특수문자 포함 8자 이상" /></div>
         <div><label className="label">비밀번호 확인</label><input type="password" className="field" /></div>
         <div><label className="label">이름</label><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></div>
         <div><label className="label">휴대폰 번호</label><input type="tel" className="field" placeholder="010-0000-0000" /></div>
         <div className="border border-line p-4 space-y-2.5 text-[13px]">
-          <Checkbox checked={all} onChange={setAll} label={<b>전체 동의</b>} />
+          <Checkbox checked={allAgreed} onChange={(on) => setAgreed(Object.fromEntries(SIGNUP_AGREEMENTS.map((a) => [a.id, on])))} label={<b>전체 동의</b>} />
           <div className="h-px bg-line" />
-          {['(필수) 만 14세 이상입니다', '(필수) 이용약관 동의', '(필수) 개인정보 수집·이용 동의', '(선택) 마케팅 정보 수신 동의'].map((t) => <Checkbox key={t} checked={all} onChange={() => {}} label={t} />)}
+          {SIGNUP_AGREEMENTS.map((a) => <Checkbox key={a.id} checked={!!agreed[a.id]} onChange={(on) => setAgreed((prev) => ({ ...prev, [a.id]: on }))} label={a.label} />)}
         </div>
-        <button className="btn btn-ink btn-lg w-full">가입하기</button>
+        {formError && <p role="alert" className="text-[13px] text-rust">{formError}</p>}
+        <button type="submit" className="btn btn-ink btn-lg w-full">가입하기</button>
       </form>
     </div>
   );

@@ -7,7 +7,7 @@ import { SectionHead } from '../../components/ui';
 import { cx, comma } from '../../lib/format';
 
 const BANNERS = [
-  { img: '/images/banner/b1-1.jpg', kicker: 'LIVING · 10월 기획전', title: '해가 짧아지는 계절,\n방 안을 데우는 물건들', sub: '조명 · 패브릭 · 캔들 최대 30%', to: '/products?cat=living' },
+  { img: '/images/banner/b1-1.jpg', kicker: 'LIVING · 리빙 기획전', title: '해가 짧아지는 계절,\n방 안을 데우는 물건들', sub: '조명 · 패브릭 · 캔들 모아보기', to: '/products?cat=living' },
   { img: '/images/banner/b2-1.jpg', kicker: 'STORE PICK · 오롯이 리넨', title: '간절기에도\n리넨을 입는 이유', sub: '성수동 작업실에서 직접 만든 F/W 리넨', to: '/store/s1' },
   { img: '/images/banner/b3-1.jpg', kicker: 'FOOD · 로스터리 하루', title: '볶은 지 3일,\n가장 맛있는 원두만', sub: '월·목 로스팅 / 화·금 발송', to: '/store/s7' },
   { img: '/images/banner/b4-1.jpg', kicker: 'HANDMADE · 토담공방', title: '같은 모양은\n하나도 없습니다', sub: '전주 공방의 손빚음 식기', to: '/store/s4' },
@@ -100,7 +100,8 @@ export default function Home() {
           <div>
             <div className="eyebrow">Store of the week</div>
             <h2 className="mt-3 text-[30px] font-bold leading-tight tracking-tight">“흙을 고르는 데만<br />한 달이 걸려요”</h2>
-            <p className="mt-4 text-[15px] text-ink-2 leading-relaxed max-w-md">{featured.intro} 이번 주, 토담공방 이수아 작가의 작업실을 찾아가 가마를 여는 날의 이야기를 들었습니다.</p>
+            <p className="mt-4 text-[15px] text-ink-2 leading-relaxed max-w-md">{featured.intro}</p>
+            <p className="mt-2 text-[15px] text-ink-2 leading-relaxed max-w-md">이번 주, 토담공방 이수아 작가의 작업실을 찾아가 가마를 여는 날의 이야기를 들었습니다.</p>
             <div className="mt-7 grid grid-cols-3 gap-3">
               {featuredItems.map((p) => (
                 <Link key={p.id} to={`/products/${p.id}`} className="group">
@@ -129,7 +130,7 @@ export default function Home() {
           <div className="p-8 md:p-10 bg-ink text-white">
             <div className="eyebrow text-white/50">For sellers</div>
             <h2 className="mt-3 text-[28px] font-bold leading-tight">작은 가게도<br />곳간에선 잘 팔립니다</h2>
-            <p className="mt-4 text-sm text-white/70">신규 입점 첫 3개월, 판매수수료 50% 지원</p>
+            <p className="mt-4 text-sm text-white/70">카테고리별 판매수수료 6~11% · 매주 목요일 정산</p>
             <Link to="/seller/apply" className="btn btn-point mt-7">입점 신청하기 <ArrowRight size={16} /></Link>
           </div>
           <ol className="grid sm:grid-cols-3">

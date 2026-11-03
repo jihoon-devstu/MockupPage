@@ -7,6 +7,7 @@ import { StoreHome, StoreList } from './pages/shop/StorePages';
 import { Cart, Checkout, OrderComplete } from './pages/shop/CartCheckout';
 import { Login, Signup, Help, AuthCallback } from './pages/shop/AuthPages';
 import SellerApply from './pages/shop/SellerApply';
+import { Notice, Faq, Fees, SellerTerms } from './pages/shop/PolicyPages';
 import {
   MyPageLayout, MyOrders, MyOrderDetail, ClaimRequest, MyClaims, MyReviews, MyQna, MyChats, MyPoints, MyProfile, MyAddresses,
 } from './pages/mypage/MyPage';
@@ -38,6 +39,10 @@ export default function App() {
           <Route path="signup" element={<Signup />} />
           <Route path="auth/callback" element={<AuthCallback />} />
           <Route path="help" element={<Help />} />
+          <Route path="notice" element={<Notice />} />
+          <Route path="faq" element={<Faq />} />
+          <Route path="fees" element={<Fees />} />
+          <Route path="terms/seller" element={<SellerTerms />} />
           <Route path="seller/apply" element={<SellerApply />} />
           <Route path="mypage" element={<MyPageLayout />}>
             <Route index element={<Navigate to="orders" replace />} />

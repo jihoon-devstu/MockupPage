@@ -6,7 +6,7 @@ import { reviewsOf, ratingSummary, qnas, qnaWriter } from '../../data/reviews';
 import { ME } from '../../data/people';
 import { earnOf } from '../../data/orders';
 import { useApp } from '../../lib/store';
-import { Stars, Price, Modal, Checkbox, Pager, Pill } from '../../components/ui';
+import { Stars, Price, Modal, Checkbox, Pill } from '../../components/ui';
 import ProductCard from '../../components/ProductCard';
 import InquiryModal from '../../components/InquiryModal';
 import ReportModal from '../../components/ReportModal';
@@ -41,6 +41,7 @@ export default function ProductDetail() {
   const [photoOnly, setPhotoOnly] = useState(false);
   const [starFilter, setStarFilter] = useState(0);
   const [rsort, setRsort] = useState('recent');
+  const [rpage, setRpage] = useState(0);
 
   useEffect(() => { setImg(0); setPick({}); setLines([]); }, [id]);
   useEffect(() => { if (loc.hash) setTimeout(() => document.getElementById(loc.hash.slice(1))?.scrollIntoView(), 50); }, [loc.hash]);
@@ -58,7 +59,10 @@ export default function ProductDetail() {
   const cat = catById[p.cat];
   const unit = salePrice(p);
   const soldOut = p.status === '품절';
+  const storeOpen = store.status === '운영중'; // 실제: 정지 · 폐점 스토어면 문의 버튼 · 배송 정책 · 우측 스토어 카드를 숨김
+  const canBuy = storeOpen && p.status !== '판매중지'; // 실제: purchasable=false 면 '현재 구매할 수 없는 상품입니다'
   const fits = p.cat === 'fashion' || p.cat === 'shoes-bags' ? ['작아요', '정사이즈', '커요'].map((f) => ({ f, n: revs.filter((r) => r.fit === f).length })) : null;
+  const REVIEW_PAGE = 10;
   const canReport = !!user?.roles?.includes('BUYER'); // 리뷰 신고는 구매자만 — 판매자는 판매자센터의 '관리자 검토 요청'
   const myQna = qs.filter((q) => q.productId === id).sort((a, b) => b.date - a.date);
   const submitQna = ({ content, secret }) => {
@@ -75,7 +79,7 @@ export default function ProductDetail() {
   };
   const photos = revs.filter((r) => r.photos.length);
   const total = lines.reduce((a, l) => a + l.qty * unit, 0);
-  const ship = store.freeOver && total >= store.freeOver ? 0 : store.shipFee;
+  const ship = !storeOpen ? 0 : store.freeOver && total >= store.freeOver ? 0 : store.shipFee;
   const others = visibleProducts.filter((x) => x.storeId === p.storeId && x.id !== p.id).slice(0, 4);
 
   const choose = (name, v) => {
@@ -127,10 +131,12 @@ export default function ProductDetail() {
             <span className="w-5 h-5 text-[10px] text-white flex items-center justify-center" style={{ background: store.color }}>{store.name[0]}</span>
             {store.name} <ChevronRight size={14} />
           </Link>
-          <OpenChatButton className="btn btn-line btn-xs ml-2" basePath="/mypage/chats" by="BUYER"
-            request={{ type: 'STORE_INQUIRY', buyerId: CHAT_ME.userId, storeId: store.id, context: { type: 'PRODUCT', id: p.id } }}>
-            판매자에게 문의
-          </OpenChatButton>
+          {storeOpen && (
+            <OpenChatButton className="btn btn-line btn-xs ml-2" basePath="/mypage/chats" by="BUYER"
+              request={{ type: 'STORE_INQUIRY', buyerId: CHAT_ME.userId, storeId: store.id, context: { type: 'PRODUCT', id: p.id } }}>
+              판매자에게 문의
+            </OpenChatButton>
+          )}
           <h1 className="mt-2 text-[22px] font-bold leading-snug tracking-tight">{p.name}</h1>
           <button onClick={() => go('reviews')} className="mt-2 flex items-center gap-2 text-[13px]">
             <Stars value={p.rating} size={13} /> <b>{p.rating.toFixed(1)}</b> <span className="text-mute underline">리뷰 {comma(p.reviews)}개</span>
@@ -140,15 +146,19 @@ export default function ProductDetail() {
           <dl className="py-4 border-b border-line text-[13px] grid grid-cols-[72px_1fr] gap-y-2.5">
             <dt className="text-mute">적립</dt><dd>구매확정 시 실결제금액의 5% · 약 <b className="num">{comma(earnOf(unit))}P</b></dd>
             <dt className="text-mute">배송</dt>
-            <dd>
-              <div className="flex items-center gap-1.5"><Truck size={14} strokeWidth={1.6} /> {store.courier} · {store.shipFee ? `${comma(store.shipFee)}원` : '무료배송'}</div>
-              {store.freeOver > 0 && store.shipFee > 0 && <div className="text-mute mt-0.5">{comma(store.freeOver)}원 이상 구매 시 무료 (스토어 묶음배송)</div>}
-              <div className="text-moss mt-0.5 font-medium">{store.dispatch}</div>
-            </dd>
+            {storeOpen ? (
+              <dd>
+                <div className="flex items-center gap-1.5"><Truck size={14} strokeWidth={1.6} /> {store.courier} · {store.shipFee ? `${comma(store.shipFee)}원` : '무료배송'}</div>
+                {store.freeOver > 0 && store.shipFee > 0 && <div className="text-mute mt-0.5">{comma(store.freeOver)}원 이상 구매 시 무료 (스토어 묶음배송)</div>}
+                <div className="text-moss mt-0.5 font-medium">{store.dispatch}</div>
+              </dd>
+            ) : (
+              <dd className="flex items-center gap-1.5"><Truck size={14} strokeWidth={1.6} /> 지금은 판매하지 않는 스토어예요</dd>
+            )}
           </dl>
 
           {/* 옵션 */}
-          {!soldOut && (
+          {!soldOut && canBuy && (
             <div className="pt-5 space-y-2.5">
               {p.options.map((o, oi) => (
                 <select key={o.name} value={pick[o.name] || ''} disabled={oi > 0 && !pick[p.options[oi - 1].name]} onChange={(e) => choose(o.name, e.target.value)} className="field disabled:bg-cream disabled:text-mute">
@@ -181,7 +191,9 @@ export default function ProductDetail() {
             <span className="text-[24px] font-bold num">{won(total)}</span>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {soldOut ? (
+            {!canBuy ? (
+              <button disabled className="btn btn-line btn-lg col-span-2">현재 구매할 수 없는 상품입니다</button>
+            ) : soldOut ? (
               <button disabled className="btn btn-line btn-lg col-span-2">일시품절</button>
             ) : (
               <>
@@ -206,7 +218,6 @@ export default function ProductDetail() {
             <div className="max-w-[720px] mx-auto">
               <p className="text-center eyebrow">Detail</p>
               <h3 className="text-center text-[22px] font-bold mt-2">{p.name}</h3>
-              <p className="text-center text-sm text-ink-2 mt-3 leading-relaxed">{store.intro}</p>
               <div className="mt-8 space-y-2">
                 {p.images.map((s) => <img key={s} src={s} alt="" className="w-full" />)}
               </div>
@@ -227,7 +238,7 @@ export default function ProductDetail() {
               <h3 className="text-[20px] font-bold">리뷰 <span className="num">{comma(p.reviews)}</span></h3>
               <span className="text-[12px] text-mute">구매확정 후 작성된 리뷰만 노출됩니다</span>
             </div>
-            <div className="grid sm:grid-cols-[200px_1fr_1fr] gap-8 py-8 border-b border-line">
+            <div className={cx('grid gap-8 py-8 border-b border-line', fits ? 'sm:grid-cols-[200px_1fr_1fr]' : 'sm:grid-cols-[200px_1fr]')}>
               <div className="text-center sm:border-r border-line sm:pr-8">
                 <div className="text-[46px] font-bold leading-none num">{p.rating.toFixed(1)}</div>
                 <Stars value={p.rating} size={16} className="mt-2" />
@@ -235,7 +246,7 @@ export default function ProductDetail() {
               <ul className="space-y-1.5 text-[12.5px]">
                 {sum.dist.map((d) => (
                   <li key={d.star}>
-                    <button onClick={() => setStarFilter(starFilter === d.star ? 0 : d.star)} className={cx('w-full flex items-center gap-2.5', starFilter && starFilter !== d.star && 'opacity-40')}>
+                    <button onClick={() => { setStarFilter(starFilter === d.star ? 0 : d.star); setRpage(0); }} className={cx('w-full flex items-center gap-2.5', starFilter && starFilter !== d.star && 'opacity-40')}>
                       <span className="w-6 text-left">{d.star}점</span>
                       <span className="flex-1 h-1.5 bg-sand"><span className="block h-full bg-ink" style={{ width: `${(d.count / sum.total) * 100}%` }} /></span>
                       <span className="w-9 text-right num text-mute">{Math.round((d.count / sum.total) * 100)}%</span>
@@ -272,41 +283,51 @@ export default function ProductDetail() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 py-4 border-b border-line text-[13px]">
               <div className="flex items-center gap-4">
-                <Checkbox checked={photoOnly} onChange={setPhotoOnly} label="포토 리뷰만" />
-                {starFilter > 0 && <button onClick={() => setStarFilter(0)} className="inline-flex items-center gap-1 h-7 px-2 bg-sand">{starFilter}점만<X size={12} /></button>}
+                <Checkbox checked={photoOnly} onChange={(v) => { setPhotoOnly(v); setRpage(0); }} label="포토 리뷰만" />
+                {starFilter > 0 && <button onClick={() => { setStarFilter(0); setRpage(0); }} className="inline-flex items-center gap-1 h-7 px-2 bg-sand">{starFilter}점만<X size={12} /></button>}
               </div>
               <div className="flex gap-3">
                 {[['recent', '최신순'], ['high', '평점 높은순'], ['low', '평점 낮은순']].map(([k, l]) => (
-                  <button key={k} onClick={() => setRsort(k)} className={rsort === k ? 'font-bold' : 'text-mute'}>{l}</button>
+                  <button key={k} onClick={() => { setRsort(k); setRpage(0); }} className={rsort === k ? 'font-bold' : 'text-mute'}>{l}</button>
                 ))}
               </div>
             </div>
 
+            {filtered.length === 0 && (
+              <p className="py-10 text-center text-mute text-[13px]">{starFilter || photoOnly ? '조건에 맞는 리뷰가 없어요' : '아직 작성된 리뷰가 없어요'}</p>
+            )}
             <ul>
-              {filtered.map((r) => {
+              {filtered.slice(rpage * REVIEW_PAGE, (rpage + 1) * REVIEW_PAGE).map((r) => {
                 return (
                   <li key={r.id} className="py-6 border-b border-line">
                     {/* 작성자는 writerDisplayName 글자만 — 아바타 · 등급 없음 */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="text-[13px] font-semibold">{r.writer}</div>
-                      {canReport && <button onClick={() => setReportTarget({ type: 'REVIEW', id: r.id, label: '리뷰' })} className="text-[11.5px] text-mute hover:text-ink shrink-0">신고</button>}
+                      {canReport && r.userId !== ME.id && <button onClick={() => setReportTarget({ type: 'REVIEW', id: r.id, label: '리뷰' })} className="text-[11.5px] text-mute hover:text-ink shrink-0">신고</button>}
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-mute"><Stars value={r.rating} size={11} /> {ymd(r.date)}</div>
                     <div className="mt-3 text-[12px] text-mute">{r.option && <>옵션: {r.option}</>}{r.fit && <>{r.option && ' · '}사이즈 <b className="text-ink-2">{r.fit}</b></>}</div>
-                    <p className="mt-2 text-[14px] font-semibold">{r.title}</p>
+                    {r.title && <p className="mt-2 text-[14px] font-semibold">{r.title}</p>}
                     <p className="mt-1 text-[14px] leading-relaxed text-ink-2">{r.body}</p>
                     {r.photos.length > 0 && <div className="mt-3 flex gap-2">{r.photos.map((src) => <img key={src} src={src} alt="" className="w-28 h-28 object-cover" />)}</div>}
                     {r.reply && (
                       <div className="mt-4 bg-cream p-4 text-[13px]">
                         <div className="font-bold mb-1">{store.name} <span className="font-normal text-mute text-[11px] ml-1">판매자 답글</span></div>
-                        <p className="text-ink-2 leading-relaxed">{r.reply}</p>
+                        <p className="text-ink-2 leading-relaxed whitespace-pre-line">{r.reply}</p>
                       </div>
                     )}
                   </li>
                 );
               })}
             </ul>
-            <Pager total={5} className="mt-8" />
+            {/* 실제: 10개씩 서버 페이징 · 1페이지뿐이면 페이저 없음 (BlockPager) */}
+            {filtered.length > REVIEW_PAGE && (
+              <div className="mt-8 flex items-center justify-center gap-1 text-[13px]">
+                {Array.from({ length: Math.ceil(filtered.length / REVIEW_PAGE) }, (_, i) => (
+                  <button key={i} type="button" onClick={() => setRpage(i)} className={cx('min-w-8 h-8 px-1 num', i === rpage ? 'bg-ink text-white font-semibold' : 'hover:bg-sand')}>{i + 1}</button>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* Q&A — 비밀글은 작성자(나)에게만 내용이 보이고 남에게는 "비밀글입니다". 내 문의는 답변 전까지 수정, 삭제는 언제든 */}
@@ -351,11 +372,13 @@ export default function ProductDetail() {
             <table className="w-full text-[13px] mt-0">
               <tbody>
                 {[
-                  ['배송 방법', store.courier],
-                  ['배송비', store.shipFee ? `${won(store.shipFee)} (${won(store.freeOver)} 이상 무료)` : '무료배송'],
-                  ['출고', store.dispatch],
+                  ...(storeOpen ? [
+                    ['배송 방법', store.courier],
+                    ['배송비', store.shipFee ? `${won(store.shipFee)} (${won(store.freeOver)} 이상 무료)` : '무료배송'],
+                    ['출고', store.dispatch],
+                  ] : [['배송비', '스토어 배송 정책에 따름 — 장바구니에서 스토어별로 계산']]),
                   ['교환/반품 신청', '배송 완료 후 7일 이내, 마이페이지 > 주문/배송에서 신청'],
-                  ['반품 배송비', `단순 변심: 왕복 ${won((store.shipFee || 3000) * 2)} / 상품 하자·오배송: 판매자 부담`],
+                  ['반품 배송비', `단순 변심: 왕복 ${storeOpen ? won((store.shipFee || 3000) * 2) : '배송비'} / 상품 하자·오배송: 판매자 부담`],
                   ['교환/반품 불가', '사용 · 훼손으로 상품 가치가 떨어진 경우, 신선식품 · 주문 제작 상품의 단순 변심'],
                   ['구매 확정', '배송 완료 7일 후 자동 구매확정 (확정 이후에는 교환/반품 불가)'],
                   ['포인트', '적립은 구매확정 때 · 취소 · 반품 완료 시 그 상품분 사용 포인트는 환원'],
@@ -369,7 +392,7 @@ export default function ProductDetail() {
 
         {/* 우측 스토어 카드 */}
         <aside className="hidden lg:block pt-10">
-          <div className="sticky top-32 border border-line">
+          {storeOpen && <div className="sticky top-32 border border-line">
             <img src={store.cover} alt="" className="w-full aspect-[16/9] object-cover" />
             <div className="p-5">
               <div className="flex items-center gap-2">
@@ -384,7 +407,7 @@ export default function ProductDetail() {
                 <Link to={`/store/${store.id}`} className="btn btn-ink btn-sm w-full">스토어 홈</Link>
               </div>
             </div>
-          </div>
+          </div>}
         </aside>
       </div>
 

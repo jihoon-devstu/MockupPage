@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useApp } from '../../lib/store';
 import { Upload, Check, FileText, X } from 'lucide-react';
 import { categories } from '../../data/catalog';
 import { Checkbox } from '../../components/ui';
@@ -19,20 +20,23 @@ const DOC_TYPES = [
   { value: 'BANK_COPY', label: '정산 계좌 통장 사본', desc: '사업자 명의 계좌 (개인사업자는 대표자 명의 가능)' },
   { value: 'PRODUCT_PHOTO', label: '대표 상품 사진', desc: '실제 판매할 상품 사진 3~10장', multiple: true },
 ];
+// 판매수수료 범위 — 수수료 안내(/fees)와 같은 표(시드값)에서 계산. 수수료 안내는 새 탭(작성 중인 신청서 유지)
+const COMMISSION_RANGE = '6%–11%';
+const FeesLink = () => <Link to="/fees" target="_blank" rel="noopener noreferrer" className="underline">수수료 안내</Link>;
 const DOC_LABEL = Object.fromEntries(DOC_TYPES.map((d) => [d.value, d.label]));
 const EXPECTED_SALES = ['선택 안 함', '500만원 미만', '500만 ~ 2,000만원', '2,000만 ~ 1억', '1억 이상'];
 const BANKS = ['기업은행', '국민은행', '신한은행', '우리은행', '하나은행', '농협'];
 const FIELD_LABEL = {
   bizType: '사업자 구분', companyName: '상호명', ownerName: '대표자명', bizRegNo: '사업자등록번호', ecommerceRegNo: '통신판매업 신고번호',
   managerPhone: '담당자 휴대폰', managerEmail: '담당자 이메일', businessAddress: '사업장 주소', storeName: '스토어 이름', slug: '스토어 주소',
-  categoryId: '대표 카테고리', intro: '스토어 소개', bank: '은행', number: '계좌번호', holder: '예금주',
+  categoryId: '대표 카테고리', intro: '스토어 소개', expectedMonthlySales: '월 예상 매출', salesChannel: '운영 중인 채널', bank: '은행', number: '계좌번호', holder: '예금주',
 };
 
 // 내 신청 상태 예시 (store.md 2-2절 모양)
 const SUBMITTED = {
   bizType: '개인사업자', companyName: '바람결 리빙', ownerName: '김하늘', bizRegNo: '123-45-67890', ecommerceRegNo: '2026-서울마포-0123',
   managerPhone: '010-1234-5678', managerEmail: 'sky@example.com', businessAddress: '서울 마포구 월드컵로 12길 3, 2층',
-  storeName: '바람결 리빙', slug: 'baramgyeol', categoryId: 'living', intro: '손으로 엮은 라탄 소품을 만듭니다.',
+  storeName: '바람결 리빙', slug: 'baramgyeol', categoryId: 'living', intro: '손으로 엮은 라탄 소품을 만듭니다.', expectedMonthlySales: '500만원 미만', salesChannel: '',
   products: [{ name: '라탄 바구니 M', sub: '수납', price: 38000 }, { name: '라탄 트레이', sub: '수납', price: 26000 }],
   bank: '국민은행', number: '123456-01-234567', holder: '김하늘',
   documents: [['BUSINESS_REG', '사업자등록증.pdf'], ['ECOMMERCE_REG', '통신판매업신고증.pdf'], ['BANK_COPY', '통장사본.jpg'], ['PRODUCT_PHOTO', 'basket.jpg, tray.jpg, lamp.jpg']],
@@ -136,6 +140,7 @@ function ApplicationStatus({ me, onReapply, onResubmit }) {
 
 /* ─── 신청 폼 (4단계) ─── */
 function ApplyForm({ onSubmit }) {
+  const { toast } = useApp();
   const [step, setStep] = useState(0);
   const [bizType, setBizType] = useState(BIZ_TYPES[0]);
   const [cat, setCat] = useState(categories[0].id);
@@ -143,6 +148,11 @@ function ApplyForm({ onSubmit }) {
   const [docs, setDocs] = useState({});
   const [agree, setAgree] = useState({ sellerTerms: false, electronicFinance: false, privacy: false, marketing: false });
   const c = categories.find((x) => x.id === cat);
+  // 목업: 실제 화면 검사 중 서류 개수만 흉내 (빈칸 · 형식 검사는 생략)
+  const next = () => {
+    if (step === 2 && !DOC_TYPES.every((t) => docs[t.value])) { toast('서류 3종을 모두 올려 주세요'); return; }
+    setStep(step + 1);
+  };
 
   return (
     <div className="max-w-[1080px] mx-auto px-4 md:px-6 pt-10 grid lg:grid-cols-[300px_1fr] gap-10">
@@ -160,9 +170,8 @@ function ApplyForm({ onSubmit }) {
           <div className="mt-8 bg-cream p-5 text-[13px] leading-relaxed">
             <b>입점 혜택</b>
             <ul className="mt-2 space-y-1 text-ink-2">
-              <li>· 첫 3개월 판매수수료 50% 지원</li>
+              <li>· 판매수수료 상위 카테고리별 {COMMISSION_RANGE} · 결제수수료 2.2% (<FeesLink />)</li>
               <li>· 주 1회 정산 (구매확정 기준)</li>
-              <li>· 신규 스토어 메인 노출 2주</li>
             </ul>
           </div>
         </div>
@@ -246,7 +255,7 @@ function ApplyForm({ onSubmit }) {
               <div className="px-4 h-11 flex items-center bg-cream font-semibold text-[14px] border-b border-line">정산 정책 요약</div>
               <table className="w-full text-[13px]">
                 <tbody>
-                  {[['판매수수료', '상위 카테고리별 요율 (첫 3개월 50%)'], ['결제수수료', '2.2% (PG사 수수료)'], ['정산 기준', '구매확정일 (배송완료 7일 후 자동 확정)'], ['정산 주기', '주 1회 · 월~일 확정분을 다음 주 목요일 지급'], ['지급 보류', '클레임 미처리, 스토어 정지 시 해당 건 지급 보류']].map(([k, v]) => (
+                  {[['판매수수료', <>상위 카테고리별 {COMMISSION_RANGE} (<FeesLink />)</>], ['결제수수료', '2.2% (PG사 수수료)'], ['정산 기준', '구매확정일 (배송완료 7일 후 자동 확정)'], ['정산 주기', '주 1회 · 월~일 확정분을 다음 주 목요일 지급'], ['지급 보류', '클레임 미처리, 스토어 정지 시 해당 건 지급 보류']].map(([k, v]) => (
                     <tr key={k} className="border-b border-line last:border-0"><th className="w-28 text-left font-medium text-ink-2 px-4 py-2.5">{k}</th><td className="px-4 py-2.5">{v}</td></tr>
                   ))}
                 </tbody>
@@ -263,9 +272,9 @@ function ApplyForm({ onSubmit }) {
         <div className="mt-10 pt-5 border-t border-line flex justify-between">
           <button disabled={step === 0} onClick={() => setStep(step - 1)} className="btn btn-line">이전</button>
           {step < 3 ? (
-            <button onClick={() => setStep(step + 1)} className="btn btn-ink px-8">다음 단계</button>
+            <button onClick={next} className="btn btn-ink px-8">다음 단계</button>
           ) : (
-            <button onClick={onSubmit} className="btn btn-point px-8">입점 신청하기</button>
+            <button onClick={() => { if (!(agree.sellerTerms && agree.electronicFinance && agree.privacy)) { toast('필수 약관에 동의해 주세요'); return; } onSubmit(); }} className="btn btn-point px-8">입점 신청하기</button>
           )}
         </div>
       </div>
@@ -275,6 +284,7 @@ function ApplyForm({ onSubmit }) {
 
 /* ─── 보완 재제출 — 제출한 내용으로 채운 한 페이지 폼, 바꾼 칸만 보냄 ─── */
 function Resubmit({ me, onCancel, onDone }) {
+  const { toast } = useApp();
   const [form, setForm] = useState(SUBMITTED);
   const [docs, setDocs] = useState({});
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -283,8 +293,9 @@ function Resubmit({ me, onCancel, onDone }) {
   const changedCount = changed.length + needDocs.length;
   const current = (type) => SUBMITTED.documents.find(([t]) => t === type)?.[1];
   const submit = () => {
-    const names = [...changed.map((k) => FIELD_LABEL[k]), ...needDocs.map((t) => t.label)];
-    if (window.confirm(`${names.length ? `바꾼 항목: ${names.join(', ')}` : '바꾼 항목 없이 확인만 제출해요'}\n\n제출하면 다시 심사를 받아요. 제출할까요?`)) onDone();
+    // 실제 resubmitConfirmMessage 와 같은 문구
+    const names = [...changed.map((k) => FIELD_LABEL[k]), ...needDocs.map((t) => `${t.label}(다시 냄)`)];
+    if (window.confirm(names.length ? `바꾼 항목: ${names.join(' · ')}\n제출하면 다시 심사받습니다. 제출할까요?` : '바꾼 항목이 없어요. 확인만 제출할까요?')) { toast('보완 내용을 제출했어요. 다시 심사해 드릴게요.'); onDone(); }
   };
 
   return (
@@ -299,7 +310,9 @@ function Resubmit({ me, onCancel, onDone }) {
 
       <section className="mt-10 space-y-3">
         <h2 className="text-[18px] font-bold">다시 낼 서류</h2>
-        <p className="text-[13px] text-mute">PDF, JPG, PNG (최대 10MB) · 상품 사진은 JPG, PNG</p>
+        {needDocs.length === 0
+          ? <p className="text-[13px] text-mute">다시 낼 서류는 없어요. 아래에서 고칠 내용만 수정해 주세요.</p>
+          : <p className="text-[13px] text-mute">PDF, JPG, PNG (최대 10MB) · 상품 사진은 JPG, PNG</p>}
         {needDocs.map((t) => <Doc key={t.value} type={t} current={current(t.value)} done={docs[t.value]} onToggle={() => setDocs({ ...docs, [t.value]: !docs[t.value] })} />)}
       </section>
 
@@ -335,11 +348,16 @@ function Resubmit({ me, onCancel, onDone }) {
               <div key={i} className="grid grid-cols-[1fr_120px_140px] gap-2">
                 <input className="field" defaultValue={p.name} />
                 <select className="field" defaultValue={p.sub}>{[...new Set([p.sub, ...(categories.find((x) => x.id === form.categoryId)?.subs ?? [])])].map((s) => <option key={s}>{s}</option>)}</select>
-                <input className="field num" defaultValue={p.price} />
+                <input className="field num" type="number" min="1" placeholder="예상 판매가" defaultValue={p.price} />
               </div>
             ))}
+            {form.products.length < 10 && <button type="button" onClick={() => setForm({ ...form, products: [...form.products, { name: '', sub: '', price: '' }] })} className="btn btn-ghost btn-sm">+ 상품 추가</button>}
           </div>
         </Field>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="월 예상 매출"><select className="field" value={form.expectedMonthlySales} onChange={set('expectedMonthlySales')}>{EXPECTED_SALES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="운영 중인 채널"><input className="field" value={form.salesChannel} onChange={set('salesChannel')} /></Field>
+        </div>
         <Field label="스토어 소개"><textarea rows={4} className="field" value={form.intro} onChange={set('intro')} /></Field>
       </section>
 

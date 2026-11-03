@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Star, Camera, Upload, X, Lock } from 'lucide-react';
+import { ChevronRight, Star, Camera, X, Lock } from 'lucide-react';
 import { productById, storeById } from '../../data/catalog';
 import { ME, myAddresses, GRADES, gradeById, nextGrade } from '../../data/people';
 import { myOrders, FLOW, orderPay, linePoints, orderOfLine, shipFeeFor, POINT_RATE } from '../../data/orders';
@@ -153,7 +153,7 @@ function ReviewForm({ target, onClose }) {
         <div className="text-[12px] text-mute mt-1">{STAR_TEXT[hover || star]}</div>
       </div>
       {(['fashion', 'shoes-bags'].includes(p?.cat) || editing?.fit) && <div className="mb-4">
-        <div className="label">사이즈는 어땠나요? <span className="text-mute font-normal">(선택 — 의류 · 신발 · 가방)</span></div>
+        <div className="label">사이즈는 어땠나요? <span className="text-mute font-normal">(선택)</span></div>
         <div className="grid grid-cols-3 gap-2">{FITS.map((f) => <button key={f} onClick={() => setFit(fit === f ? null : f)} className={cx('h-10 border text-sm', fit === f ? 'border-ink border-2 font-bold' : 'border-line-2')}>{f}</button>)}</div>
       </div>}
       <label className="label">리뷰 내용</label>
@@ -335,7 +335,6 @@ export function MyOrderDetail() {
             <div className="flex justify-between py-2.5 text-[13px]"><span className="text-mute">{o.items.every((l) => l.status === '구매확정') ? '적립 포인트' : '적립 예정 포인트 (구매확정 시 적립)'}</span><span className="num font-semibold text-moss">+{comma(earned)}P</span></div>
           </div>
           <div className="flex gap-2 mt-2">
-            <button className="btn btn-line btn-sm">영수증 / 거래명세서</button>
             <OpenChatButton basePath="/mypage/chats" by="BUYER" request={{ type: 'BUYER_SUPPORT', buyerId: CHAT_ME.userId, context: { type: 'ORDER', id: o.id } }}>
               결제 · 환불 문의
             </OpenChatButton>
@@ -363,20 +362,21 @@ const reasonLabel = (reason) => reason.replace(/ \(.*\)$/, '');
 /* 환불 예정액 (실제는 서버 claims/preview)
    취소: 그 스토어의 마지막 상품주문이면 배송비 환불 · 반품: 구매자 사유면 왕복 배송비 차감 · 교환: 금액 0
    결제수단 환불 = 상품금액 ± 배송비 − 그 상품주문분 사용 포인트(환원). 적립은 구매확정 때라 회수할 적립 포인트 없음 */
+// 같은 스토어에 취소되지 않은 다른 상품주문이 남았는지 — 남았으면 취소해도 배송비를 돌려주지 않는다 (실제 ClaimTxService.lastOfStore 와 같은 기준)
+const sameStoreLeft = (o, l) => o.items.some((x) => x.lineId !== l.lineId && x.storeId === l.storeId && !['취소요청', '취소완료'].includes(x.status));
 function refundOf(o, l, type, reason) {
   const amount = l.unitPrice * l.qty;
   if (type === '교환') return { amount, ship: 0, pointBack: 0, cash: 0 };
   const store = storeById[l.storeId];
   let ship = 0;
   if (type === '취소') {
-    const others = o.items.filter((x) => x.lineId !== l.lineId && x.storeId === l.storeId && !['취소완료', '반품완료'].includes(x.status));
-    if (!others.length) ship = shipFeeFor(store, amount);
+    if (!sameStoreLeft(o, l)) ship = shipFeeFor(store, amount);
   } else if (!isSellerFault(reason)) ship = -(store.shipFee || 3000) * 2;
   const pointBack = linePoints(o, l).used;
   return { amount, ship, pointBack, cash: Math.max(0, amount + ship - pointBack) };
 }
 
-function PreviewBox({ r, type, reason }) {
+function PreviewBox({ r, type, reason, left }) {
   const row = (k, v, cls = '') => <div className={cx('flex justify-between', cls)}><span className="text-ink-2">{k}</span><span className="num">{v}</span></div>;
   if (!reason) return <div className="bg-cream p-5 text-[13px] text-mute">사유를 고르면 환불 예정 금액을 알려 드려요.</div>;
   return (
@@ -386,7 +386,7 @@ function PreviewBox({ r, type, reason }) {
         ? row('교환 배송비', '판매자 부담 · 같은 옵션으로 다시 보내 드려요')
         : <>
           {type === '취소'
-            ? row('배송비 환불', r.ship ? `+${won(r.ship)}` : '없음 (같은 스토어 상품이 남아 있어요)')
+            ? row('배송비 환불', r.ship ? `+${won(r.ship)}` : left ? '없음 (같은 스토어 상품이 남아 있어요)' : '없음 (배송비를 내지 않은 주문이에요)')
             : row('반품 배송비 차감', r.ship ? `−${won(Math.abs(r.ship))}` : '판매자 부담')}
           {row('사용 포인트 환원', r.pointBack ? `+${comma(r.pointBack)}P` : '0P', 'text-moss')}
           <div className="flex justify-between font-bold border-t border-line-2 pt-2"><span>결제수단 환불 예정 금액</span><span className="num">{won(r.cash)}</span></div>
@@ -454,17 +454,11 @@ function ClaimRequestBody({ l }) {
           </div>
           <div><label className="label">상세 사유</label><textarea rows={4} maxLength={500} className="field" placeholder="판매자에게 전달할 내용을 적어주세요" /></div>
           {type !== '취소' && (
-            <div>
-              <label className="label">사진 첨부 {isSellerFault(reason) && <span className="text-point">(필수)</span>}</label>
-              <button className="w-20 h-20 border border-dashed border-line-2 text-mute flex flex-col items-center justify-center gap-1 text-[11px]"><Upload size={18} />추가</button>
-            </div>
-          )}
-          {type !== '취소' && (
             <div><label className="label">회수 방법</label>
               <div className="grid grid-cols-2 gap-2"><button className="h-11 border-2 border-ink text-sm font-semibold">판매자 지정 택배 회수</button><button className="h-11 border border-line-2 text-sm">직접 발송</button></div>
             </div>
           )}
-          <PreviewBox r={r} type={type} reason={reason} />
+          <PreviewBox r={r} type={type} reason={reason} left={sameStoreLeft(o, l)} />
           <p className="text-[12px] text-mute -mt-3">{type === '취소' ? '결제완료 상태는 판매자 확인 없이 바로 취소되고 결제수단으로 환불돼요.' : type === '반품' ? '판매자가 회수 상품을 확인한 후 환불됩니다. (영업일 1~3일)' : '교환은 결제 · 재고 변동 없이 회수 확인 후 같은 옵션으로 재배송됩니다.'}</p>
           <div className="flex gap-2 justify-end">
             <button onClick={() => nav(-1)} className="btn btn-line">이전으로</button>

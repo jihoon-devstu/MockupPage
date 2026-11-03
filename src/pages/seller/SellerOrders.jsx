@@ -74,6 +74,7 @@ export function SellerOrderList() {
 
       <div className="panel mt-3">
         <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-line text-[13px]">
+          <Checkbox checked={allOn} onChange={(on) => setSel(on ? new Set(list.map((r) => r.lineId)) : new Set())} />
           <span className="text-ink-2 mr-2">선택 <b className="num text-ink">{sel.size}</b>건</span>
           <button disabled={!sel.size} onClick={confirm} className="btn btn-ink btn-xs">발주확인</button>
           <button disabled={!sel.size} onClick={() => setInvoiceModal(true)} className="btn btn-line btn-xs">송장 입력 · 발송처리</button>
@@ -83,11 +84,12 @@ export function SellerOrderList() {
           <table className="tbl">
             <thead>
               <tr>
-                <th className="w-10"><Checkbox checked={allOn} onChange={(on) => setSel(on ? new Set(list.map((r) => r.lineId)) : new Set())} /></th>
+                <th className="w-10" />
                 <th>상품주문번호</th><th>주문일시</th><th>상태</th><th>상품 / 옵션</th><th className="text-right">수량</th><th className="text-right">결제금액</th><th>구매자</th><th>택배사 / 송장</th>
               </tr>
             </thead>
             <tbody>
+              {list.length === 0 && <tr><td colSpan={9} className="text-center text-mute py-10">조건에 맞는 항목이 없어요</td></tr>}
               {list.map((o) => {
                 const p = productById[o.productId];
                 return (
@@ -120,7 +122,7 @@ export function SellerOrderList() {
               <tr key={r.lineId} className={cx(r.status !== '배송준비' && 'opacity-40')}>
                 <td className="num text-[12px]">{r.lineId}</td><td>{r.receiver}</td>
                 <td><select defaultValue={MY_STORE.courier} className="field field-sm w-32" disabled={r.status !== '배송준비'}>{COURIERS.map((c) => <option key={c}>{c}</option>)}</select></td>
-                <td><input className="field field-sm num w-40" defaultValue={r.invoice || ''} placeholder="숫자만 입력 (비우면 자동)" disabled={r.status !== '배송준비'} /></td>
+                <td><input className="field field-sm num w-40" placeholder="숫자만 입력 (비우면 자동)" disabled={r.status !== '배송준비'} /></td>
               </tr>
             ))}
           </tbody>
@@ -175,8 +177,6 @@ export function SellerOrderDetail() {
               {o.status === '결제완료' && <button onClick={() => update({ status: '배송준비' }, bulkSummary('발주확인', 1))} className="btn btn-ink btn-sm">발주확인</button>}
               {o.status === '배송준비' && !shipForm && <button onClick={() => setShipForm({ courier: MY_STORE.courier, invoice: '' })} className="btn btn-ink btn-sm">송장 입력</button>}
               {o.status === '배송중' && <button onClick={() => update({ status: '배송완료' }, bulkSummary('배송완료 처리', 1))} className="btn btn-ink btn-sm">배송완료 처리</button>}
-              {o.status === '배송중' && <button className="btn btn-line btn-sm">송장 수정</button>}
-              <button className="btn btn-line btn-sm">구매자에게 메시지</button>
             </div>
             {shipForm && (
               <div className="px-5 pb-5 flex flex-wrap items-center gap-2 text-[13px]">
@@ -188,7 +188,7 @@ export function SellerOrderDetail() {
             )}
           </div>
           <div className="panel">
-            <div className="panel-head"><span className="panel-title">배송지 정보</span><button className="btn btn-line btn-xs">배송지 수정</button></div>
+            <div className="panel-head"><span className="panel-title">배송지 정보</span></div>
             <div className="p-5"><KV rows={[['수령인', o.receiver], ['연락처', o.phone], ['주소', o.addr], ['배송메모', o.memo || '-'], ['택배사', o.invoice ? o.courier : '-'], ['송장번호', o.invoice ? <span className="num">{o.invoice}</span> : '미등록']]} /></div>
           </div>
           <div className="panel">
@@ -206,13 +206,10 @@ export function SellerOrderDetail() {
             <div className="p-5 text-[13px]"><b>{buyer?.name ?? o.receiver}</b></div>
           </div>
           <div className="panel">
-            <div className="panel-head"><span className="panel-title">정산 예정</span></div>
+            <div className="panel-head"><span className="panel-title">정산</span></div>
             <div className="p-5 text-[13px] space-y-2 num">
               <div className="flex justify-between"><span className="text-ink-2 font-sans">결제금액</span>{won(amount)}</div>
-              <div className="flex justify-between"><span className="text-ink-2 font-sans">판매수수료 (11%)</span>−{won(amount * 0.11)}</div>
-              <div className="flex justify-between"><span className="text-ink-2 font-sans">결제수수료 (2.2%)</span>−{won(amount * 0.022)}</div>
-              <div className="flex justify-between border-t border-line pt-2 font-bold text-[14px]"><span className="font-sans">정산 예정액</span>{won(amount * (1 - 0.132))}</div>
-              <p className="text-[11.5px] text-mute font-sans">구매확정 후 다음 주 목요일 지급</p>
+              <p className="text-[11.5px] text-mute font-sans">판매수수료는 카테고리별 요율로 빠지고, 구매확정 후 다음 주 목요일 지급돼요. 금액은 <Link to="/seller/settlements" className="underline">정산 내역</Link>에서 확인하세요.</p>
             </div>
           </div>
         </div>
@@ -364,7 +361,7 @@ export function SellerClaims() {
               <div className="flex-1"><div className="font-semibold">{p.name}</div><div className="text-mute">{detail.option || '단일상품'} · {detail.qty}개</div><div className="num text-mute">{detail.lineId}</div></div>
               <StatusPill s={claimStatusLabel(view(detail))} />
             </div>
-            <div className="mt-4"><KV rows={[['유형', c.type], ['사유', c.reason], ['요청일', ymd(c.requested)], ['구매자', userById[detail.buyerId]?.name ?? detail.receiver], ['진행', claimProgress(view(detail))], ['송장', invoice ? <span className="num">{invoice}</span> : '-']]} /></div>
+            <div className="mt-4"><KV rows={[['유형', c.type], ['사유', `${c.reason}${c.detail ? ` · ${c.detail}` : ''}`], ['요청일', ymd(c.requested)], ['구매자', userById[detail.buyerId]?.name ?? detail.receiver], ['진행', claimProgress(view(detail))], ['송장', invoice ? <span className="num">{invoice}</span> : '-']]} /></div>
             {c.type !== '교환' && (
               <div className="mt-4 bg-cream p-4 text-[13px] space-y-1.5">
                 <div className="flex justify-between"><span className="text-ink-2">상품 결제금액</span><span className="num">{won(m.amount)}</span></div>

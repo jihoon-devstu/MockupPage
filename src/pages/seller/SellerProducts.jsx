@@ -68,6 +68,11 @@ export function SellerProductList() {
     else toast(soldOut === okRows.length ? `${head}. 재고가 0이라 품절로 보여요 — 「재고」에서 채워 주세요` : `${head}. 그중 ${soldOut}개는 재고가 0이라 품절로 보여요`);
     setSel(new Set(failed.map((r) => r.id)));
   };
+  // 복사 — 판매중지 · 재고 0 으로 새로 등록 (실제: 상세를 읽어 '(복사)' 이름으로 저장)
+  const copy = (p) => {
+    setRows([{ ...p, id: `${p.id}-c${rows.length}`, name: `${p.name} (복사)`.slice(0, 100), status: '판매중지', blocked: false, statusReason: '', stock: 0, rating: 0, reviews: 0, created: new Date() }, ...rows]);
+    toast('판매중지 상태로 복사했어요. 재고를 채운 뒤 판매를 시작하세요');
+  };
   const toggle = (id) => { const n = new Set(sel); n.has(id) ? n.delete(id) : n.add(id); setSel(n); };
   const saveStock = (total) => {
     if (total == null) return toast('바뀐 재고가 없어요');
@@ -106,6 +111,7 @@ export function SellerProductList() {
               </tr>
             </thead>
             <tbody>
+              {list.length === 0 && <tr><td colSpan={10} className="text-center text-mute py-10">조건에 맞는 항목이 없어요</td></tr>}
               {list.map((p) => (
                 <tr key={p.id}>
                   <td><Checkbox checked={sel.has(p.id)} onChange={() => toggle(p.id)} /></td>
@@ -122,6 +128,7 @@ export function SellerProductList() {
                   <td className="whitespace-nowrap">
                     <StatusPill s={p.blocked ? '강제중지' : p.status} />
                     {p.blocked && p.statusReason && <div className="text-[11.5px] text-rust mt-1 max-w-[180px] whitespace-normal">사유: {p.statusReason}</div>}
+                    {p.hidden && <div className="text-[11.5px] text-amber mt-1">쇼핑몰 미노출 · {p.hidden}</div>}
                   </td>
                   <td className="whitespace-nowrap">★ {p.rating} <span className="text-mute num">({comma(p.reviews)})</span></td>
                   <td className="num text-ink-2">{ymd(p.created)}</td>
@@ -130,7 +137,7 @@ export function SellerProductList() {
                       <Link to={`/seller/products/${p.id}/edit`} className="btn btn-line btn-xs">수정</Link>
                       <button onClick={() => setStockId(p.id)} className="btn btn-line btn-xs">재고</button>
                       <Link to={`/products/${p.id}`} className="btn btn-ghost btn-xs px-1.5" title="쇼핑몰에서 보기"><Eye size={14} /></Link>
-                      <button onClick={() => toast('판매중지 상태로 복사했어요. 재고를 채운 뒤 판매를 시작하세요')} className="btn btn-ghost btn-xs px-1.5" title="복사"><Copy size={14} /></button>
+                      <button onClick={() => copy(p)} className="btn btn-ghost btn-xs px-1.5" title="복사"><Copy size={14} /></button>
                     </div>
                   </td>
                 </tr>
@@ -185,6 +192,7 @@ export function SellerProductForm() {
   const [desc, setDesc] = useState(edit ? `<p>${MY_STORE.intro}</p>\n<p>세탁: 찬물 단독 손세탁 / 건조기 사용 금지</p>` : '');
   const [status, setStatus] = useState('판매중');
   const [stocks, setStocks] = useState({}); // 새 조합의 재고 입력값
+  const [off, setOff] = useState({}); // 판매 체크를 푼 조합
   const [ask, setAsk] = useState(null); // 확인 창: 'zeroStock' | 'delete'
 
   const combos = useMemo(() => {
@@ -257,7 +265,7 @@ export function SellerProductForm() {
                         <td>{hasOptions ? cb.join(' / ') : '옵션 없음'}</td>
                         <td><input className="field field-sm num" defaultValue="0" disabled={!hasOptions} /></td>
                         <td>{saved != null ? <span className="num text-ink-2">{saved}</span> : <input className="field field-sm num" value={stocks[cb.join('/')] ?? 0} onChange={(e) => setStocks({ ...stocks, [cb.join('/')]: Number(e.target.value.replace(/\D/g, '')) })} />}</td>
-                        <td><Checkbox checked onChange={() => {}} /></td>
+                        <td><Checkbox checked={!off[cb.join('/')]} onChange={(on) => setOff({ ...off, [cb.join('/')]: !on })} /></td>
                       </tr>
                     );
                   })}

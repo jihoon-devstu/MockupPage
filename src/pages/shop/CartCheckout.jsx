@@ -55,7 +55,11 @@ export function Cart() {
   const { cart, setQty, toggleLine, toggleAll, removeLines, toast } = useApp();
   const nav = useNavigate();
   const checked = cart.filter((l) => l.checked);
-  const groups = groupByStore(cart);
+  // 실제: 스토어 머리의 배송비 · 무료배송까지 남은 금액은 선택된 구매 가능 줄 기준 (서버 계산)
+  const groups = groupByStore(cart).map((g) => {
+    const subtotal = g.lines.filter((l) => l.checked && purchasable(l)).reduce((a, l) => a + l.unit * l.qty, 0);
+    return { ...g, subtotal, ship: subtotal ? shipFeeFor(g.store, subtotal) : 0 };
+  });
   const checkedGroups = groupByStore(checked.filter(purchasable));
   const orderable = checked.filter(purchasable).length;
   const allOn = cart.length > 0 && checked.length === cart.length;
@@ -75,14 +79,14 @@ export function Cart() {
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-line">
               <Checkbox checked={allOn} onChange={toggleAll} label={`전체선택 (${checked.length}/${cart.length})`} />
-              <button onClick={() => { removeLines(checked.map((l) => l.key)); toast('선택한 상품을 삭제했어요'); }} className="text-[13px] text-mute hover:text-ink">선택삭제</button>
+              <button onClick={() => { if (!checked.length) { toast('삭제할 상품을 선택해 주세요'); return; } removeLines(checked.map((l) => l.key)); toast('선택한 상품을 삭제했어요'); }} className="text-[13px] text-mute hover:text-ink">선택삭제</button>
             </div>
             {groups.map((g) => (
               <div key={g.store.id} className="mt-6 border border-line">
                 <div className="flex items-center justify-between px-4 h-12 bg-cream border-b border-line">
                   <Link to={`/store/${g.store.id}`} className="font-bold text-[14px] hover:underline">{g.store.name}</Link>
                   <span className="text-[12px] text-ink-2">
-                    {g.ship === 0 ? '무료배송' : <>배송비 {won(g.ship)}{g.store.freeOver - g.subtotal > 0 && <> · <span className="text-point">{won(g.store.freeOver - g.subtotal)} 더 담으면 무료배송</span></>}</>}
+                    {g.subtotal === 0 ? '선택한 상품 없음' : g.ship === 0 ? '무료배송' : <>배송비 {won(g.ship)}{g.store.freeOver - g.subtotal > 0 && <> · <span className="text-point">{won(g.store.freeOver - g.subtotal)} 더 담으면 무료배송</span></>}</>}
                   </span>
                 </div>
                 {g.lines.map((l) => (
@@ -99,14 +103,11 @@ export function Cart() {
                       {purchasable(l) && l.qty > l.product.stock && <div className="text-[12px] text-rust mt-1">재고가 {l.product.stock}개 남았어요</div>}
                       <div className="mt-3 flex items-end justify-between">
                         <div className="flex items-center border border-line-2 h-8">
-                          <button className="w-8 h-full flex items-center justify-center hover:bg-sand" onClick={() => setQty(l.key, l.qty - 1)}><Minus size={13} /></button>
+                          <button disabled={l.qty <= 1} aria-label="수량 줄이기" className="w-8 h-full flex items-center justify-center hover:bg-sand disabled:opacity-30" onClick={() => setQty(l.key, l.qty - 1)}><Minus size={13} /></button>
                           <span className="w-9 text-center text-[13px] num">{l.qty}</span>
-                          <button className="w-8 h-full flex items-center justify-center hover:bg-sand" onClick={() => setQty(l.key, l.qty + 1)}><Plus size={13} /></button>
+                          <button disabled={l.qty >= 999} aria-label="수량 늘리기" className="w-8 h-full flex items-center justify-center hover:bg-sand disabled:opacity-30" onClick={() => setQty(l.key, l.qty + 1)}><Plus size={13} /></button>
                         </div>
-                        <div className="text-right">
-                          {l.product.discount > 0 && <div className="text-[12px] text-mute line-through num">{won(l.product.price * l.qty)}</div>}
-                          <div className="font-bold num">{won(l.unit * l.qty)}</div>
-                        </div>
+                        <div className="font-bold num">{won(l.unit * l.qty)}</div>
                       </div>
                     </div>
                   </div>
@@ -288,7 +289,7 @@ export function OrderComplete() {
   const payState = new URLSearchParams(search).get('pay');
   if (payState === 'checking') return <Empty title="결제를 확인하고 있어요" />;
   if (payState === 'failed') {
-    return <Empty title="결제를 완료하지 못했어요" desc="결제창에서 결제를 취소했어요." action={<Link to="/mypage/orders" className="btn btn-ink">주문 내역 보기</Link>} />;
+    return <Empty title="결제를 완료하지 못했어요" desc="결제를 취소했어요." action={<Link to="/mypage/orders" className="btn btn-ink">주문 내역 보기</Link>} />;
   }
   const pay = st.pay ?? 64400;
   return (
