@@ -258,12 +258,7 @@ export default function ProductDetail() {
                     );
                   })}
                 </div>
-              ) : (
-                <div className="text-[12.5px] space-y-2">
-                  <div className="font-semibold">구매자 한마디</div>
-                  <div className="flex flex-wrap gap-1.5">{['포장이 꼼꼼해요', '재구매 의사 있어요', '선물용 추천', '배송 빨라요'].map((k) => <span key={k} className="px-2 py-1 bg-cream">{k}</span>)}</div>
-                </div>
-              )}
+              ) : null}
             </div>
 
             {photos.length > 0 && (

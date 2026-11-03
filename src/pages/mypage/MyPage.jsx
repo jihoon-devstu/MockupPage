@@ -152,10 +152,10 @@ function ReviewForm({ target, onClose }) {
         </div>
         <div className="text-[12px] text-mute mt-1">{STAR_TEXT[hover || star]}</div>
       </div>
-      <div className="mb-4">
+      {(['fashion', 'shoes-bags'].includes(p?.cat) || editing?.fit) && <div className="mb-4">
         <div className="label">사이즈는 어땠나요? <span className="text-mute font-normal">(선택 — 의류 · 신발 · 가방)</span></div>
         <div className="grid grid-cols-3 gap-2">{FITS.map((f) => <button key={f} onClick={() => setFit(fit === f ? null : f)} className={cx('h-10 border text-sm', fit === f ? 'border-ink border-2 font-bold' : 'border-line-2')}>{f}</button>)}</div>
-      </div>
+      </div>}
       <label className="label">리뷰 내용</label>
       <textarea rows={5} className="field" value={body} onChange={(e) => setBody(e.target.value)} placeholder={`최소 ${CONTENT_MIN}자 이상 작성해주세요. 다른 구매자에게 큰 도움이 됩니다.`} />
       <div className="mt-1 text-right text-[11.5px] text-mute num">{body.trim().length} / {CONTENT_MAX.toLocaleString()}</div>

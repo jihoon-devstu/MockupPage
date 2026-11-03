@@ -295,7 +295,7 @@ export function OrderComplete() {
     <div className="max-w-[640px] mx-auto px-4 pt-20 text-center">
       <div className="mx-auto w-14 h-14 bg-ink text-white flex items-center justify-center"><Check size={28} strokeWidth={2.5} /></div>
       <h1 className="mt-6 text-[26px] font-bold tracking-tight">주문이 완료되었습니다</h1>
-      <p className="mt-2 text-sm text-ink-2">판매자가 주문을 확인하면 알림톡으로 알려드려요.</p>
+      <p className="mt-2 text-sm text-ink-2">판매자가 주문을 확인하면 사이트 알림과 메일로 알려드려요.</p>
       <div className="mt-10 border-t border-ink text-left text-[14px]">
         {[
           ['주문번호', <span className="num">{st.orderNo ?? '20261001-000052'}</span>],

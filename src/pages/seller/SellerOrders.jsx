@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { Search, Download, Printer } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { productById } from '../../data/catalog';
 import { sellerOrders, FLOW } from '../../data/orders';
 import { userById } from '../../data/people';
@@ -29,7 +29,6 @@ export function SellerOrderList() {
   const [sel, setSel] = useState(new Set());
   const [q, setQ] = useState('');
   const [invoiceModal, setInvoiceModal] = useState(false);
-  const [range, setRange] = useState('1개월');
 
   const save = (next) => { ORDERS = next; setRows(next); };
   const TABS = ['전체', ...FLOW];
@@ -62,15 +61,9 @@ export function SellerOrderList() {
 
   return (
     <div>
-      <PageHead title="주문 관리" desc="결제완료 → 발주확인(배송준비) → 송장등록(배송중) → 배송완료 → 구매확정(자동 7일)"
-        right={<button className="btn btn-line btn-sm"><Download size={14} /> 엑셀 다운로드</button>} />
+      <PageHead title="주문 관리" desc="결제완료 → 발주확인(배송준비) → 송장등록(배송중) → 배송완료 → 구매확정(자동 7일)" />
 
       <div className="panel p-4 space-y-3">
-        <div className="flex flex-wrap gap-3 items-center">
-          <span className="text-[13px] font-semibold w-14">조회기간</span>
-          <div className="flex">{['오늘', '1주일', '1개월', '3개월'].map((r, i) => <button key={r} onClick={() => setRange(r)} className={cx('h-9 px-3 text-[13px] border border-line-2', i && '-ml-px', range === r && 'bg-ink text-white border-ink relative')}>{r}</button>)}</div>
-          <input type="date" defaultValue="2026-09-01" className="field field-sm w-36 h-9" /> ~ <input type="date" defaultValue="2026-10-01" className="field field-sm w-36 h-9" />
-        </div>
         <div className="flex flex-wrap gap-3 items-center">
           <span className="text-[13px] font-semibold w-14">검색</span>
           <div className="flex items-center border border-line-2 h-9 px-2.5 w-full sm:w-96 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 px-2 text-[13px] outline-none" placeholder="상품주문번호 · 구매자 · 수령인 · 상품명 · 송장번호" /></div>
@@ -85,9 +78,6 @@ export function SellerOrderList() {
           <button disabled={!sel.size} onClick={confirm} className="btn btn-ink btn-xs">발주확인</button>
           <button disabled={!sel.size} onClick={() => setInvoiceModal(true)} className="btn btn-line btn-xs">송장 입력 · 발송처리</button>
           <button disabled={!sel.size} onClick={deliver} className="btn btn-line btn-xs">배송완료 처리</button>
-          <button disabled={!sel.size} onClick={() => toast('주문 취소 처리 (구매자 환불)')} className="btn btn-line btn-xs">판매취소</button>
-          <button disabled={!sel.size} onClick={() => toast('발송지연 안내가 구매자에게 발송되었어요')} className="btn btn-line btn-xs">발송지연 안내</button>
-          <button disabled={!sel.size} className="btn btn-ghost btn-xs ml-auto"><Printer size={13} /> 송장 출력</button>
         </div>
         <div className="overflow-x-auto">
           <table className="tbl">
@@ -185,7 +175,6 @@ export function SellerOrderDetail() {
               {o.status === '결제완료' && <button onClick={() => update({ status: '배송준비' }, bulkSummary('발주확인', 1))} className="btn btn-ink btn-sm">발주확인</button>}
               {o.status === '배송준비' && !shipForm && <button onClick={() => setShipForm({ courier: MY_STORE.courier, invoice: '' })} className="btn btn-ink btn-sm">송장 입력</button>}
               {o.status === '배송중' && <button onClick={() => update({ status: '배송완료' }, bulkSummary('배송완료 처리', 1))} className="btn btn-ink btn-sm">배송완료 처리</button>}
-              {['결제완료', '배송준비'].includes(o.status) && <button className="btn btn-line btn-sm">판매취소</button>}
               {o.status === '배송중' && <button className="btn btn-line btn-sm">송장 수정</button>}
               <button className="btn btn-line btn-sm">구매자에게 메시지</button>
             </div>
