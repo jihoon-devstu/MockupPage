@@ -205,7 +205,7 @@ function LineActions({ o, l, onReview }) {
 // 결제 대기 · 실패 안내 — 결제 대기 만료는 서버 스케줄러가 처리하고 화면은 상태만 보여 준다
 function OrderNotice({ status }) {
   if (status === 'PENDING') return <div className="px-4 py-2.5 text-[12px] bg-cream border-b border-line text-ink-2">결제가 아직 확인되지 않았어요. 결제를 마치지 않으면 잠시 후 주문이 자동 취소되고 사용한 포인트는 돌려드려요.</div>;
-  if (status === 'FAILED') return <div className="px-4 py-2.5 text-[12px] bg-cream border-b border-line text-rust">결제 시간이 지났거나 결제가 확인되지 않아 주문이 취소되었어요. 사용한 포인트는 돌려드렸어요.</div>;
+  if (status === 'FAILED') return <div className="px-4 py-2.5 text-[12px] bg-cream border-b border-line text-rust">결제 시간이 지났거나 결제가 확인되지 않아 주문이 취소되었어요. 사용한 포인트는 자동으로 돌려드려요.</div>;
   return null;
 }
 
@@ -213,6 +213,11 @@ export function MyOrders() {
   const [review, setReview] = useState(null);
   const [period, setPeriod] = useState('3개월');
   const counts = FLOW.map((s) => [s, allLines.filter((l) => l.status === s).length]);
+  // 기간 탭 — 주문일로 거른다. N개월 = 오늘에서 N달 전 같은 날 0시부터 (실제 프론트 orderView.ordersInPeriod 와 같음)
+  const months = { '1개월': 1, '3개월': 3, '6개월': 6, 전체: null }[period];
+  const now = new Date();
+  const from = months && new Date(now.getFullYear(), now.getMonth() - months, now.getDate());
+  const shownOrders = from ? sortedOrders.filter((o) => o.date >= from) : sortedOrders;
   return (
     <div>
       <H>주문 · 배송</H>
@@ -228,8 +233,9 @@ export function MyOrders() {
       <div className="flex gap-1 mt-6 mb-4">
         {['1개월', '3개월', '6개월', '전체'].map((p) => <button key={p} onClick={() => setPeriod(p)} className={cx('h-8 px-3 text-[13px] border', period === p ? 'border-ink bg-ink text-white' : 'border-line-2 text-ink-2')}>{p}</button>)}
       </div>
+      {!shownOrders.length && <p className="text-mute py-10 text-center">{sortedOrders.length ? `최근 ${period} 주문 내역이 없어요` : '주문 내역이 없어요'}</p>}
       <div className="space-y-5">
-        {sortedOrders.map((o) => (
+        {shownOrders.map((o) => (
           <div key={o.id} className="border border-line">
             <div className="flex items-center justify-between px-4 h-11 bg-cream border-b border-line text-[13px]">
               <span><b>{ymd(o.date)}</b> <span className="text-mute num ml-2">주문번호 {o.id}</span></span>

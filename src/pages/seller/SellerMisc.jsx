@@ -284,7 +284,7 @@ export function SellerSettlements() {
       <PageHead title="정산 내역" desc="구매확정일 기준 주 1회 정산 · 월~일 확정분을 다음 주 목요일에 등록 계좌로 지급합니다." />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <Kpi label="이번 주 정산 예정" value={comma(pendingPayout)} unit="원" sub="이번 주 구매확정분 · 수수료 차감 후" />
-        <Kpi label="다음 지급 예정" value={next ? comma(next.payout) : '-'} unit="원" sub={next ? `${ymd(next.pay)} (목)` : '지급 전 정산서 없음'} />
+        <Kpi label="다음 지급 예정" value={next ? comma(next.payout) : '-'} unit="원" sub={next ? (next.pay < new Date() ? `${ymd(next.pay)} 예정 · 지급 대기` : `${ymd(next.pay)} (목)`) : '지급 전 정산서 없음'} />
         <Kpi label="최근 8주 지급 완료" value={comma(paid8 / 10000)} unit="만원" />
         <Kpi label="적용 수수료율" value={rates.map((r) => pct(r.rate + PAYMENT_FEE, 1)).join(' · ')}
           sub={`${rates.map((r) => `${r.name} ${pct(r.rate, 1)}`).join(' · ')} + 결제 2.2%`} />
@@ -375,7 +375,7 @@ export function SellerStore() {
               <div className="flex gap-1.5">{(PALETTE.includes(s.color) ? PALETTE : [s.color, ...PALETTE]).map((c) => <button key={c} aria-label={`대표 색 ${c}`} onClick={() => setColor(c)} className={cx('w-7 h-7', color === c && 'ring-2 ring-offset-2 ring-ink')} style={{ background: c }} />)}</div>
             </div>
             <div><label className="label">스토어명</label><input className="field bg-cream" defaultValue={s.name} readOnly /><p className="text-[12px] text-mute mt-1">스토어명 변경은 관리자 승인이 필요합니다.</p></div>
-            <div><label className="label">스토어 URL</label><input className="field bg-cream num" defaultValue={`gotgan.kr/store/${s.slug}`} readOnly /></div>
+            <div><label className="label">스토어 URL</label><input className="field bg-cream num" defaultValue={`${window.location.host}/store/${s.slug}`} readOnly /></div>
             <div><label className="label">고객센터 전화</label><input className="field num" defaultValue={s.phone} placeholder="010-0000-0000" /></div>
             <div><label className="label">소개</label><textarea rows={3} maxLength={5000} className="field" defaultValue={s.intro} /></div>
           </div>

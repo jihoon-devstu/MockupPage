@@ -36,7 +36,7 @@ export default function ConsoleLayout({ kind, groups, account, badge, bell, onLo
     <div className="min-h-screen bg-work">
       <header className="sticky top-0 z-40 h-14 bg-ink text-white flex items-center px-4 gap-4">
         <button className="lg:hidden" onClick={() => setOpen(true)} aria-label="메뉴"><Menu size={22} strokeWidth={1.6} /></button>
-        <Link to={kind === 'seller' ? '/seller' : '/admin'} className="flex items-center gap-3">
+        <Link to="/" aria-label="곳간 쇼핑몰 메인으로" className="flex items-center gap-3">
           <Wordmark dark sub={kind === 'seller' ? 'SELLER' : 'ADMIN'} />
         </Link>
         <span className={cx('hidden sm:inline text-[11px] font-bold px-2 py-0.5', kind === 'seller' ? 'bg-[#c9f26b] text-ink' : 'bg-point text-white')}>{badge}</span>

@@ -498,11 +498,10 @@ function UserDetailBody({ u: initial }) {
       </div>
       <div className="grid xl:grid-cols-[360px_1fr] gap-4 mt-4">
         <div className="panel">
-          <div className="p-5 flex items-center gap-3 border-b border-line"><img src={u.avatar} alt="" className="w-12 h-12 rounded-full object-cover" /><div><b>{u.name}</b> <span className="text-mute text-[13px]">({u.nick})</span><div><StatusPill s={u.status} /></div></div></div>
+          <div className="p-5 flex items-center gap-3 border-b border-line"><img src={u.avatar} alt="" className="w-12 h-12 rounded-full object-cover" /><div><b>{u.name}</b> {u.nick && <span className="text-mute text-[13px]">({u.nick})</span>}<div><StatusPill s={u.status} /></div></div></div>
           <div className="p-5"><KV rows={[
             ['회원번호', u.id.toUpperCase()], ['휴대폰', u.phone], ['회원등급', <GradeBadge grade={u.grade} />], ['최근 접속', ymdhm(u.lastLogin)],
             ...(suspended ? [['정지 기간', u.suspendedUntil ? `${ymdhm(u.suspendedUntil)}까지` : '영구']] : []),
-            ['마케팅 수신', '동의 (2025.03.02)'],
           ]} /></div>
           {u.memo && <div className="mx-5 mb-5 bg-rust-soft text-rust text-[13px] p-3">{u.memo}</div>}
         </div>

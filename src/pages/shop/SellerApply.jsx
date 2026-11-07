@@ -204,7 +204,7 @@ function ApplyForm({ onSubmit }) {
           <div className="space-y-5">
             <h2 className="text-[20px] font-bold">스토어 · 카테고리 · 판매 예정 상품</h2>
             <Field label="스토어 이름" req hint="쇼핑몰에 노출되는 이름입니다. 승인 후 변경하려면 관리자 승인이 필요해요."><input className="field" placeholder="예) 오롯이 리넨" /></Field>
-            <Field label="스토어 주소" req hint="영소문자 · 숫자 · 하이픈 3~30자. 승인 후 변경할 수 없어요."><div className="flex items-center border border-line-2 h-10 px-3 text-sm"><span className="text-mute">gotgan.kr/store/</span><input className="flex-1 outline-none" placeholder="my-store" /></div></Field>
+            <Field label="스토어 주소" req hint="영소문자 · 숫자 · 하이픈 3~30자. 승인 후 변경할 수 없어요."><div className="flex items-center border border-line-2 h-10 px-3 text-sm"><span className="text-mute shrink-0">{window.location.host}/store/</span><input className="flex-1 min-w-0 outline-none" placeholder="my-store" /></div></Field>
             <Field label="대표 카테고리" req hint="카테고리에 따라 판매수수료가 달라집니다.">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {categories.map((x) => (

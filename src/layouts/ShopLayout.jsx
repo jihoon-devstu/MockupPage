@@ -62,6 +62,8 @@ export default function ShopLayout() {
             <>
               <span className="text-ink font-semibold">{user.name}님</span>
               <button type="button" onClick={onLogout} className="cursor-pointer hover:text-ink">로그아웃</button>
+              <Link to="/mypage" className="hover:text-ink">마이페이지</Link>
+              <Link to="/cart" className="hover:text-ink">장바구니</Link>
             </>
           ) : (
             <>

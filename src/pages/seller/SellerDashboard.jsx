@@ -4,7 +4,7 @@ import { productsOfStore, productById, catById, PAYMENT_FEE } from '../../data/c
 import { sellerOrders, sellerDaily, settlements, pendingThisWeek } from '../../data/orders';
 import { reviewsOfStore, ratingSummary } from '../../data/reviews';
 import { userById } from '../../data/people';
-import { Kpi, BarChart, PageHead, Stars, StatusPill } from '../../components/ui';
+import { Kpi, BarChart, PageHead, Pill, Stars, StatusPill } from '../../components/ui';
 import { won, comma, ymd, maskName, cx } from '../../lib/format';
 import { MY_STORE, myStoreQna } from './SellerLayout';
 
@@ -107,7 +107,7 @@ export default function SellerDashboard() {
             <div className="panel-head"><span className="panel-title">새 리뷰</span><Link to="/seller/reviews" className="text-[12px] text-mute">답글 달기</Link></div>
             {revs.slice(0, 3).map((r) => (
               <div key={r.id} className="px-5 py-3 border-b border-line last:border-0">
-                <div className="flex items-center gap-2 text-[12px]"><Stars value={r.rating} size={11} /><span className="text-mute">{maskName(userById[r.userId].name)} · {productById[r.productId].name}</span></div>
+                <div className="flex items-center gap-2 text-[12px]"><Stars value={r.rating} size={11} /><span className="text-mute">{maskName(userById[r.userId].name)} · {productById[r.productId].name}</span>{r.blinded && <Pill tone="rust">블라인드</Pill>}</div>
                 <p className="text-[13px] mt-1 line-clamp-2 text-ink-2">{r.body}</p>
               </div>
             ))}
