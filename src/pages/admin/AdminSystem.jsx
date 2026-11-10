@@ -7,7 +7,8 @@ import { PageHead, Modal } from '../../components/ui';
 /* ─────────── 시스템 상태 (장애 시연 F-1) ───────────
    실제: SystemDashboard · SystemServicePanel · SystemFeaturePanel · SystemTimeline · SystemLinks · SystemKillDialog (frontend #109)
    API: backend docs/api/admin.md 7절 — 상태 2초 · 지표 15초 · 타임라인 5초 폴링. 목업은 내리기 → 복구를 타이머로 흉내 낸다
-   목업 전용 주소: ?chaos=off = 내리기 스위치 꺼짐 · ?conn=lost = 상태 조회 실패(마지막 값 유지) */
+   이중화 검증(시나리오, frontend #111 SystemScenarioPanel) — admin.md 7-2-1 kill-one-each
+   목업 전용 주소: ?chaos=off = 내리기 스위치 꺼짐 · ?conn=lost = 상태 조회 실패(마지막 값 유지) · ?scenario=recovering = 시나리오 직후 복구 중(장애 주입 버튼 막힘) */
 
 // 서비스 13개 — 서버 순서 그대로. desired = Helm values replicas (구매 경로 · 입구 2, 나머지 1)
 const SERVICES = [
@@ -37,6 +38,19 @@ const featuresOf = (services) => FEATURES.map(([key, label, deps]) => {
 const NO_ROUTE = ['gateway-service', 'keycloak', 'mysql', 'redis'];
 const errorRateOf = (s) => (NO_ROUTE.includes(s.name) ? null : s.state === 'DOWN' ? 1 : 0); // 목업: 전부 내리면 gateway 가 502 를 셈
 
+// 이중화 검증 — 서버가 사유를 비우면 「시나리오 — …」 로 기록, 타임라인은 이 사유로 구분
+const SCENARIO_REASON = '시나리오 — 레플리카 2 서비스 1개씩 내리기';
+const NOT_READY_MESSAGE = '모든 대상 서비스가 정상일 때만 실행할 수 있어요.';
+const scenarioTargets = (services) => services.filter((s) => s.killable && s.desired >= 2);
+// 지난 시나리오 기록 예시 5건 — 서버처럼 화면 순서대로 1행씩, 최신순으로 내려옴 (목업 값, 실측 아님)
+const scenarioEvents = (minutesAgo, recovered) => {
+  const at = new Date(Date.now() - minutesAgo * 60000);
+  return scenarioTargets(SERVICES).map((s, i) => ({
+    eventId: 100 + i, service: s.name, scope: 'ONE', reason: SCENARIO_REASON, killedAt: at,
+    recoveredAt: recovered ? new Date(at.getTime() + (30 + i * 2) * 1000) : null, recoverySeconds: recovered ? 30 + i * 2 : null,
+  })).reverse();
+};
+
 const formatErrorRate = (rate) => (rate == null ? '-' : `${Math.round(rate * 1000) / 10}%`);
 const serviceShortName = (name) => name.replace(/-service$/, '');
 const clock = (d) => d.toLocaleTimeString('en-GB', { timeZone: 'Asia/Seoul' });
@@ -48,9 +62,9 @@ const SERVICE_STATE = {
   RECOVERING: { label: '복구 중', card: 'border-sky bg-sky-soft', pill: 'bg-sky text-white' },
 };
 const FEATURE_STATE = {
-  UP: { icon: '🟢', label: '정상', className: 'text-moss' },
-  DEGRADED: { icon: '🟡', label: '일부', className: 'text-amber' },
-  DOWN: { icon: '🔴', label: '중단', className: 'text-rust' },
+  UP: { icon: '🟢', label: '정상', className: 'text-moss', legend: '정상' },
+  DEGRADED: { icon: '🟡', label: '일부', className: 'text-amber', legend: '일부 동작' },
+  DOWN: { icon: '🔴', label: '중단', className: 'text-rust', legend: '중단' },
 };
 
 function PodDots({ ready, desired }) {
@@ -80,6 +94,32 @@ function KillDialog({ service, onKill, onClose }) {
   );
 }
 
+function ScenarioPanel({ services, chaosEnabled, onRun }) {
+  const [confirming, setConfirming] = useState(false);
+  const targets = scenarioTargets(services);
+  const names = targets.map((s) => serviceShortName(s.name)).join(' · ');
+  const blocked = !chaosEnabled ? '내리기 기능이 꺼져 있어요.' : targets.length === 0 ? '대상 서비스가 없어요.' : targets.some((s) => s.state !== 'UP') ? NOT_READY_MESSAGE : null;
+  return (
+    <section aria-label="이중화 검증" className="border border-line bg-paper px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <h2 className="text-lg font-bold">이중화 검증</h2>
+      <button className="btn btn-ink" disabled={!!blocked} onClick={() => setConfirming(true)}>구매 경로 장애 주입</button>
+      <div className="text-base">
+        <span className="text-mute">대상</span> <b>{names || '-'}</b>
+        <span className="ml-3 text-sm text-mute">{blocked ?? '각 서비스 파드 1개 제거 · 1개로 무중단 유지'}</span>
+      </div>
+      {confirming && (
+        <Modal open onClose={() => setConfirming(false)} title="구매 경로 장애 주입" footer={<>
+          <button className="btn btn-line" onClick={() => setConfirming(false)}>취소</button>
+          <button className="btn btn-ink" onClick={() => { onRun(targets); setConfirming(false); }}>장애 주입</button>
+        </>}>
+          <p className="text-sm">{names} 파드를 1개씩 지웁니다. 각 서비스에 1개가 남아 있어 쇼핑몰은 계속 동작해요.</p>
+          <p className="mt-2 text-sm text-ink-2">하나라도 정상이 아니면 아무것도 지우지 않아요. 내린 뒤 1분 동안은 같은 서비스를 다시 내릴 수 없어요.</p>
+        </Modal>
+      )}
+    </section>
+  );
+}
+
 function Links() {
   const [guideOpen, setGuideOpen] = useState(false);
   return (
@@ -100,8 +140,12 @@ export function AdminSystem() {
   const [sp] = useSearchParams();
   const chaosEnabled = sp.get('chaos') !== 'off';
   const connLost = sp.get('conn') === 'lost';
-  const [services, setServices] = useState(SERVICES);
-  const [events, setEvents] = useState([]); // 최신순 (서버 순서 그대로) — 처음엔 '아직 내린 서비스가 없어요.'
+  const recoveringStart = sp.get('scenario') === 'recovering';
+  // ?scenario=recovering: 방금 장애 주입 → 대상 5개가 1/2 복구 중
+  const [services, setServices] = useState(() => (recoveringStart
+    ? SERVICES.map((s) => (s.killable && s.desired >= 2 ? { ...s, ready: s.desired - 1, state: 'RECOVERING' } : s)) : SERVICES));
+  // 최신순 (서버 순서 그대로) — 지난 이중화 검증 5건 예시
+  const [events, setEvents] = useState(() => (recoveringStart ? [...scenarioEvents(0, false), ...scenarioEvents(20, true)] : scenarioEvents(20, true)));
   const [killTarget, setKillTarget] = useState(null);
   const timers = useRef([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -109,16 +153,11 @@ export function AdminSystem() {
   const patch = (name, ready) => setServices((list) => list.map((s) => (s.name === name
     ? { ...s, ready, state: ready >= s.desired ? 'UP' : ready === 0 ? 'DOWN' : 'RECOVERING' } : s)));
 
-  const kill = (scope) => {
-    const s = killTarget;
-    const count = scope === 'ONE' ? 1 : s.ready;
-    const eventId = Date.now();
+  // 내리기 1건 = 타임라인 1행. 목업 복구 흉내 — 새 파드가 하나씩 Ready
+  const killPods = (s, scope, count, reason, eventId) => {
     const killedAt = new Date();
     patch(s.name, s.ready - count);
-    setEvents((list) => [{ eventId, service: s.name, scope, killedAt, recoveredAt: null, recoverySeconds: null }, ...list].slice(0, 20));
-    toast(`${serviceShortName(s.name)} 파드 ${count}개를 내렸어요.`);
-    setKillTarget(null);
-    // 목업 복구 흉내 — 새 파드가 하나씩 Ready
+    setEvents((list) => [{ eventId, service: s.name, scope, reason, killedAt, recoveredAt: null, recoverySeconds: null }, ...list].slice(0, 20));
     const step = scope === 'ONE' ? 8000 : 6000;
     for (let i = 1; i <= count; i += 1) {
       timers.current.push(setTimeout(() => {
@@ -131,15 +170,31 @@ export function AdminSystem() {
     }
   };
 
+  const kill = (scope) => {
+    const s = killTarget;
+    const count = scope === 'ONE' ? 1 : s.ready;
+    killPods(s, scope, count, null, Date.now());
+    toast(`${serviceShortName(s.name)} 파드 ${count}개를 내렸어요.`);
+    setKillTarget(null);
+  };
+
+  // 시나리오 — 대상마다 파드 1개(= 서비스별 ONE), 서비스마다 1행
+  const runScenario = (targets) => {
+    const base = Date.now();
+    targets.forEach((s, i) => killPods(s, 'ONE', 1, SCENARIO_REASON, base + i));
+    toast(`${targets.length}개 서비스에 장애를 주입했어요 — 파드 1개씩 제거`);
+  };
+
   const killable = services.filter((s) => s.killable);
   const fixed = services.filter((s) => !s.killable);
   const features = featuresOf(services);
 
   return (
     <div>
-      <PageHead title="시스템 상태" desc="서비스를 내리면 어떤 기능이 멈추고 얼마 만에 복구되는지 보여 줍니다." right={<Links />} />
+      <PageHead title="시스템 상태" desc="장애 발생 시 기능별 영향 범위와 복구 소요 시간을 확인합니다." right={<Links />} />
       {connLost && <p role="alert" className="mb-3 px-4 py-3 bg-rust-soft text-lg font-bold text-rust">연결 끊김 — 마지막으로 받은 상태를 보여 주고 있어요.</p>}
       <div className="grid gap-4">
+        <ScenarioPanel services={services} chaosEnabled={chaosEnabled} onRun={runScenario} />
         <section aria-label="서비스 상태" className="border border-line bg-paper p-4">
           <div className="flex flex-wrap items-baseline gap-x-3 mb-2">
             <h2 className="text-lg font-bold">서비스 상태</h2>
@@ -180,7 +235,13 @@ export function AdminSystem() {
         </section>
         <div className="grid xl:grid-cols-2 gap-4 items-start">
           <section aria-label="사용자 기능" className="border border-line bg-paper p-4">
-            <h2 className="text-lg font-bold mb-1">사용자 기능</h2>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-1">
+              <h2 className="text-lg font-bold">사용자 기능</h2>
+              {/* 상태 색 설명 */}
+              <ul aria-label="상태 설명" className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-2">
+                {Object.values(FEATURE_STATE).map((s) => <li key={s.label}><span aria-hidden="true">{s.icon}</span> <b className={s.className}>{s.legend}</b></li>)}
+              </ul>
+            </div>
             <ul className="grid sm:grid-cols-2 gap-x-6">
               {features.map((f) => {
                 const st = FEATURE_STATE[f.state];
@@ -207,6 +268,7 @@ export function AdminSystem() {
                     <span>{clock(e.killedAt)}</span>
                     <span className="font-bold">{serviceShortName(e.service)}</span>
                     <span>{e.scope === 'ONE' ? '1개' : '전부'} 내림</span>
+                    {e.reason?.startsWith('시나리오') && <span className="px-1.5 text-sm font-bold bg-sand text-ink-2">이중화 검증</span>}
                     {e.recoveredAt
                       ? <span className="text-moss font-bold">→ {clock(e.recoveredAt)} 복구 · {e.recoverySeconds}초</span>
                       : <span className="text-sky font-bold">→ 복구 기다리는 중</span>}

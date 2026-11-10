@@ -30,7 +30,7 @@ export const SCREENS = [
     ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reports', '신고 관리'],
     ['/admin/chats', '상담함'], ['/admin/chats/103', '고객 상담 (도움 요청 카드)'], ['/admin/chats/102', '스토어 톡 열람 (읽기 전용)'], ['/admin/chats/106', '판매자 상담 (종료)'],
     ['/admin/categories', '카테고리 · 수수료'],
-    ['/admin/system', '시스템 상태 (장애 시연)'], ['/admin/system?chaos=off', '시스템 상태 — 내리기 꺼짐'], ['/admin/system?conn=lost', '시스템 상태 — 연결 끊김'],
+    ['/admin/system', '시스템 상태 (장애 시연)'], ['/admin/system?chaos=off', '시스템 상태 — 내리기 꺼짐'], ['/admin/system?conn=lost', '시스템 상태 — 연결 끊김'], ['/admin/system?scenario=recovering', '시스템 상태 — 이중화 검증 복구 중 (장애 주입 막힘)'],
   ]],
 ];
 
