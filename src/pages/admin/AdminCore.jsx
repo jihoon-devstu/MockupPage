@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileCheck, Store, Wallet, Users, Flag, MessagesSquare, Tags, ArrowRight, FileText, ExternalLink, Search } from 'lucide-react';
+import { LayoutDashboard, FileCheck, Store, Wallet, Users, Flag, MessagesSquare, Tags, Activity, ArrowRight, FileText, ExternalLink, Search } from 'lucide-react';
 import ConsoleLayout from '../../layouts/ConsoleLayout';
 import NotificationBell from '../../components/NotificationBell';
 import { useChatUnread } from '../../lib/chat';
@@ -34,6 +34,7 @@ export function AdminLayout() {
       { to: '/admin/chats', label: '상담함', icon: MessagesSquare, count: chatUnread },
     ] },
     { title: '설정', items: [{ to: '/admin/categories', label: '카테고리 · 수수료', icon: Tags }] },
+    { title: '시스템', items: [{ to: '/admin/system', label: '시스템 상태', icon: Activity }] },
   ];
   return <ConsoleLayout kind="admin" badge="운영관리" groups={groups} onLogout={onLogout} bell={<NotificationBell to="ADMIN" dark />} account={{ name: '곳간 운영팀', role: '파트너운영 · 최고관리자', avatar: '/images/avatar/u-2.jpg' }} />;
 }

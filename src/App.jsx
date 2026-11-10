@@ -18,6 +18,7 @@ import { SellerOrderList, SellerOrderDetail, SellerClaims } from './pages/seller
 import { SellerReviews, SellerQna, SellerChats, SellerSettlements, SellerStore } from './pages/seller/SellerMisc';
 import { AdminLayout, AdminDashboard, AdminApplications, AdminApplicationDetail } from './pages/admin/AdminCore';
 import { AdminStores, AdminStoreDetail, AdminChats, AdminSettlements, AdminUsers, AdminUserDetail, AdminReports, AdminCategories } from './pages/admin/AdminMore';
+import { AdminSystem } from './pages/admin/AdminSystem';
 import { ToastHost } from './components/ui';
 import MockNav from './components/MockNav';
 
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="chats" element={<AdminChats />} />
           <Route path="chats/:roomId" element={<AdminChats />} />
           <Route path="categories" element={<AdminCategories />} />
+          <Route path="system" element={<AdminSystem />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

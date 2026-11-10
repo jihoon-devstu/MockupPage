@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { storeById } from '../data/catalog';
 import { comma, cx } from '../lib/format';
 import { Price } from './ui';
@@ -6,6 +6,7 @@ import { Price } from './ui';
 export default function ProductCard({ p, rank, showStore = true }) {
   const store = storeById[p.storeId];
   const soldOut = p.status === '품절';
+  const rated = useSearchParams()[0].get('review') !== 'down'; // 목업: ?review=down = 평점 조회 실패(review 장애) — 실제는 평점을 받은 상품만 rated
   return (
     <div className="group relative">
       <Link to={`/products/${p.id}`} className="block">
@@ -18,9 +19,14 @@ export default function ProductCard({ p, rank, showStore = true }) {
           {showStore && <div className="text-[12px] font-bold text-ink-2 mb-0.5">{store.name}</div>}
           <div className="text-[13px] text-ink-2 leading-snug line-clamp-2 min-h-[2.4em]">{p.name}</div>
           <div className="mt-1"><Price p={p} /></div>
-          <div className="mt-1 flex items-center gap-1.5 text-[11.5px] text-mute">
-            <span className="text-ink">★ {p.rating.toFixed(1)}</span>
-            <span className="num">({comma(p.reviews)})</span>
+          {/* 별점을 못 받아도 줄 높이는 유지해 카드가 들썩이지 않게 한다 (실제 ProductCard.jsx) */}
+          <div className="mt-1 flex items-center gap-1.5 text-[11.5px] text-mute min-h-[18px]">
+            {rated && (
+              <>
+                <span className="text-ink">★ {p.rating.toFixed(1)}</span>
+                <span className="num">({comma(p.reviews)})</span>
+              </>
+            )}
           </div>
         </div>
       </Link>

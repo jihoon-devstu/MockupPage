@@ -7,7 +7,7 @@ import { cx } from '../lib/format';
 export const SCREENS = [
   ['구매자 · 쇼핑몰', [
     ['/', '메인'], ['/products?cat=fashion', '상품 목록 (카테고리)'], ['/products?q=리넨', '검색 결과'], ['/products/p101', '상품 상세 (옵션·리뷰)'],
-    ['/products/p103', '상품 상세 (품절)'], ['/stores', '스토어 목록'], ['/store/s1', '스토어 홈'], ['/cart', '장바구니'], ['/checkout', '주문/결제'],
+    ['/products/p103', '상품 상세 (품절)'], ['/products?cat=fashion&review=down', '상품 목록 — 평점 조회 실패 (별점 숨김)'], ['/stores', '스토어 목록'], ['/store/s1', '스토어 홈'], ['/cart', '장바구니'], ['/checkout', '주문/결제'],
     ['/order/complete', '주문 완료'], ['/order/complete?pay=checking', '결제 확인 중'], ['/order/complete?pay=failed', '결제 실패'],
     ['/login', '로그인'], ['/signup', '회원가입'], ['/auth/callback', '소셜 로그인 콜백'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'], ['/seller/apply?status=PENDING', '입점 신청 — 심사대기'], ['/seller/apply?status=SUPPLEMENT', '입점 신청 — 보완요청 · 재제출'], ['/seller/apply?status=REJECTED', '입점 신청 — 반려(재신청 가능)'], ['/seller/apply?status=APPROVED', '입점 신청 — 승인'],
   ]],
@@ -19,7 +19,7 @@ export const SCREENS = [
     ['/mypage/profile', '회원정보 · 등급'], ['/mypage/addresses', '배송지'],
   ]],
   ['판매자센터', [
-    ['/seller', '대시보드'], ['/seller/products', '상품 조회'], ['/seller/products/new', '상품 등록'], ['/seller/products/p101/edit', '상품 수정'],
+    ['/seller', '대시보드'], ['/seller/products', '상품 조회'], ['/seller/products?review=down', '상품 조회 — 평점 조회 실패'], ['/seller/products/new', '상품 등록'], ['/seller/products/p101/edit', '상품 수정'],
     ['/seller/orders', '주문 관리'], ['/seller/claims', '취소/반품/교환'], ['/seller/reviews', '리뷰 관리'], ['/seller/qna', '상품 문의'],
     ['/seller/chats', '채팅'], ['/seller/chats/105', '스토어 톡 (가린 구매자 이름)'], ['/seller/chats/104', '운영 상담 (정산 카드)'],
     ['/seller/settlements', '정산 내역'], ['/seller/store', '스토어 설정'],
@@ -30,6 +30,7 @@ export const SCREENS = [
     ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reports', '신고 관리'],
     ['/admin/chats', '상담함'], ['/admin/chats/103', '고객 상담 (도움 요청 카드)'], ['/admin/chats/102', '스토어 톡 열람 (읽기 전용)'], ['/admin/chats/106', '판매자 상담 (종료)'],
     ['/admin/categories', '카테고리 · 수수료'],
+    ['/admin/system', '시스템 상태 (장애 시연)'], ['/admin/system?chaos=off', '시스템 상태 — 내리기 꺼짐'], ['/admin/system?conn=lost', '시스템 상태 — 연결 끊김'],
   ]],
 ];
 

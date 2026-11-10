@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, X, Eye, Copy, ImagePlus } from 'lucide-react';
 import { productsOfStore, productById, categories, catById } from '../../data/catalog';
 import { useApp } from '../../lib/store';
@@ -44,6 +44,7 @@ function StockModal({ p, onClose, onSave }) {
 
 export function SellerProductList() {
   const { toast } = useApp();
+  const rated = useSearchParams()[0].get('review') !== 'down'; // 목업: ?review=down = 평점 조회 실패 — 실제는 평점을 못 받은 상품을 '-'
   const [rows, setRows] = useState(() => productsOfStore(MY_STORE.id).map((p) => ({ ...p })));
   const [status, setStatus] = useState('전체');
   const [q, setQ] = useState('');
@@ -130,7 +131,7 @@ export function SellerProductList() {
                     {p.blocked && p.statusReason && <div className="text-[11.5px] text-rust mt-1 max-w-[180px] whitespace-normal">사유: {p.statusReason}</div>}
                     {p.hidden && <div className="text-[11.5px] text-amber mt-1">쇼핑몰 미노출 · {p.hidden}</div>}
                   </td>
-                  <td className="whitespace-nowrap">★ {p.rating} <span className="text-mute num">({comma(p.reviews)})</span></td>
+                  <td className="whitespace-nowrap">{rated ? <>★ {p.rating} <span className="text-mute num">({comma(p.reviews)})</span></> : <span className="text-mute">-</span>}</td>
                   <td className="num text-ink-2">{ymd(p.created)}</td>
                   <td>
                     <div className="flex gap-1 justify-center">
