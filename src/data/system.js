@@ -91,7 +91,7 @@ export function tickMonitor(m, t, env) {
     const down = state === 'DOWN';
     const ms = down ? 3 : jitter(s.ms * (1 + share / 150) * (state === 'RECOVERING' && share > 0 ? 1.8 : 1));
     sec.svc[s.name] = { req, err: down ? req : 0, msSum: req * ms };
-    s.apis.forEach(([method, api, ratio, mult]) => {
+    s.apis.forEach(([method, api, , ratio, mult]) => {
       const count = req * ratio;
       apiSec.rows.push({ service: s.name, api: `${method} ${api}`, status: down ? '502' : '200', count, msSum: count * (down ? 3 : ms * mult) });
     });
@@ -113,7 +113,7 @@ export function tickMonitor(m, t, env) {
   const k = Math.min(6, Math.max(total < 0.5 ? 0 : 1, Math.round(Math.sqrt(total) * 1.1)));
   for (let i = 0; i < k; i += 1) {
     const x = pick(sampleFrom, (y) => y.req);
-    const [method, api, path, mult] = pick(x.s.apis, (a) => a[3]);
+    const [method, api, path, , mult] = pick(x.s.apis, (a) => a[3]);
     const status = x.down ? 502 : Math.random() < 0.03 ? (x.s.name === 'user-service' ? 401 : 404) : 200;
     const call = {
       traceId: hex(32), timestampMs: t + Math.floor((i / k) * 1000), method, api: `${method} ${api}`,
