@@ -19,6 +19,7 @@ import { SellerReviews, SellerQna, SellerChats, SellerSettlements, SellerStore }
 import { AdminLayout, AdminDashboard, AdminApplications, AdminApplicationDetail } from './pages/admin/AdminCore';
 import { AdminStores, AdminStoreDetail, AdminChats, AdminSettlements, AdminUsers, AdminUserDetail, AdminReports, AdminCategories } from './pages/admin/AdminMore';
 import { AdminSystem } from './pages/admin/AdminSystem';
+import { AdminSystemReport } from './pages/admin/AdminSystemReport';
 import { ToastHost } from './components/ui';
 import MockNav from './components/MockNav';
 
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="chats/:roomId" element={<AdminChats />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="system" element={<AdminSystem />} />
+          <Route path="system/report" element={<AdminSystemReport />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

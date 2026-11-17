@@ -34,7 +34,7 @@ export function AdminLayout() {
       { to: '/admin/chats', label: '상담함', icon: MessagesSquare, count: chatUnread },
     ] },
     { title: '설정', items: [{ to: '/admin/categories', label: '카테고리 · 수수료', icon: Tags }] },
-    { title: '시스템', items: [{ to: '/admin/system', label: '시스템 상태', icon: Activity }] },
+    { title: '시스템', items: [{ to: '/admin/system', end: true, label: '시스템 상태', icon: Activity }, { to: '/admin/system/report', label: '장애 리포트', icon: FileText }] },
   ];
   return <ConsoleLayout kind="admin" badge="운영관리" groups={groups} onLogout={onLogout} bell={<NotificationBell to="ADMIN" dark />} account={{ name: '곳간 운영팀', role: '파트너운영 · 최고관리자', avatar: '/images/avatar/u-2.jpg' }} />;
 }
