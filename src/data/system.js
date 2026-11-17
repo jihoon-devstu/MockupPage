@@ -1,7 +1,8 @@
-/* 시스템 상태, 장애 분석 리포트 목업 데이터 (실제 frontend #116 ~ #122, backend docs/api/admin.md 8 ~ 10절)
+/* 시스템 상태, 장애 분석 리포트 목업 데이터 (실제 frontend #116 ~ #122, #125 ~ #127, backend docs/api/admin.md 8 ~ 10절)
    - 실시간 모니터링: 실제는 Prometheus, Zipkin, Loki 를 폴링. 목업은 1초마다 가짜 트래픽을 만들어 같은 모양으로 쌓는다
      (서비스를 전부 내리면 그 서비스로 가는 요청이 게이트웨이 502 로 바뀌고, 5xx 건수(최근 1분)가 오른다)
    - 장애 리포트: 실제는 서버가 기간을 받아 계산. 목업은 11/16 저녁 ~ 11/17 오전의 고정 사건 5건으로 같은 응답을 만든다
+   - 부하테스트 결과, 현재 접속자: 실제는 k6 지표와 Redis 접속 신호. 목업은 1초(접속자는 5초)마다 가짜 값을 쌓는다
    - 값은 전부 시연용 예시(실측 아님). IP 는 문서용 대역(203.0.113.x, 198.51.100.x) */
 
 export const serviceShortName = (name) => name.replace(/-service$/, '');
@@ -213,6 +214,118 @@ export function traceOf(call) {
   }
   spans.push({ id: 'e', service: call.service, name: 'SELECT (JDBC)', startMs: 2 + Math.round(inner * 0.2), durationMs: Math.max(1, Math.round(inner * 0.25)), status: null, error: false });
   return { traceId: call.traceId, durationMs: d, spans };
+}
+
+/* ─────────── 부하테스트 진행 상태와 결과 (실제 loadTest.js, admin.md 8절 result) ─────────── */
+
+export const SCENARIO_LABEL = { BROWSE: '둘러보기', REVIEWS: '리뷰 조회 폭주', CART: '장바구니 CRUD', MIXED: '혼합' };
+export const formatCount = (n) => (n == null ? '-' : Number(n).toLocaleString('ko-KR'));
+const mmss = (sec) => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+
+/** 진행 상태 — 경과, 남은 시간, 진행률(0~100). 끝난 실행은 실제 끝난 시각 기준 */
+export function progress(load, nowMs = Date.now()) {
+  if (!load) return null;
+  const end = load.finishedAt ?? nowMs;
+  const total = load.durationSec * 1000;
+  const elapsed = Math.max(0, Math.min(end - load.startedAt, total));
+  return {
+    elapsed: mmss(Math.floor(elapsed / 1000)),
+    remaining: mmss(Math.max(0, Math.ceil((total - elapsed) / 1000))),
+    percent: Math.round((elapsed / total) * 100),
+  };
+}
+
+const STATUS_CAUSE = {
+  '연결 실패': '서버에 닿지 못함(연결 거부, 시간 초과)',
+  429: '요청 제한에 걸림(같은 사용자, IP 가 너무 자주 요청)',
+  401: '로그인 토큰 문제(만료, 미발급)',
+  403: '권한 없음',
+  404: '없는 자원 요청',
+  409: '상태 충돌(재고, 중복 요청)',
+  500: '서버 내부 오류',
+  502: '서비스 연결 실패(파드 종료, 재시작)',
+  503: '서비스 일시 중단(차단기 열림 등)',
+  504: '응답 시간 초과',
+};
+
+/** 결과의 원인 개조식 — 실패가 없으면 한 줄, 있으면 상태 코드별 원인 + 서버 쪽 5xx 서비스 */
+export function failureCauses(result) {
+  if (!result || result.failed === 0) return ['실패 없음: 모든 요청이 정상 응답(2xx)'];
+  const lines = Object.entries(result.byStatus)
+    .filter(([status]) => !status.startsWith('2'))
+    .sort((a, b) => b[1] - a[1])
+    .map(([status, n]) => `${status} ${formatCount(n)}건: ${STATUS_CAUSE[status] ?? '기타 오류'}`);
+  const servers = Object.entries(result.serverErrors ?? {});
+  if (servers.length) lines.push(`같은 시간 서버 5xx: ${servers.map(([s, n]) => `${serviceShortName(s)} ${formatCount(n)}건`).join(', ')}`);
+  return lines;
+}
+
+/* 목업 결과 누적 — 실제는 k6 지표를 Prometheus 에서 합산. 목업은 1초마다 사용자 수 x 1.6건을 시나리오 서비스에 나눠 쌓고,
+   내려간(DOWN) 서비스 몫은 게이트웨이 502 로 센다 */
+export const createLoadAcc = () => ({ requests: 0, ok: 0, byApi: {}, byService: {}, msSum: 0, peakVus: 0, seconds: 0 });
+
+export function tickLoadAcc(acc, load, stateOf) {
+  acc.seconds += 1;
+  acc.peakVus = Math.max(acc.peakVus, load.vus);
+  if (load.vus <= 0) return;
+  const targets = SCENARIO_SERVICES[load.scenario];
+  const rps = load.vus * 1.6 * (0.92 + Math.random() * 0.16);
+  targets.forEach((name) => {
+    const s = MONITOR_SERVICES.find((x) => x.name === name);
+    const share = rps / targets.length;
+    const state = stateOf(name);
+    acc.requests += share;
+    if (state === 'DOWN') {
+      acc.byService[name] = (acc.byService[name] ?? 0) + share;
+      s.apis.forEach(([method, api, , ratio]) => {
+        const key = `${method} ${api}|502`;
+        acc.byApi[key] = (acc.byApi[key] ?? 0) + share * ratio;
+      });
+    } else {
+      acc.ok += share;
+      acc.msSum += share * s.ms * (1 + load.vus / 150) * (state === 'RECOVERING' ? 1.8 : 1);
+    }
+  });
+}
+
+/** GET /loadtest 의 result 모양 */
+export function loadResult(acc) {
+  const requests = Math.round(acc.requests);
+  const ok = Math.round(acc.ok);
+  const failed = requests - ok;
+  const byStatus = { 200: ok };
+  if (failed > 0) byStatus[502] = failed;
+  return {
+    requests, failed, byStatus,
+    p95Ms: acc.ok > 0 ? (acc.msSum / acc.ok) * 2.4 : null,
+    avgRps: acc.seconds > 0 ? Math.round((requests / acc.seconds) * 10) / 10 : 0,
+    peakVus: acc.peakVus,
+    elapsedSec: acc.seconds,
+    topFailures: Object.entries(acc.byApi).map(([key, count]) => {
+      const [api, status] = key.split('|');
+      return { api, status, count: Math.round(count) };
+    }).filter((f) => f.count > 0).sort((a, b) => b.count - a.count).slice(0, 5),
+    serverErrors: Object.fromEntries(Object.entries(acc.byService).map(([s, n]) => [s, Math.round(n)]).filter(([, n]) => n > 0)),
+  };
+}
+
+// ?load=done — 25분 전에 끝난 혼합 90명 5분 실행. 중간에 product 를 전부 내려 502 가 일부 섞인 결과 (목업 고정값)
+export const DONE_RESULT = {
+  requests: 41816, failed: 612, byStatus: { 200: 41204, 502: 612 }, p95Ms: 184, avgRps: 139.4, peakVus: 90, elapsedSec: 300,
+  topFailures: [
+    { api: 'GET /api/products', status: '502', count: 275 },
+    { api: 'GET /api/products/{id}', status: '502', count: 275 },
+    { api: 'GET /api/categories', status: '502', count: 62 },
+  ],
+  serverErrors: { 'product-service': 612 },
+};
+
+/* ─────────── 현재 접속자 (실제 SystemVisitors, admin.md 9절 visitors) ───────────
+   실제는 최근 60초 안에 신호가 있는 사람을 5초마다 다시 센다. 목업은 5초마다 작게 오르내리는 가짜 값 */
+export function nextVisitors(prev) {
+  const step = (v, lo, hi) => Math.min(hi, Math.max(lo, v + Math.floor(Math.random() * 3) - 1));
+  const visitors = step(prev?.visitors ?? 14, 8, 24);
+  return { visitors, members: Math.min(visitors, step(prev?.members ?? 6, 2, 12)) };
 }
 
 /* ─────────── 장애 분석 리포트 ─────────── */
