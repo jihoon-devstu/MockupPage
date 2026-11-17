@@ -3,9 +3,9 @@ import { users } from './people';
 import { seeded, pick, daysAgo, maskName } from '../lib/format';
 
 /* 리뷰 정책 (review-service)
-   - 구매확정된 주문상품 1건당 1개 작성 가능 (작성 기한: 구매확정 후 30일) · 별점 1~5 · 본문 20~2,000자 · 사진 최대 3장
-   - 사이즈 체감(작아요 · 정사이즈 · 커요)은 모든 상품에서 고른다
-   - 작성자는 writerDisplayName(닉네임, 없으면 마스킹 실명)만 — 아바타 · 등급 없음
+   - 구매확정된 주문상품 1건당 1개 작성 가능 (작성 기한: 구매확정 후 30일), 별점 1~5, 본문 20~2,000자, 사진 최대 3장
+   - 사이즈 체감(작아요, 정사이즈, 커요)은 모든 상품에서 고른다
+   - 작성자는 writerDisplayName(닉네임, 없으면 마스킹 실명)만 — 아바타, 등급 없음
    - 판매자는 답글만 가능 (삭제 불가), 블라인드된 리뷰엔 답글 불가
    - 신고가 들어온 리뷰는 관리자 신고 처리에서 블라인드 / 신고 기각 */
 
@@ -125,7 +125,7 @@ export function ratingSummary(list) {
 }
 
 /* ─────────── 상품 Q&A ───────────
-   q = 문의 내용(1~1,000자) · a = 판매자 답변(없으면 답변대기) · secret = 비밀글(작성자 · 판매자만 내용을 봄)
+   q = 문의 내용(1~1,000자), a = 판매자 답변(없으면 답변대기), secret = 비밀글(작성자, 판매자만 내용을 봄)
    작성자는 답변 전까지만 수정, 삭제는 언제든 (review.md 14 ~ 17절) */
 export const qnas = [
   { id: 'q1', productId: 'p101', userId: 'u4', q: '키 165에 55kg인데 M이랑 L 중 어떤 걸 추천하시나요?', a: 'M 추천드립니다! 오버핏이라 L은 많이 클 수 있어요.', date: daysAgo(1), secret: false },
@@ -135,14 +135,14 @@ export const qnas = [
   { id: 'q5', productId: 'p104', userId: 'u12', q: '세탁기 사용 가능한가요?', a: null, date: daysAgo(0, 7), secret: false },
   { id: 'q6', productId: 'p103', userId: 'u14', q: '아이보리 재입고는 언제쯤일까요?', a: '10월 둘째 주 재입고 예정입니다. 알림 드릴게요!', date: daysAgo(6), secret: false },
   { id: 'q7', productId: 'p102', userId: 'u1', q: '샌드 컬러 M 사이즈 총장이 몇 cm인가요? 키 160이에요.', a: null, date: daysAgo(0, 3), secret: true },
-  // 스토어 1 · 2(목업 s6 · s4) 문의 — 시드 scenario.mjs INQUIRIES 와 같은 작성자 · 내용 (user 4 · 5 · 6 · 104 = u1 · u2 · u3 · u4)
+  // 스토어 1, 2(목업 s6, s4) 문의 — 시드 scenario.mjs INQUIRIES 와 같은 작성자, 내용 (user 4, 5, 6, 104 = u1, u2, u3, u4)
   { id: 'q11', productId: 'p601', userId: 'u1', q: '로얄과랑 대과는 당도 차이가 있나요? 아이들 간식용으로 사려고 해요.', a: '당도는 거의 같고 크기만 달라요. 아이들 간식용이면 한 입에 쏙 들어가는 로얄과를 추천드립니다.', date: daysAgo(6), secret: false },
   { id: 'q12', productId: 'p601', userId: 'u2', q: '오늘 주문하면 이번 주 토요일 전에 받을 수 있을까요?', a: null, date: daysAgo(1), secret: false },
   { id: 'q13', productId: 'p602', userId: 'u3', q: '선물용으로 보내려는데 보자기 포장이 가능할까요? 받는 분 주소로 바로 보내고 싶어요.', a: '보자기 포장 무료로 해 드려요. 주문 시 배송 메모에 "선물 포장"이라고 남겨 주세요.', date: daysAgo(9), secret: true },
   { id: 'q14', productId: 'p603', userId: 'u4', q: '7분도로 도정하면 밥 지을 때 따로 불려야 하나요?', a: null, date: daysAgo(2), secret: false },
-  { id: 'q15', productId: 'p401', userId: 'u1', q: '식기세척기 · 전자레인지 사용해도 괜찮나요?', a: '무연유약이라 둘 다 사용 가능합니다. 다만 흑유는 광택 유지를 위해 손세척을 권해 드려요.', date: daysAgo(12), secret: false },
+  { id: 'q15', productId: 'p401', userId: 'u1', q: '식기세척기, 전자레인지 사용해도 괜찮나요?', a: '무연유약이라 둘 다 사용 가능합니다. 다만 흑유는 광택 유지를 위해 손세척을 권해 드려요.', date: daysAgo(12), secret: false },
   { id: 'q16', productId: 'p403', userId: 'u3', q: '생화를 꽂아 두면 물이 스며 나오지 않나요? 원목 선반 위에 두려고 해요.', a: null, date: daysAgo(3), secret: true },
-  { id: 'q17', productId: 'p404', userId: 'u2', q: '찻잔 두 개 모양이 서로 다른가요? 선물용이라 짝이 맞았으면 해요.', a: '손으로 빚어 모양이 조금씩 다르지만 같은 흙 · 유약으로 한 번에 구워 짝을 맞춰 보내드립니다.', date: daysAgo(5), secret: false },
+  { id: 'q17', productId: 'p404', userId: 'u2', q: '찻잔 두 개 모양이 서로 다른가요? 선물용이라 짝이 맞았으면 해요.', a: '손으로 빚어 모양이 조금씩 다르지만 같은 흙, 유약으로 한 번에 구워 짝을 맞춰 보내드립니다.', date: daysAgo(5), secret: false },
 ];
 // 문의 작성자 표시 — writerDisplayName (닉네임, 없으면 실명 가운데 가림)
 export const qnaWriter = (userId) => { const u = users.find((x) => x.id === userId); return u.nick || maskName(u.name); };

@@ -81,7 +81,7 @@ export function SellerReviews() {
         </select>
       </div>
 
-      {/* 실제 SellerReviewList — 표(평점 · 리뷰 · 상품 · 작성자 · 작성일 · 답글) */}
+      {/* 실제 SellerReviewList — 표(평점, 리뷰, 상품, 작성자, 작성일, 답글) */}
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
           <thead><tr><th>평점</th><th>리뷰</th><th>상품</th><th>작성자</th><th>작성일</th><th>답글</th></tr></thead>
@@ -119,7 +119,7 @@ export function SellerReviews() {
           <button onClick={() => setFlagTarget(null)} className="btn btn-ghost btn-sm">취소</button>
           <button disabled={!flagReason.trim()} onClick={() => { setRows(rows.map((x) => (x.id === flagTarget.id ? { ...x, flag: flagReason.trim() } : x))); setFlagTarget(null); toast('검토 요청을 보냈어요. 관리자가 확인 후 블라인드 여부를 결정합니다'); }} className="btn btn-ink btn-sm">요청</button>
         </>}>
-        <p className="text-[13px] text-ink-2">판매자는 리뷰를 삭제하거나 가릴 수 없습니다. 욕설 · 광고 · 허위 사실 등 정책 위반이 의심되면 사유를 적어 관리자에게 검토를 요청하세요.</p>
+        <p className="text-[13px] text-ink-2">판매자는 리뷰를 삭제하거나 가릴 수 없습니다. 욕설, 광고, 허위 사실 등 정책 위반이 의심되면 사유를 적어 관리자에게 검토를 요청하세요.</p>
         <textarea rows={3} maxLength={500} value={flagReason} onChange={(e) => setFlagReason(e.target.value)} className="field text-[13px] mt-3" placeholder="예: 상품과 무관한 광고성 내용" />
       </Modal>
     </div>
@@ -127,7 +127,7 @@ export function SellerReviews() {
 }
 
 /* ─────────── 상품 문의 ─────────── */
-// 실제 review/components/SellerQnaList.jsx — 표(상태 · 상품 · 문의·답변 · 작성자 · 작성일), 답변은 등록 뒤에도 "수정"으로 다시 열어 덮어씀
+// 실제 review/components/SellerQnaList.jsx — 표(상태, 상품, 문의, 답변, 작성자, 작성일), 답변은 등록 뒤에도 "수정"으로 다시 열어 덮어씀
 const ANSWER_MAX = 1000;
 function AnswerBox({ q, onSubmit }) {
   const [editing, setEditing] = useState(!q.a);
@@ -162,7 +162,7 @@ export function SellerQna() {
       <Segments items={['미답변', '답변완료', '전체']} value={tab} onChange={setTab} counts={{ 미답변: rows.filter((q) => !q.a).length, 답변완료: rows.filter((q) => q.a).length, 전체: rows.length }} />
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
-          <thead><tr><th>상태</th><th>상품</th><th>문의 · 답변</th><th>작성자</th><th>작성일</th></tr></thead>
+          <thead><tr><th>상태</th><th>상품</th><th>문의, 답변</th><th>작성자</th><th>작성일</th></tr></thead>
           <tbody>
             {list.map((q) => (
               <tr key={q.id}>
@@ -184,7 +184,7 @@ export function SellerQna() {
   );
 }
 
-/* ─────────── 채팅 (스토어 톡 · 판매자 운영 상담) ─────────── */
+/* ─────────── 채팅 (스토어 톡, 판매자 운영 상담) ─────────── */
 export function SellerChats() {
   return (
     <>
@@ -196,7 +196,7 @@ export function SellerChats() {
 }
 
 /* ─────────── 정산 내역 ───────────
-   실제 SellerSettlementList · SettlementDetailBody 와 같은 구성 — 정산 주차(ISO 주) · 건수(이월) · 상세(건별 표 · 보류 사유 · 상태 이력) */
+   실제 SellerSettlementList, SettlementDetailBody 와 같은 구성 — 정산 주차(ISO 주), 건수(이월), 상세(건별 표, 보류 사유, 상태 이력) */
 const isoWeek = (d) => {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
@@ -204,7 +204,7 @@ const isoWeek = (d) => {
   return `${y}-W${String(Math.ceil(((t - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7)).padStart(2, '0')}`;
 };
 const ACTOR = { SYSTEM: '자동', ADMIN: '곳간 운영팀' };
-// 목업: 정산 행에 주차 · 이월 건수 · 건별 내역 · 상태 이력을 붙인다 (건별 금액 합 = 구매확정 매출)
+// 목업: 정산 행에 주차, 이월 건수, 건별 내역, 상태 이력을 붙인다 (건별 금액 합 = 구매확정 매출)
 function withDetail(s, i) {
   const prods = productsOfStore(s.storeId).filter((p) => p.status !== '판매중지');
   const carriedOver = i % 3 === 1 ? 2 : 0;
@@ -228,7 +228,7 @@ function withDetail(s, i) {
 function SettlementDetailBody({ d }) {
   return (
     <div className="text-[14px]">
-      <div className="text-[13px] text-mute mb-3">대상기간 {ymd(d.start)} ~ {ymd(d.end)} · {d.status === '지급완료' ? '지급일' : '지급 예정일'} {ymd(d.pay)}</div>
+      <div className="text-[13px] text-mute mb-3">대상기간 {ymd(d.start)} ~ {ymd(d.end)}, {d.status === '지급완료' ? '지급일' : '지급 예정일'} {ymd(d.pay)}</div>
       <div className="border-t border-ink num">
         {[['구매확정 매출', d.gross], ['판매수수료 (카테고리별)', -d.commission], ['결제수수료 (2.2%)', -d.pgFee]].map(([k, v]) => (
           <div key={k} className="flex justify-between py-2.5 border-b border-line"><span className="font-sans text-ink-2">{k}</span><span>{v < 0 ? '−' : ''}{won(Math.abs(v))}</span></div>
@@ -241,7 +241,7 @@ function SettlementDetailBody({ d }) {
           <tbody>
             {d.items.map((i) => (
               <tr key={i.id}>
-                <td><div className="font-medium">{i.productName}</div><div className="text-[11px] text-mute num">{i.orderNo}{i.carriedOver && ' · 이월'}</div></td>
+                <td><div className="font-medium">{i.productName}</div><div className="text-[11px] text-mute num">{i.orderNo}{i.carriedOver && ', 이월'}</div></td>
                 <td className="num text-ink-2 whitespace-nowrap">{ymd(i.confirmedAt)}</td>
                 <td className="text-right num">{comma(i.amount)}</td>
                 <td className="text-right num">{pct(i.rate, 1)}</td>
@@ -258,7 +258,7 @@ function SettlementDetailBody({ d }) {
             <li key={idx} className="flex items-center gap-1.5 flex-wrap">
               <span className="num text-mute">{ymdhm(h.at)}</span>
               {h.from && <><StatusPill s={h.from} /><span className="text-mute">→</span></>}<StatusPill s={h.to} />
-              <span className="text-ink-2">{ACTOR[h.actor] ?? h.actor}{h.reason && ` · ${h.reason}`}</span>
+              <span className="text-ink-2">{ACTOR[h.actor] ?? h.actor}{h.reason && `, ${h.reason}`}</span>
             </li>
           ))}
         </ol>
@@ -281,17 +281,17 @@ export function SellerSettlements() {
   const list = mine.filter((s) => `${s.week} ${s.status}`.includes(q.trim()));
   return (
     <div>
-      <PageHead title="정산 내역" desc="구매확정일 기준 주 1회 정산 · 월~일 확정분을 다음 주 목요일에 등록 계좌로 지급합니다." />
+      <PageHead title="정산 내역" desc="구매확정일 기준 주 1회 정산, 월~일 확정분을 다음 주 목요일에 등록 계좌로 지급합니다." />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <Kpi label="이번 주 정산 예정" value={comma(pendingPayout)} unit="원" sub="이번 주 구매확정분 · 수수료 차감 후" />
-        <Kpi label="다음 지급 예정" value={next ? comma(next.payout) : '-'} unit="원" sub={next ? (next.pay < new Date() ? `${ymd(next.pay)} 예정 · 지급 대기` : `${ymd(next.pay)} (목)`) : '지급 전 정산서 없음'} />
+        <Kpi label="이번 주 정산 예정" value={comma(pendingPayout)} unit="원" sub="이번 주 구매확정분, 수수료 차감 후" />
+        <Kpi label="다음 지급 예정" value={next ? comma(next.payout) : '-'} unit="원" sub={next ? (next.pay < new Date() ? `${ymd(next.pay)} 예정, 지급 대기` : `${ymd(next.pay)} (목)`) : '지급 전 정산서 없음'} />
         <Kpi label="최근 8주 지급 완료" value={comma(paid8 / 10000)} unit="만원" />
-        <Kpi label="적용 수수료율" value={rates.map((r) => pct(r.rate + PAYMENT_FEE, 1)).join(' · ')}
-          sub={`${rates.map((r) => `${r.name} ${pct(r.rate, 1)}`).join(' · ')} + 결제 2.2%`} />
+        <Kpi label="적용 수수료율" value={rates.map((r) => pct(r.rate + PAYMENT_FEE, 1)).join(', ')}
+          sub={`${rates.map((r) => `${r.name} ${pct(r.rate, 1)}`).join(', ')} + 결제 2.2%`} />
       </div>
       <div className="flex mt-4">
         <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-72 bg-white">
-          <Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="정산 주차 · 상태" className="flex-1 px-2 text-[13px] outline-none" />
+          <Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="정산 주차, 상태" className="flex-1 px-2 text-[13px] outline-none" />
         </div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
@@ -316,13 +316,13 @@ export function SellerSettlements() {
           </tbody>
         </table>
       </div>
-      <Modal open={!!detail} onClose={() => setDetail(null)} title={`정산 상세 · ${detail?.week ?? ''}`} width={600}
+      <Modal open={!!detail} onClose={() => setDetail(null)} title={`정산 상세, ${detail?.week ?? ''}`} width={600}
         footer={detail && <>
           <OpenChatButton by="SELLER" basePath="/seller/chats" request={{ type: 'SELLER_SUPPORT', storeId: MY_STORE.id, context: { type: 'SETTLEMENT', id: detail.id } }}>
             <MessagesSquare size={14} /> 이 정산 문의
           </OpenChatButton>
           {/* 실제 기능 — 지급완료 건만 명세서(정산 명세서 Lambda 가 만든 CSV)를 10분 링크로 연다. 11/2 에 없앤 엑셀 다운로드와 다름 */}
-          {detail.status === '지급완료' && <button className="btn btn-line btn-sm" onClick={() => toast('정산 명세서(CSV)를 새 탭에서 열어요 · 링크는 10분 동안 유효')}><Download size={14} /> 정산 명세서 (CSV)</button>}
+          {detail.status === '지급완료' && <button className="btn btn-line btn-sm" onClick={() => toast('정산 명세서(CSV)를 새 탭에서 열어요, 링크는 10분 동안 유효')}><Download size={14} /> 정산 명세서 (CSV)</button>}
         </>}>
         {detail && <SettlementDetailBody d={detail} />}
       </Modal>
@@ -332,7 +332,7 @@ export function SellerSettlements() {
 
 /* ─────────── 스토어 설정 ─────────── */
 const PALETTE = ['#5b6b4a', '#2b2b2b', '#7a4b2a', '#2f5f8a', '#b4371f', '#c08a2e']; // 지금 색이 밖이면 맨 앞에 함께 보여 준다 (실제 paletteWith)
-// 실제 SellerStoreSettings — 저장 · 대표(커버) 이미지 · 폐점. 기본 배송비 0원이면 무료배송 기준 칸을 막음
+// 실제 SellerStoreSettings — 저장, 대표(커버) 이미지, 폐점. 기본 배송비 0원이면 무료배송 기준 칸을 막음
 export function SellerStore() {
   const { toast } = useApp();
   const s = MY_STORE;
@@ -345,12 +345,12 @@ export function SellerStore() {
   const allFree = shipFee !== '' && Number(shipFee) === 0;
   const digits = (v) => v.replace(/\D/g, '');
   const fileRef = useRef(null);
-  // 커버 변경 — 파일 선택 → 형식 · 10MB 검사 → 미리보기 (실제: S3 업로드 후 저장을 눌러야 반영)
+  // 커버 변경 — 파일 선택 → 형식, 10MB 검사 → 미리보기 (실제: S3 업로드 후 저장을 눌러야 반영)
   const pickCover = (e) => {
     const file = e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('JPG · PNG · WEBP 이미지만 올릴 수 있어요');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) return toast('JPG, PNG, WEBP 이미지만 올릴 수 있어요');
     if (file.size > 10 * 1024 * 1024) return toast('이미지는 10MB 이하만 올릴 수 있어요');
     setCover(URL.createObjectURL(file));
   };

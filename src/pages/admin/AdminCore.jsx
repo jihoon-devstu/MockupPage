@@ -28,19 +28,19 @@ export function AdminLayout() {
       { to: '/admin/stores', label: '스토어 관리', icon: Store },
       { to: '/admin/settlements', label: '정산 관리', icon: Wallet, count: settlements.filter((s) => s.status === '지급보류').length },
     ] },
-    { title: '회원 · 콘텐츠', items: [
+    { title: '회원, 콘텐츠', items: [
       { to: '/admin/users', label: '회원 관리', icon: Users },
       { to: '/admin/reports', label: '신고 관리', icon: Flag, count: openReportCount() },
       { to: '/admin/chats', label: '상담함', icon: MessagesSquare, count: chatUnread },
     ] },
-    { title: '설정', items: [{ to: '/admin/categories', label: '카테고리 · 수수료', icon: Tags }] },
+    { title: '설정', items: [{ to: '/admin/categories', label: '카테고리, 수수료', icon: Tags }] },
     { title: '시스템', items: [{ to: '/admin/system', end: true, label: '시스템 상태', icon: Activity }, { to: '/admin/system/report', label: '장애 리포트', icon: FileText }] },
   ];
-  return <ConsoleLayout kind="admin" badge="운영관리" groups={groups} onLogout={onLogout} bell={<NotificationBell to="ADMIN" dark />} account={{ name: '곳간 운영팀', role: '파트너운영 · 최고관리자', avatar: '/images/avatar/u-2.jpg' }} />;
+  return <ConsoleLayout kind="admin" badge="운영관리" groups={groups} onLogout={onLogout} bell={<NotificationBell to="ADMIN" dark />} account={{ name: '곳간 운영팀', role: '파트너운영, 최고관리자', avatar: '/images/avatar/u-2.jpg' }} />;
 }
 
 /* ─────────── 대시보드 ─────────── */
-// 일별 거래액 = 결제일별 최근 30일 · 카테고리별 거래액 · 스토어 순위 = 정산의 최근 8주 구매확정분 (실제 AdminDashboard.jsx)
+// 일별 거래액 = 결제일별 최근 30일, 카테고리별 거래액, 스토어 순위 = 정산의 최근 8주 구매확정분 (실제 AdminDashboard.jsx)
 export function AdminDashboard() {
   const gmv = platformDaily.reduce((a, d) => a + d.amount, 0);
   const orderCount = platformDaily.reduce((a, d) => a + d.orders, 0);
@@ -71,7 +71,7 @@ export function AdminDashboard() {
   ];
   return (
     <div>
-      <PageHead title="운영 대시보드" desc="거래액은 결제 기준, 수수료 수익 · 지급액은 정산서 기준" />
+      <PageHead title="운영 대시보드" desc="거래액은 결제 기준, 수수료 수익, 지급액은 정산서 기준" />
       <div className="panel grid grid-cols-3 md:grid-cols-6">
         {todo.map(([k, n, to], i) => (
           <Link key={k} to={to} className={cx('px-4 py-4 hover:bg-cream border-line', i % 3 && 'border-l', i >= 3 && 'border-t md:border-t-0', i % 6 && 'md:border-l')}>
@@ -83,22 +83,22 @@ export function AdminDashboard() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
         <Kpi label="누적 거래액 (GMV)" value={shortWon(gmv)} unit="원" sub={`결제 완료 주문 ${comma(orderCount)}건`} />
         <Kpi label="이번 달 수수료 수익" value={shortWon(commissionThisMonth)} unit="원" sub="판매수수료 (결제수수료 제외)" />
-        <Kpi label="지급 예정 · 보류" value={shortWon(sum(scheduled, 'payout'))} unit="원" sub={`보류 ${won(sum(held, 'payout'))} · 이번 달 지급 ${shortWon(paidThisMonth)}원`} />
-        <Kpi label="운영 스토어 / 회원" value={`${stores.filter((s) => s.status === '운영중').length}`} unit={`곳 · ${comma(users.length)}명`}
-          sub={`판매중 상품 ${comma(products.filter((p) => p.status === '판매중').length)} · 품절 ${comma(products.filter((p) => p.status === '품절').length)} · 강제중지 ${comma(products.filter((p) => p.blocked).length)}`} />
+        <Kpi label="지급 예정, 보류" value={shortWon(sum(scheduled, 'payout'))} unit="원" sub={`보류 ${won(sum(held, 'payout'))}, 이번 달 지급 ${shortWon(paidThisMonth)}원`} />
+        <Kpi label="운영 스토어 / 회원" value={`${stores.filter((s) => s.status === '운영중').length}`} unit={`곳, ${comma(users.length)}명`}
+          sub={`판매중 상품 ${comma(products.filter((p) => p.status === '판매중').length)}, 품절 ${comma(products.filter((p) => p.status === '품절').length)}, 강제중지 ${comma(products.filter((p) => p.blocked).length)}`} />
       </div>
       <div className="grid xl:grid-cols-[1fr_360px] gap-4 mt-4">
         <div className="panel">
-          <div className="panel-head"><span className="panel-title">일별 거래액 · 최근 30일</span></div>
+          <div className="panel-head"><span className="panel-title">일별 거래액, 최근 30일</span></div>
           <div className="p-5"><BarChart data={platformDaily} /></div>
         </div>
         <div className="panel">
-          <div className="panel-head"><span className="panel-title">카테고리별 거래액 (8주 · 구매확정)</span><span className="text-[11.5px] text-mute">수수료율</span></div>
+          <div className="panel-head"><span className="panel-title">카테고리별 거래액 (8주, 구매확정)</span><span className="text-[11.5px] text-mute">수수료율</span></div>
           <div className="p-5"><HBars rows={catRows} format={(v) => `${shortWon(v)}원`} /></div>
         </div>
       </div>
       <div className="panel mt-4 overflow-x-auto">
-        <div className="panel-head"><span className="panel-title">스토어 거래액 순위 (최근 8주 · 구매확정 · 상위 10)</span><Link to="/admin/stores" className="text-[12px] text-mute flex items-center gap-1">스토어 관리 <ArrowRight size={12} /></Link></div>
+        <div className="panel-head"><span className="panel-title">스토어 거래액 순위 (최근 8주, 구매확정, 상위 10)</span><Link to="/admin/stores" className="text-[12px] text-mute flex items-center gap-1">스토어 관리 <ArrowRight size={12} /></Link></div>
         <table className="tbl">
           <thead><tr><th className="w-12">순위</th><th>스토어</th><th className="text-right">구매확정</th><th className="text-right">거래액</th><th className="text-right">수수료 수익</th></tr></thead>
           <tbody>
@@ -113,7 +113,7 @@ export function AdminDashboard() {
             ))}
           </tbody>
         </table>
-        <p className="px-4 py-2 text-[11.5px] text-mute">{ymd(salesFrom)}부터 · 정산 데이터 기준 (거래액은 포인트 차감 전 상품주문 금액)</p>
+        <p className="px-4 py-2 text-[11.5px] text-mute">{ymd(salesFrom)}부터, 정산 데이터 기준 (거래액은 포인트 차감 전 상품주문 금액)</p>
       </div>
     </div>
   );
@@ -128,7 +128,7 @@ const DOC_TYPES = [
   { value: 'PRODUCT_PHOTO', label: '상품 사진' },
 ];
 const APPLICATION_STATUS_LABEL = { PENDING: '심사대기', SUPPLEMENT: '보완요청', APPROVED: '승인', REJECTED: '반려' };
-const CHECKLIST = [['biz', '사업자 상태 정상 (국세청 조회)'], ['ecom', '통신판매업 신고 확인'], ['dup', '기존 스토어 중복 입점 없음'], ['cat', '카테고리 · 상품 적합']];
+const CHECKLIST = [['biz', '사업자 상태 정상 (국세청 조회)'], ['ecom', '통신판매업 신고 확인'], ['dup', '기존 스토어 중복 입점 없음'], ['cat', '카테고리, 상품 적합']];
 const REJECT_REASONS = ['사업자 정보 확인 불가', '판매 금지 품목 포함', '정품/인증 증빙 불가', '기존 스토어 중복 입점', '기타'];
 
 export function AdminApplications() {
@@ -139,10 +139,10 @@ export function AdminApplications() {
   const list = APPS.filter((a) => (tab === '전체' || a.status === tab) && (a.no + a.storeName + a.owner + catById[a.cat].name).includes(q));
   return (
     <div>
-      <PageHead title="입점 심사" desc="심사 기준: 사업자 상태(국세청) · 통신판매업 신고 · 카테고리 적합성 · 중복 입점 여부 / 처리 기한: 접수 후 영업일 3일" />
+      <PageHead title="입점 심사" desc="심사 기준: 사업자 상태(국세청), 통신판매업 신고, 카테고리 적합성, 중복 입점 여부 / 처리 기한: 접수 후 영업일 3일" />
       <div className="flex flex-wrap gap-3 items-center">
         <Segments items={T} value={tab} onChange={setTab} counts={counts} />
-        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="접수번호 · 스토어 · 대표자 · 카테고리" className="flex-1 px-2 text-[13px] outline-none" /></div>
+        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="접수번호, 스토어, 대표자, 카테고리" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
@@ -215,10 +215,10 @@ function ApplicationDetailBody({ a }) {
             ]} /></div>
           </div>
           <div className="panel">
-            <div className="panel-head"><span className="panel-title">스토어 소개 · 판매 예정 상품</span></div>
+            <div className="panel-head"><span className="panel-title">스토어 소개, 판매 예정 상품</span></div>
             <div className="p-5">
               <p className="text-[14px] text-ink-2 leading-relaxed">{a.intro}</p>
-              <ul className="mt-4 border-t border-line">{a.products.map((p) => <li key={p.name} className="py-2.5 border-b border-line text-[13px] flex justify-between">{p.name}<span className="text-mute">{p.subCategory} · {won(p.price)}</span></li>)}</ul>
+              <ul className="mt-4 border-t border-line">{a.products.map((p) => <li key={p.name} className="py-2.5 border-b border-line text-[13px] flex justify-between">{p.name}<span className="text-mute">{p.subCategory}, {won(p.price)}</span></li>)}</ul>
             </div>
           </div>
           <div className="panel">
@@ -255,9 +255,9 @@ function ApplicationDetailBody({ a }) {
               ))}
               <div className="mt-2 border-t border-line pt-2.5 text-[12px] text-ink-2">
                 <div className="font-semibold">같은 사업자번호</div>
-                {dupCount === 0 && <div className="text-mute">다른 신청 · 스토어 없음</div>}
-                {a.sameBizRegNo.applications.map((x) => <div key={`a${x.applicationId}`} className="num">{x.applicationNo} · {x.storeName} · {APPLICATION_STATUS_LABEL[x.status] ?? x.status}</div>)}
-                {a.sameBizRegNo.stores.map((x) => <div key={`s${x.storeId}`}>스토어 {x.storeName} · {x.status}</div>)}
+                {dupCount === 0 && <div className="text-mute">다른 신청, 스토어 없음</div>}
+                {a.sameBizRegNo.applications.map((x) => <div key={`a${x.applicationId}`} className="num">{x.applicationNo}, {x.storeName}, {APPLICATION_STATUS_LABEL[x.status] ?? x.status}</div>)}
+                {a.sameBizRegNo.stores.map((x) => <div key={`s${x.storeId}`}>스토어 {x.storeName}, {x.status}</div>)}
               </div>
             </div>
           </div>
@@ -279,7 +279,7 @@ function ApplicationDetailBody({ a }) {
                     <StatusPill s={h.to} />
                   </div>
                   {h.reason && <div className="mt-1 text-ink-2">{h.reason}</div>}
-                  <div className="text-[11.5px] text-mute num">{ymdhm(h.at)} · {h.by}</div>
+                  <div className="text-[11.5px] text-mute num">{ymdhm(h.at)}, {h.by}</div>
                 </li>
               ))}
             </ol>
@@ -288,7 +288,7 @@ function ApplicationDetailBody({ a }) {
       </div>
 
       <Modal open={modal === 'approve'} onClose={() => setModal(null)} title="입점 승인" width={480}
-        footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => decide('승인', `${a.storeName} 입점 승인 · 승인 안내 메일 발송`)}>승인 확정</button></>}>
+        footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-ink btn-sm" onClick={() => decide('승인', `${a.storeName} 입점 승인, 승인 안내 메일 발송`)}>승인 확정</button></>}>
         <div className="space-y-4 text-[14px]">
           <KV rows={[['스토어', a.storeName], ['판매수수료', `${pct(c.commission)} (카테고리 기본)`], ['결제수수료', pct(PAYMENT_FEE, 1)], ['판매자 등급', '새싹 (시작 등급)']]} />
           <p className="text-[12px] text-mute">승인 시: ① 스토어 생성(상태: 운영중) ② 판매자 권한 부여(신청자의 다음 로그인부터) ③ 승인 안내 메일 발송</p>
@@ -297,10 +297,10 @@ function ApplicationDetailBody({ a }) {
       <Modal open={modal === 'supplement'} onClose={() => setModal(null)} title="보완 요청" width={480}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-ink btn-sm" disabled={!message.trim() || message.trim().length > 255} onClick={() => decide('보완요청', '보완 요청을 보냈어요 (7일 내 미보완 시 자동 반려)', message.trim())}>요청 보내기</button></>}>
         <div className="space-y-2 text-[14px]">{DOC_TYPES.map((d) => <Checkbox key={d.value} checked={requestedDocs.includes(d.value)} onChange={(on) => toggleDoc(d.value, on)} label={`${d.label} 재제출`} />)}</div>
-        <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} className="field mt-4" placeholder="판매자에게 전달할 메시지 (필수 · 서류가 아닌 내용 보완이면 서류 선택 없이)" />
+        <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} className="field mt-4" placeholder="판매자에게 전달할 메시지 (필수, 서류가 아닌 내용 보완이면 서류 선택 없이)" />
       </Modal>
       <Modal open={modal === 'reject'} onClose={() => setModal(null)} title="입점 반려" width={480}
-        footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-sm bg-rust text-white border-rust" disabled={rejectReason.length > 255} onClick={() => decide('반려', '반려 처리 · 사유가 신청자에게 발송되었어요', rejectReason)}>반려 확정</button></>}>
+        footer={<><button className="btn btn-line btn-sm" onClick={() => setModal(null)}>취소</button><button className="btn btn-sm bg-rust text-white border-rust" disabled={rejectReason.length > 255} onClick={() => decide('반려', '반려 처리, 사유가 신청자에게 발송되었어요', rejectReason)}>반려 확정</button></>}>
         <label className="label">반려 사유</label>
         <select value={rejectPreset} onChange={(e) => setRejectPreset(e.target.value)} className="field mb-3">{REJECT_REASONS.map((r) => <option key={r}>{r}</option>)}</select>
         <textarea rows={3} value={rejectDetail} onChange={(e) => setRejectDetail(e.target.value)} className="field" placeholder="상세 사유 (신청자에게 전달됨)" />

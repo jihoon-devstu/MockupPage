@@ -27,7 +27,7 @@ export default function SellerDashboard() {
   const revs = reviewsOfStore(MY_STORE.id);
   const sum = ratingSummary(revs);
   const prods = productsOfStore(MY_STORE.id);
-  // 상품 현황 — 판매중 · 재고 부족(1~19) · 품절 · 판매중지 수, 재고 부족은 적은 순 10개 (실제 GET /api/seller/dashboard 의 product)
+  // 상품 현황 — 판매중, 재고 부족(1~19), 품절, 판매중지 수, 재고 부족은 적은 순 10개 (실제 GET /api/seller/dashboard 의 product)
   const lowStock = prods.filter((p) => p.status !== '판매중지' && p.stock > 0 && p.stock < 20).sort((a, b) => a.stock - b.stock).slice(0, 10);
   const productStat = [['판매중', prods.filter((p) => p.status === '판매중').length], ['재고 부족', lowStock.length], ['품절', prods.filter((p) => p.status === '품절').length], ['판매중지', prods.filter((p) => p.status === '판매중지').length]];
   const pendingCount = sellerOrders.filter((o) => o.status === '구매확정').length;
@@ -35,7 +35,7 @@ export default function SellerDashboard() {
 
   return (
     <div>
-      <PageHead title={`${MY_STORE.owner} 대표님, 좋은 하루예요`} desc={`${ymd(new Date('2026-10-01'))} (목) · ${MY_STORE.name} 스토어 현황`}
+      <PageHead title={`${MY_STORE.owner} 대표님, 좋은 하루예요`} desc={`${ymd(new Date('2026-10-01'))} (목), ${MY_STORE.name} 스토어 현황`}
         right={<Link to="/seller/products/new" className="btn btn-ink btn-sm">+ 상품 등록</Link>} />
 
       {/* 할 일 */}
@@ -57,7 +57,7 @@ export default function SellerDashboard() {
 
       <div className="grid xl:grid-cols-[1fr_340px] gap-4 mt-4">
         <div className="panel">
-          <div className="panel-head"><span className="panel-title">일별 결제금액 · 최근 30일</span><span className="text-[12px] text-mute">막대에 마우스를 올리면 상세 금액</span></div>
+          <div className="panel-head"><span className="panel-title">일별 결제금액, 최근 30일</span><span className="text-[12px] text-mute">막대에 마우스를 올리면 상세 금액</span></div>
           <div className="p-5"><BarChart data={sellerDaily} /></div>
         </div>
         <div className="panel">
@@ -107,14 +107,14 @@ export default function SellerDashboard() {
             <div className="panel-head"><span className="panel-title">새 리뷰</span><Link to="/seller/reviews" className="text-[12px] text-mute">답글 달기</Link></div>
             {revs.slice(0, 3).map((r) => (
               <div key={r.id} className="px-5 py-3 border-b border-line last:border-0">
-                <div className="flex items-center gap-2 text-[12px]"><Stars value={r.rating} size={11} /><span className="text-mute">{maskName(userById[r.userId].name)} · {productById[r.productId].name}</span>{r.blinded && <Pill tone="rust">블라인드</Pill>}</div>
+                <div className="flex items-center gap-2 text-[12px]"><Stars value={r.rating} size={11} /><span className="text-mute">{maskName(userById[r.userId].name)}, {productById[r.productId].name}</span>{r.blinded && <Pill tone="rust">블라인드</Pill>}</div>
                 <p className="text-[13px] mt-1 line-clamp-2 text-ink-2">{r.body}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
-      <p className="text-[12px] text-mute mt-4">이번 주 구매확정분 정산 예정 {won(pendingPayout)}({comma(pendingCount)}건) · 다음 주 목요일 지급</p>
+      <p className="text-[12px] text-mute mt-4">이번 주 구매확정분 정산 예정 {won(pendingPayout)}({comma(pendingCount)}건), 다음 주 목요일 지급</p>
     </div>
   );
 }

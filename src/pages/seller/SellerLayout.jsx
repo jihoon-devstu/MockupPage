@@ -24,7 +24,7 @@ export default function SellerLayout() {
       { to: '/seller/products', end: true, label: '상품 조회/수정', icon: Package },
       { to: '/seller/products/new', label: '상품 등록', icon: PlusSquare },
     ] },
-    { title: '주문 · 배송', items: [
+    { title: '주문, 배송', items: [
       { to: '/seller/orders', label: '주문 관리', icon: ShoppingCart, count: cnt('결제완료') },
       { to: '/seller/claims', label: '취소/반품/교환', icon: RotateCcw, count: claims },
     ] },
@@ -33,11 +33,11 @@ export default function SellerLayout() {
       { to: '/seller/qna', label: '상품 문의', icon: MessageCircle, count: myStoreQna.filter((q) => !q.a).length },
       { to: '/seller/chats', label: '채팅', icon: MessagesSquare, count: chatUnread },
     ] },
-    { title: '정산 · 스토어', items: [
+    { title: '정산, 스토어', items: [
       { to: '/seller/settlements', label: '정산 내역', icon: Wallet },
       { to: '/seller/store', label: '스토어 설정', icon: Store },
     ] },
   ];
   return <ConsoleLayout kind="seller" badge="판매자센터" groups={groups} onLogout={onLogout} bell={<NotificationBell to="STORE" dark />}
-    account={{ name: MY_STORE.name, role: `${MY_STORE.owner} 대표 · ${MY_STORE.grade}`, avatar: '/images/avatar/u-6.jpg' }} />;
+    account={{ name: MY_STORE.name, role: `${MY_STORE.owner} 대표, ${MY_STORE.grade}`, avatar: '/images/avatar/u-6.jpg' }} />;
 }

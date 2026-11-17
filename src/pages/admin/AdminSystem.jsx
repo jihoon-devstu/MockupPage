@@ -9,15 +9,15 @@ import {
 } from '../../data/system';
 
 /* ─────────── 시스템 상태 (장애 시연 F-1) ───────────
-   실제: SystemDashboard · SystemServicePanel · SystemFeaturePanel · SystemTimeline · SystemLinks · SystemKillDialog (frontend #109)
-   API: backend docs/api/admin.md 7절 — 상태 2초 · 지표 15초 · 타임라인 5초 폴링. 목업은 내리기 → 복구를 타이머로 흉내 낸다
+   실제: SystemDashboard, SystemServicePanel, SystemFeaturePanel, SystemTimeline, SystemLinks, SystemKillDialog (frontend #109)
+   API: backend docs/api/admin.md 7절 — 상태 2초, 지표 15초, 타임라인 5초 폴링. 목업은 내리기 → 복구를 타이머로 흉내 낸다
    이중화 검증(시나리오, frontend #111 SystemScenarioPanel) — admin.md 7-2-1 kill-one-each
-   부하테스트(frontend #116 · #117 · #119, admin.md 8절) · 실시간 모니터링(#118 · #120, admin.md 9절) · 5xx 퍼센트 → 건수(#121)
+   부하테스트(frontend #116, #117, #119, admin.md 8절), 실시간 모니터링(#118, #120, admin.md 9절), 5xx 퍼센트 → 건수(#121)
    목업은 1초마다 가짜 트래픽을 만든다(data/system.js). 서비스를 전부 내리면 그 서비스 요청이 502 로 바뀌어 5xx 건수와 장애 감지가 뜬다
-   목업 전용 주소: ?chaos=off = 내리기 스위치 꺼짐 · ?conn=lost = 상태 조회 실패(마지막 값 유지) · ?scenario=recovering = 시나리오 직후 복구 중(장애 주입 버튼 막힘)
-   · ?load=running = 혼합 시나리오 120명 실행 중 + 20초 전 product 전부 내림(장애 감지) */
+   목업 전용 주소: ?chaos=off = 내리기 스위치 꺼짐, ?conn=lost = 상태 조회 실패(마지막 값 유지), ?scenario=recovering = 시나리오 직후 복구 중(장애 주입 버튼 막힘)
+   - ?load=running = 혼합 시나리오 120명 실행 중 + 20초 전 product 전부 내림(장애 감지) */
 
-// 서비스 13개 — 서버 순서 그대로. desired = Helm values replicas (구매 경로 · 입구 2, 나머지 1)
+// 서비스 13개 — 서버 순서 그대로. desired = Helm values replicas (구매 경로, 입구 2, 나머지 1)
 const SERVICES = [
   ['order-service', true, 2], ['product-service', true, 2], ['payment-service', true, 2], ['store-service', true, 2], ['user-service', true, 2],
   ['review-service', true, 1], ['settlement-service', true, 1], ['chat-service', true, 1],
@@ -26,14 +26,14 @@ const SERVICES = [
 
 // 사용자 기능 — 서버가 의존 관계로 계산 (admin.md 7절 표)
 const FEATURES = [
-  ['BROWSE', '둘러보기 · 상품 상세', ['product-service']],
+  ['BROWSE', '둘러보기, 상품 상세', ['product-service']],
   ['STORE', '스토어', ['store-service']],
-  ['REVIEW', '리뷰 · 문의', ['review-service']],
-  ['CART_ORDER', '장바구니 · 주문', ['order-service', 'product-service', 'store-service']],
+  ['REVIEW', '리뷰, 문의', ['review-service']],
+  ['CART_ORDER', '장바구니, 주문', ['order-service', 'product-service', 'store-service']],
   ['PAYMENT', '결제', ['order-service', 'payment-service']],
   ['CHAT', '채팅', ['chat-service']],
   ['SETTLEMENT', '판매자 정산', ['settlement-service']],
-  ['MYPAGE', '회원 · 마이페이지', ['user-service']],
+  ['MYPAGE', '회원, 마이페이지', ['user-service']],
 ];
 const featuresOf = (services) => FEATURES.map(([key, label, deps]) => {
   const causes = deps.filter((d) => services.find((s) => s.name === d).state !== 'UP');
@@ -55,7 +55,7 @@ const scenarioEvents = (minutesAgo, recovered) => {
   })).reverse();
 };
 
-// 최근 1분 5xx 건수(11/17 퍼센트 → 건수). 라우트 없는 서비스(gateway · keycloak · mysql · redis)는 '-'
+// 최근 1분 5xx 건수(11/17 퍼센트 → 건수). 라우트 없는 서비스(gateway, keycloak, mysql, redis)는 '-'
 const formatErrorCount = (count) => (count == null ? '-' : `${count}건/분`);
 const serviceShortName = (name) => name.replace(/-service$/, '');
 const clock = (d) => d.toLocaleTimeString('en-GB', { timeZone: 'Asia/Seoul' });
@@ -105,7 +105,7 @@ function KillDialog({ service, onKill, onClose }) {
 function ScenarioPanel({ services, chaosEnabled, onRun }) {
   const [confirming, setConfirming] = useState(false);
   const targets = scenarioTargets(services);
-  const names = targets.map((s) => serviceShortName(s.name)).join(' · ');
+  const names = targets.map((s) => serviceShortName(s.name)).join(', ');
   const blocked = !chaosEnabled ? '내리기 기능이 꺼져 있어요.' : targets.length === 0 ? '대상 서비스가 없어요.' : targets.some((s) => s.state !== 'UP') ? NOT_READY_MESSAGE : null;
   return (
     <section aria-label="이중화 검증" className="border border-line bg-paper px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -113,7 +113,7 @@ function ScenarioPanel({ services, chaosEnabled, onRun }) {
       <button className="btn btn-ink" disabled={!!blocked} onClick={() => setConfirming(true)}>구매 경로 장애 주입</button>
       <div className="text-base">
         <span className="text-mute">대상</span> <b>{names || '-'}</b>
-        <span className="ml-3 text-sm text-mute">{blocked ?? '각 서비스 파드 1개 제거 · 1개로 무중단 유지'}</span>
+        <span className="ml-3 text-sm text-mute">{blocked ?? '각 서비스 파드 1개 제거, 1개로 무중단 유지'}</span>
       </div>
       {confirming && (
         <Modal open onClose={() => setConfirming(false)} title="구매 경로 장애 주입" footer={<>
@@ -136,7 +136,7 @@ function Links() {
       <a href="/" target="_blank" rel="noopener noreferrer" className="btn btn-line btn-sm inline-flex items-center gap-1">쇼핑몰 새 창으로 열기 <ExternalLink size={14} /></a>
       <button className="btn btn-line btn-sm" onClick={() => setGuideOpen(true)}>Grafana 안내</button>
       <Modal open={guideOpen} onClose={() => setGuideOpen(false)} title="Grafana 접속 방법">
-        <p className="text-sm">자세한 그래프 · 로그 · 트레이스는 Grafana 에서 봅니다. 외부에 열려 있지 않아 터미널에서 먼저 연결해야 해요.</p>
+        <p className="text-sm">자세한 그래프, 로그, 트레이스는 Grafana 에서 봅니다. 외부에 열려 있지 않아 터미널에서 먼저 연결해야 해요.</p>
         <pre className="mt-3 p-3 bg-cream text-[13px] overflow-x-auto"><code>kubectl -n monitoring port-forward svc/grafana 3000</code></pre>
         <p className="mt-3 text-sm">연결한 뒤 <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" className="underline">http://localhost:3000</a> 을 여세요.</p>
       </Modal>
@@ -433,7 +433,7 @@ export function AdminSystem() {
   const connLost = sp.get('conn') === 'lost';
   const recoveringStart = sp.get('scenario') === 'recovering';
   const loadStart = sp.get('load') === 'running';
-  // ?scenario=recovering: 방금 장애 주입 → 대상 5개가 1/2 복구 중 · ?load=running: product 전부 내림(0/2)
+  // ?scenario=recovering: 방금 장애 주입 → 대상 5개가 1/2 복구 중, ?load=running: product 전부 내림(0/2)
   const [services, setServices] = useState(() => (recoveringStart
     ? SERVICES.map((s) => (s.killable && s.desired >= 2 ? { ...s, ready: s.desired - 1, state: 'RECOVERING' } : s))
     : loadStart ? SERVICES.map((s) => (s.name === 'product-service' ? { ...s, ready: 0, state: 'DOWN' } : s)) : SERVICES));
@@ -598,7 +598,7 @@ export function AdminSystem() {
               );
             })}
           </ul>
-          {/* 입구 · 관리자 · 로그인 · 데이터 — 시연에서 내리지 않으니 한 줄로 줄인다 */}
+          {/* 입구, 관리자, 로그인, 데이터 — 시연에서 내리지 않으니 한 줄로 줄인다 */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-3">
             <span className="text-sm text-mute whitespace-nowrap">내릴 수 없음</span>
             {fixed.map((s) => (
@@ -629,7 +629,7 @@ export function AdminSystem() {
                     <span className="text-xl font-bold">{f.label}</span>
                     <span className={`ml-auto text-lg font-bold ${st.className}`}>
                       {st.label}
-                      {f.causes.length > 0 && <span className="font-normal"> · {f.causes.map(serviceShortName).join(', ')}</span>}
+                      {f.causes.length > 0 && <span className="font-normal">, {f.causes.map(serviceShortName).join(', ')}</span>}
                     </span>
                   </li>
                 );
@@ -648,7 +648,7 @@ export function AdminSystem() {
                     <span>{e.scope === 'ONE' ? '1개' : '전부'} 내림</span>
                     {e.reason?.startsWith('시나리오') && <span className="px-1.5 text-sm font-bold bg-sand text-ink-2">이중화 검증</span>}
                     {e.recoveredAt
-                      ? <span className="text-moss font-bold">→ {clock(e.recoveredAt)} 복구 · {e.recoverySeconds}초</span>
+                      ? <span className="text-moss font-bold">→ {clock(e.recoveredAt)} 복구, {e.recoverySeconds}초</span>
                       : <span className="text-sky font-bold">→ 복구 기다리는 중</span>}
                   </li>
                 ))}

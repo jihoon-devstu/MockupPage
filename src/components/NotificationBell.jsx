@@ -14,8 +14,8 @@ const markRead = (to, id) => {
 };
 
 /**
- * 헤더 알림 벨 — 쇼핑몰 · 판매자센터 · 관리자 헤더 공용 (dark = 콘솔 먹색 헤더)
- * to = 받는 쪽 (USER · STORE · ADMIN). 안 읽은 수 + 펼치면 최신순 목록, 누르면 읽음 처리 후 그 화면으로
+ * 헤더 알림 벨 — 쇼핑몰, 판매자센터, 관리자 헤더 공용 (dark = 콘솔 먹색 헤더)
+ * to = 받는 쪽 (USER, STORE, ADMIN). 안 읽은 수 + 펼치면 최신순 목록, 누르면 읽음 처리 후 그 화면으로
  */
 export default function NotificationBell({ to, dark = false }) {
   const [open, setOpen] = useState(false);

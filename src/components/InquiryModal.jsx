@@ -1,5 +1,5 @@
-// 상품 문의 작성 · 수정 모달 — 상품 상세 Q&A · 마이페이지 상품 문의가 같이 쓴다 (실제 review/components/InquiryModal.jsx)
-// target: { productId } 면 작성, { inquiry } 면 수정 · onSubmit({ content, secret })
+// 상품 문의 작성, 수정 모달 — 상품 상세 Q&A, 마이페이지 상품 문의가 같이 쓴다 (실제 review/components/InquiryModal.jsx)
+// target: { productId } 면 작성, { inquiry } 면 수정, onSubmit({ content, secret })
 import { useState } from 'react';
 import { Modal, Checkbox } from './ui';
 

@@ -5,7 +5,7 @@ import { OpenChatButton } from './Chat';
 import { REPORT_REASONS } from '../data/reports';
 import { CHAT_ME } from '../data/chats';
 
-/* 신고 모달 — 실제 구현 features/report/components/ReportModal 과 같은 구성. 리뷰 · 회원 신고에 공용
+/* 신고 모달 — 실제 구현 features/report/components/ReportModal 과 같은 구성. 리뷰, 회원 신고에 공용
    사용: <ReportModal target={{ type: 'REVIEW', id: 31, label: '리뷰' }} onClose={() => setTarget(null)} />  — target 이 있으면 열림
    목업: 접수하면 신고 번호만 만들어 접수 완료 화면을 보여 준다 */
 let seq = 900;

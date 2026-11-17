@@ -4,7 +4,7 @@
    곳간 디자인 토큰
    - 쇼핑몰: 흰 바탕 + 먹색 + 따뜻한 회색, 각진 모서리, 얇은 선
    - 콘솔(판매자/관리자): 회색 작업면 + 흰 패널, 촘촘한 표
-   - 포인트 컬러는 '주홍(vermilion)' 하나만 사용 (할인·알림·CTA)
+   - 포인트 컬러는 '주홍(vermilion)' 하나만 사용 (할인, 알림, CTA)
    ─────────────────────────────────────────────── */
 @theme {
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif;

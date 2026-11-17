@@ -35,7 +35,7 @@ export default function ProductDetail() {
   const [lines, setLines] = useState([]);
   const [tab, setTab] = useState('info');
   const [cartModal, setCartModal] = useState(false);
-  const [qnaTarget, setQnaTarget] = useState(null); // { productId } 작성 · { inquiry } 수정
+  const [qnaTarget, setQnaTarget] = useState(null); // { productId } 작성, { inquiry } 수정
   const [qs, setQs] = useState(qnas);
   const [reportTarget, setReportTarget] = useState(null);
   const [photoOnly, setPhotoOnly] = useState(false);
@@ -59,7 +59,7 @@ export default function ProductDetail() {
   const cat = catById[p.cat];
   const unit = salePrice(p);
   const soldOut = p.status === '품절';
-  const storeOpen = store.status === '운영중'; // 실제: 정지 · 폐점 스토어면 문의 버튼 · 배송 정책 · 우측 스토어 카드를 숨김
+  const storeOpen = store.status === '운영중'; // 실제: 정지, 폐점 스토어면 문의 버튼, 배송 정책, 우측 스토어 카드를 숨김
   const canBuy = storeOpen && p.status !== '판매중지'; // 실제: purchasable=false 면 '현재 구매할 수 없는 상품입니다'
   const fits = p.cat === 'fashion' || p.cat === 'shoes-bags' ? ['작아요', '정사이즈', '커요'].map((f) => ({ f, n: revs.filter((r) => r.fit === f).length })) : null;
   const REVIEW_PAGE = 10;
@@ -144,11 +144,11 @@ export default function ProductDetail() {
           <div className="mt-5 pb-5 border-b border-line"><Price p={p} size="lg" /></div>
 
           <dl className="py-4 border-b border-line text-[13px] grid grid-cols-[72px_1fr] gap-y-2.5">
-            <dt className="text-mute">적립</dt><dd>구매확정 시 실결제금액의 5% · 약 <b className="num">{comma(earnOf(unit))}P</b></dd>
+            <dt className="text-mute">적립</dt><dd>구매확정 시 실결제금액의 5%, 약 <b className="num">{comma(earnOf(unit))}P</b></dd>
             <dt className="text-mute">배송</dt>
             {storeOpen ? (
               <dd>
-                <div className="flex items-center gap-1.5"><Truck size={14} strokeWidth={1.6} /> {store.courier} · {store.shipFee ? `${comma(store.shipFee)}원` : '무료배송'}</div>
+                <div className="flex items-center gap-1.5"><Truck size={14} strokeWidth={1.6} /> {store.courier}, {store.shipFee ? `${comma(store.shipFee)}원` : '무료배송'}</div>
                 {store.freeOver > 0 && store.shipFee > 0 && <div className="text-mute mt-0.5">{comma(store.freeOver)}원 이상 구매 시 무료 (스토어 묶음배송)</div>}
                 <div className="text-moss mt-0.5 font-medium">{store.dispatch}</div>
               </dd>
@@ -300,13 +300,13 @@ export default function ProductDetail() {
               {filtered.slice(rpage * REVIEW_PAGE, (rpage + 1) * REVIEW_PAGE).map((r) => {
                 return (
                   <li key={r.id} className="py-6 border-b border-line">
-                    {/* 작성자는 writerDisplayName 글자만 — 아바타 · 등급 없음 */}
+                    {/* 작성자는 writerDisplayName 글자만 — 아바타, 등급 없음 */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="text-[13px] font-semibold">{r.writer}</div>
                       {canReport && r.userId !== ME.id && <button onClick={() => setReportTarget({ type: 'REVIEW', id: r.id, label: '리뷰' })} className="text-[11.5px] text-mute hover:text-ink shrink-0">신고</button>}
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-mute"><Stars value={r.rating} size={11} /> {ymd(r.date)}</div>
-                    <div className="mt-3 text-[12px] text-mute">{r.option && <>옵션: {r.option}</>}{r.fit && <>{r.option && ' · '}사이즈 <b className="text-ink-2">{r.fit}</b></>}</div>
+                    <div className="mt-3 text-[12px] text-mute">{r.option && <>옵션: {r.option}</>}{r.fit && <>{r.option && ', '}사이즈 <b className="text-ink-2">{r.fit}</b></>}</div>
                     {r.title && <p className="mt-2 text-[14px] font-semibold">{r.title}</p>}
                     <p className="mt-1 text-[14px] leading-relaxed text-ink-2">{r.body}</p>
                     {r.photos.length > 0 && <div className="mt-3 flex gap-2">{r.photos.map((src) => <img key={src} src={src} alt="" className="w-28 h-28 object-cover" />)}</div>}
@@ -320,7 +320,7 @@ export default function ProductDetail() {
                 );
               })}
             </ul>
-            {/* 실제: 10개씩 서버 페이징 · 1페이지뿐이면 페이저 없음 (BlockPager) */}
+            {/* 실제: 10개씩 서버 페이징, 1페이지뿐이면 페이저 없음 (BlockPager) */}
             {filtered.length > REVIEW_PAGE && (
               <div className="mt-8 flex items-center justify-center gap-1 text-[13px]">
                 {Array.from({ length: Math.ceil(filtered.length / REVIEW_PAGE) }, (_, i) => (
@@ -344,7 +344,7 @@ export default function ProductDetail() {
                   <li key={q.id} className="py-4 border-b border-line text-[13.5px]">
                     <div className="flex items-center gap-2 text-[12px] text-mute">
                       <Pill tone={q.a ? 'mute' : 'line'}>{q.a ? '답변완료' : '답변대기'}</Pill>
-                      {qnaWriter(q.userId)} · {ymd(q.date)}
+                      {qnaWriter(q.userId)}, {ymd(q.date)}
                       {mine && (
                         <span className="ml-auto flex gap-2">
                           {!q.a && <button onClick={() => setQnaTarget({ inquiry: q })} className="underline">수정</button>}
@@ -378,10 +378,10 @@ export default function ProductDetail() {
                     ['출고', store.dispatch],
                   ] : [['배송비', '스토어 배송 정책에 따름 — 장바구니에서 스토어별로 계산']]),
                   ['교환/반품 신청', '배송 완료 후 7일 이내, 마이페이지 > 주문/배송에서 신청'],
-                  ['반품 배송비', `단순 변심: 왕복 ${storeOpen ? won((store.shipFee || 3000) * 2) : '배송비'} / 상품 하자·오배송: 판매자 부담`],
-                  ['교환/반품 불가', '사용 · 훼손으로 상품 가치가 떨어진 경우, 신선식품 · 주문 제작 상품의 단순 변심'],
+                  ['반품 배송비', `단순 변심: 왕복 ${storeOpen ? won((store.shipFee || 3000) * 2) : '배송비'} / 상품 하자, 오배송: 판매자 부담`],
+                  ['교환/반품 불가', '사용, 훼손으로 상품 가치가 떨어진 경우, 신선식품, 주문 제작 상품의 단순 변심'],
                   ['구매 확정', '배송 완료 7일 후 자동 구매확정 (확정 이후에는 교환/반품 불가)'],
-                  ['포인트', '적립은 구매확정 때 · 취소 · 반품 완료 시 그 상품분 사용 포인트는 환원'],
+                  ['포인트', '적립은 구매확정 때, 취소, 반품 완료 시 그 상품분 사용 포인트는 환원'],
                 ].map(([k, v]) => (
                   <tr key={k} className="border-b border-line"><th className="w-40 bg-cream text-left font-medium px-3 py-3 text-ink-2 align-top">{k}</th><td className="px-3 py-3 leading-relaxed">{v}</td></tr>
                 ))}

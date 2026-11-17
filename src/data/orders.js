@@ -45,8 +45,8 @@ const L = (o) => {
 const SHIP_HOME = { name: '김서연', phone: '010-0000-0010', zip: '04779', addr: '서울특별시 성동구 왕십리로 115', detail: '헤이그라운드 9층 902호', memo: '문 앞에 놓아주세요' };
 const SHIP_OFFICE = { name: '김서연', phone: '010-0000-0010', zip: '06236', addr: '서울특별시 강남구 테헤란로 152', detail: '강남파이낸스센터 21층', memo: '' };
 
-/* status: 주문 상태 — PAID(결제완료 이후) · PENDING(결제대기) · FAILED(결제실패). 대기 · 실패 주문의 상품주문은 '주문완료'로 남는다
-   claim.step: 클레임 단계 — REQUESTED 요청 · APPROVED 승인 · COLLECTED 수거완료 · RESHIPPED 재배송중 · REJECTED 거부 · WITHDRAWN 철회 · COMPLETED 완료 */
+/* status: 주문 상태 — PAID(결제완료 이후), PENDING(결제대기), FAILED(결제실패). 대기, 실패 주문의 상품주문은 '주문완료'로 남는다
+   claim.step: 클레임 단계 — REQUESTED 요청, APPROVED 승인, COLLECTED 수거완료, RESHIPPED 재배송중, REJECTED 거부, WITHDRAWN 철회, COMPLETED 완료 */
 export const myOrders = [
   {
     id: '20261001-000058', date: daysAgo(0, 1), userId: 'u1', status: 'PENDING', ship: SHIP_HOME,
@@ -95,7 +95,7 @@ export const myOrders = [
   {
     id: '20260904-000011', date: daysAgo(27), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
     payment: { method: 'CARD', point: 0 },
-    items: [L({ lineId: '20260904-000011-01', productId: 'p201', option: '블랙 / L', status: '교환요청', date: daysAgo(27), invoice: '247001877140', claim: { type: '교환', step: 'RESHIPPED', reason: '상품 불량 · 파손', detail: '밑창 접착이 떨어져 있어요', requested: daysAgo(5), reship: { courier: '우체국택배', trackingNo: '609112450093' } } })],
+    items: [L({ lineId: '20260904-000011-01', productId: 'p201', option: '블랙 / L', status: '교환요청', date: daysAgo(27), invoice: '247001877140', claim: { type: '교환', step: 'RESHIPPED', reason: '상품 불량, 파손', detail: '밑창 접착이 떨어져 있어요', requested: daysAgo(5), reship: { courier: '우체국택배', trackingNo: '609112450093' } } })],
   },
   {
     id: '20260829-000036', date: daysAgo(33), userId: 'u1', status: 'PAID', ship: SHIP_HOME,
@@ -118,8 +118,8 @@ export const shipFeeFor = (store, subtotal) => (store.freeOver && subtotal >= st
 
 /* ─────────── 포인트 (user-service) ───────────
    - 구매확정 시 그 상품주문의 실결제금액(포인트 사용분 제외) 5% 적립
-   - 사용 · 적립 포인트는 상품주문 단위로 금액 비율 배분해 기록
-   - 취소 · 반품 완료 시 그 상품주문분 사용 포인트 환원 (구매확정 전이라 적립분은 없음) */
+   - 사용, 적립 포인트는 상품주문 단위로 금액 비율 배분해 기록
+   - 취소, 반품 완료 시 그 상품주문분 사용 포인트 환원 (구매확정 전이라 적립분은 없음) */
 export const POINT_RATE = 0.05;
 export const earnOf = (paid) => Math.floor(paid * POINT_RATE);
 
@@ -168,7 +168,7 @@ function genStoreOrders(storeId, count, seedDays = 20) {
     else status = pick(rnd, ['구매확정', '구매확정', '구매확정', '반품완료', '취소완료', '교환완료']);
     const b = pick(rnd, buyers);
     const qty = rnd() < 0.8 ? 1 : 2;
-    // 주문번호 yyyyMMdd-NNNNNN · 상품주문번호 주문번호-NN
+    // 주문번호 yyyyMMdd-NNNNNN, 상품주문번호 주문번호-NN
     const no = `2026${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${String(1 + Math.floor(rnd() * 400)).padStart(6, '0')}`;
     list.push({
       lineId: `${no}-01`, orderId: no, date, storeId, productId: p.id,
@@ -178,7 +178,7 @@ function genStoreOrders(storeId, count, seedDays = 20) {
       buyerId: b.id, receiver: b.name, phone: b.phone.replace(/-(\d{4})-/, '-****-'),
       addr: pick(rnd, ADDR), memo: pick(rnd, ['문 앞에 놓아주세요', '부재 시 경비실', '', '배송 전 연락 부탁드립니다', '']),
       claim: CLAIMS.includes(status)
-        ?{ type: CLAIM_TYPE[status], reason: pick(rnd, CLAIM_TYPE[status] === '취소' ? ['단순 변심', '배송 지연', '기타'] : ['단순 변심', '상품 불량 · 파손', '오배송']), requested: daysAgo(Math.max(0, d - 1)) }
+        ?{ type: CLAIM_TYPE[status], reason: pick(rnd, CLAIM_TYPE[status] === '취소' ? ['단순 변심', '배송 지연', '기타'] : ['단순 변심', '상품 불량, 파손', '오배송']), requested: daysAgo(Math.max(0, d - 1)) }
         : null,
       usedPoint: prnd() < 0.4 ? Math.round((unitPriceOf(p) * qty * 0.04) / 100) * 100 : 0,
     });

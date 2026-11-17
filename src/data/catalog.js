@@ -7,11 +7,11 @@ export const PAYMENT_FEE = 0.022;
 
 export const categories = [
   { id: 'fashion', name: '패션의류', en: 'Apparel', commission: 0.11, subs: ['셔츠', '팬츠', '원피스', '니트', '아우터', '티셔츠'] },
-  { id: 'shoes-bags', name: '신발·가방', en: 'Shoes & Bags', commission: 0.11, subs: ['로퍼', '스니커즈', '토트백', '백팩', '크로스백'] },
-  { id: 'living', name: '리빙·인테리어', en: 'Living', commission: 0.09, subs: ['식기', '화병', '조명', '침구', '수납', '캔들'] },
-  { id: 'food', name: '식품', en: 'Food', commission: 0.07, subs: ['과일', '꿀·잼', '쌀·잡곡', '커피'] },
-  { id: 'beauty', name: '뷰티', en: 'Beauty', commission: 0.1, subs: ['스킨케어', '바디·핸드', '립', '선케어'] },
-  { id: 'digital', name: '디지털·가전', en: 'Digital', commission: 0.06, subs: ['키보드', '음향', '데스크'] },
+  { id: 'shoes-bags', name: '신발, 가방', en: 'Shoes & Bags', commission: 0.11, subs: ['로퍼', '스니커즈', '토트백', '백팩', '크로스백'] },
+  { id: 'living', name: '리빙, 인테리어', en: 'Living', commission: 0.09, subs: ['식기', '화병', '조명', '침구', '수납', '캔들'] },
+  { id: 'food', name: '식품', en: 'Food', commission: 0.07, subs: ['과일', '꿀, 잼', '쌀, 잡곡', '커피'] },
+  { id: 'beauty', name: '뷰티', en: 'Beauty', commission: 0.1, subs: ['스킨케어', '바디, 핸드', '립', '선케어'] },
+  { id: 'digital', name: '디지털, 가전', en: 'Digital', commission: 0.06, subs: ['키보드', '음향', '데스크'] },
 ];
 export const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
 
@@ -24,12 +24,12 @@ export const stores = [
   { id: 's4', name: '토담공방', slug: 'todam', cat: 'living', owner: '이수아', bizNo: '000-00-00004', phone: '063-0000-0004', email: 'todam.pottery@example.com', intro: '전주 한옥마을 옆 작은 도자기 공방. 손으로 빚어 하나하나 모양이 다릅니다.', since: daysAgo(455), grade: '파워', color: '#8c6d4f', cover: cover(4), status: '운영중', courier: 'CJ대한통운', shipFee: 3500, freeOver: 50000, dispatch: '결제 후 2영업일 출고 (파손 대비 3중 포장)' },
   { id: 's5', name: '볕드는집', slug: 'byeot-house', cat: 'living', owner: '정다은', bizNo: '000-00-00005', phone: '031-0000-0005', email: 'house@byeot.example.com', intro: '햇볕 잘 드는 방을 위한 조명과 패브릭.', since: daysAgo(301), grade: '새싹', color: '#c08a2e', cover: cover(5), status: '정지', courier: '한진택배', shipFee: 3000, freeOver: 40000, dispatch: '평일 13시 이전 결제 시 당일 출고' },
   { id: 's6', name: '산골농부 박씨네', slug: 'park-farm', cat: 'food', owner: '박영철', bizNo: '000-00-00006', phone: '064-0000-0006', email: 'parkfarm@example.com', intro: '제주 서귀포에서 3대째 귤 농사를 짓습니다. 따는 날 바로 보내드려요.', since: daysAgo(980), grade: '빅파워', color: '#d0701f', cover: cover(6), status: '운영중', courier: '우체국택배', shipFee: 0, freeOver: 0, dispatch: '수확 후 당일 발송 (일요일 휴무)' },
-  { id: 's7', name: '로스터리 하루', slug: 'haru-roastery', cat: 'food', owner: '윤하루', bizNo: '000-00-00007', phone: '02-0000-0007', email: 'roast@haru.example.com', intro: '월·목 로스팅, 화·금 발송. 볶은 지 3일 이내 원두만 보냅니다.', since: daysAgo(540), grade: '파워', color: '#3d2b22', cover: cover(7), status: '운영중', courier: 'CJ대한통운', shipFee: 3000, freeOver: 30000, dispatch: '화·금 발송' },
+  { id: 's7', name: '로스터리 하루', slug: 'haru-roastery', cat: 'food', owner: '윤하루', bizNo: '000-00-00007', phone: '02-0000-0007', email: 'roast@haru.example.com', intro: '월, 목 로스팅, 화, 금 발송. 볶은 지 3일 이내 원두만 보냅니다.', since: daysAgo(540), grade: '파워', color: '#3d2b22', cover: cover(7), status: '운영중', courier: 'CJ대한통운', shipFee: 3000, freeOver: 30000, dispatch: '화, 금 발송' },
   { id: 's8', name: '피부정원', slug: 'skin-garden', cat: 'beauty', owner: '강예린', bizNo: '000-00-00008', phone: '02-0000-0008', email: 'garden@skingarden.example.com', intro: '성분은 줄이고 효과는 그대로. 민감 피부를 위한 저자극 스킨케어.', since: daysAgo(720), grade: '파워', color: '#6f8f7a', cover: cover(8), status: '운영중', courier: '롯데택배', shipFee: 2500, freeOver: 30000, dispatch: '결제 후 1영업일 출고' },
   { id: 's9', name: '데스크테리어랩', slug: 'deskterior-lab', cat: 'digital', owner: '서준호', bizNo: '000-00-00009', phone: '070-0000-0009', email: 'lab@deskterior.example.com', intro: '하루 8시간 앉는 책상을 위한 도구들.', since: daysAgo(210), grade: '새싹', color: '#34495e', cover: cover(9), status: '운영중', courier: 'CJ대한통운', shipFee: 3000, freeOver: 50000, dispatch: '평일 15시 이전 결제 시 당일 출고' },
 ];
-// 관리자 스토어 상세 — 상호 · 입점 신청서 번호 · 상태 이력 (시드 scenario.mjs · gen.mjs 와 같게: 상호 = 스토어명, 신청서 id = store_id)
-//   history: { from, to, actor(ADMIN · SELLER · SYSTEM), reason, at } — 개설(운영중)부터 오래된 순
+// 관리자 스토어 상세 — 상호, 입점 신청서 번호, 상태 이력 (시드 scenario.mjs, gen.mjs 와 같게: 상호 = 스토어명, 신청서 id = store_id)
+//   history: { from, to, actor(ADMIN, SELLER, SYSTEM), reason, at } — 개설(운영중)부터 오래된 순
 const SEED_STORE_ID = { s1: 11, s2: 12, s3: 13, s4: 2, s5: 15, s6: 1, s7: 17, s8: 18, s9: 19 };
 for (const s of stores) {
   s.company = s.name;
@@ -88,9 +88,9 @@ export const products = [
 
   // s6 산골농부 박씨네
   P({ id: 'p601', storeId: 's6', cat: 'food', sub: '과일', name: '서귀포 노지 햇감귤 5kg', price: 32900, discount: 0.18, rating: 4.8, reviews: 8420, sold: 41200, stock: 900, created: daysAgo(4), options: [{ name: '크기', values: ['로얄과 (S~M)', '대과 (L)', '못난이 (혼합)'] }], material: '감귤 (노지 재배)', origin: '제주 서귀포시' }),
-  P({ id: 'p602', storeId: 's6', cat: 'food', sub: '꿀·잼', name: '지리산 야생화 꿀 1.2kg', price: 48000, rating: 4.9, reviews: 1290, sold: 3800, stock: 120, created: daysAgo(220), options: [], material: '벌꿀 100% (야생화)', origin: '경남 하동군' }),
-  P({ id: 'p603', storeId: 's6', cat: 'food', sub: '쌀·잡곡', name: '유기농 현미 4kg (2026년 햅쌀)', price: 29000, discount: 0.1, rating: 4.7, reviews: 640, sold: 2900, stock: 240, created: daysAgo(12), options: [{ name: '도정', values: ['현미', '7분도', '백미'] }], material: '유기농 현미 100%', origin: '전남 해남군' }),
-  P({ id: 'p604', storeId: 's6', cat: 'food', sub: '꿀·잼', name: '설향 딸기잼 무첨가 300g', price: 14500, rating: 4.6, reviews: 980, sold: 6100, stock: 410, created: daysAgo(180), options: [{ name: '수량', values: ['1병', '2병', '3병'] }], material: '딸기 70% 비정제원당 30%', origin: '충남 논산시' }),
+  P({ id: 'p602', storeId: 's6', cat: 'food', sub: '꿀, 잼', name: '지리산 야생화 꿀 1.2kg', price: 48000, rating: 4.9, reviews: 1290, sold: 3800, stock: 120, created: daysAgo(220), options: [], material: '벌꿀 100% (야생화)', origin: '경남 하동군' }),
+  P({ id: 'p603', storeId: 's6', cat: 'food', sub: '쌀, 잡곡', name: '유기농 현미 4kg (2026년 햅쌀)', price: 29000, discount: 0.1, rating: 4.7, reviews: 640, sold: 2900, stock: 240, created: daysAgo(12), options: [{ name: '도정', values: ['현미', '7분도', '백미'] }], material: '유기농 현미 100%', origin: '전남 해남군' }),
+  P({ id: 'p604', storeId: 's6', cat: 'food', sub: '꿀, 잼', name: '설향 딸기잼 무첨가 300g', price: 14500, rating: 4.6, reviews: 980, sold: 6100, stock: 410, created: daysAgo(180), options: [{ name: '수량', values: ['1병', '2병', '3병'] }], material: '딸기 70% 비정제원당 30%', origin: '충남 논산시' }),
 
   // s7 로스터리 하루
   P({ id: 'p701', storeId: 's7', cat: 'food', sub: '커피', name: '에티오피아 예가체프 G1 원두 200g', price: 18000, rating: 4.9, reviews: 3020, sold: 15400, stock: 500, created: daysAgo(260), options: [{ name: '분쇄', values: ['홀빈', '핸드드립', '에스프레소', '모카포트'] }], material: '아라비카 100%', origin: '에티오피아 / 국내 로스팅' }),
@@ -101,7 +101,7 @@ export const products = [
   // s8 피부정원
   P({ id: 'p801', storeId: 's8', cat: 'beauty', sub: '스킨케어', name: '시카 9 진정 토너 200ml', price: 24000, discount: 0.2, rating: 4.7, reviews: 4410, sold: 22000, stock: 800, created: daysAgo(420), options: [{ name: '구성', values: ['단품', '1+1'] }], material: '병풀추출물 외', origin: '대한민국' }),
   P({ id: 'p802', storeId: 's8', cat: 'beauty', sub: '스킨케어', name: '세라마이드 장벽 수분크림 50ml', price: 32000, discount: 0.1, rating: 4.8, reviews: 2890, sold: 13100, stock: 600, created: daysAgo(380), options: [], material: '세라마이드NP 외', origin: '대한민국' }),
-  P({ id: 'p803', storeId: 's8', cat: 'beauty', sub: '바디·핸드', name: '시어버터 핸드크림 50ml 3입', price: 19000, rating: 4.6, reviews: 1320, sold: 9400, stock: 900, created: daysAgo(150), options: [{ name: '향', values: ['무향', '베르가못', '라벤더'] }], material: '시어버터 외', origin: '대한민국' }),
+  P({ id: 'p803', storeId: 's8', cat: 'beauty', sub: '바디, 핸드', name: '시어버터 핸드크림 50ml 3입', price: 19000, rating: 4.6, reviews: 1320, sold: 9400, stock: 900, created: daysAgo(150), options: [{ name: '향', values: ['무향', '베르가못', '라벤더'] }], material: '시어버터 외', origin: '대한민국' }),
   P({ id: 'p804', storeId: 's8', cat: 'beauty', sub: '립', name: '비건 컬러 립밤', price: 12000, rating: 4.4, reviews: 860, sold: 5400, stock: 450, created: daysAgo(60), options: [{ name: '컬러', values: ['클리어', '로즈', '코랄'] }], material: '호호바오일 외', origin: '대한민국' }),
   P({ id: 'p805', storeId: 's8', cat: 'beauty', sub: '선케어', name: '무기자차 데일리 선크림 SPF50+', price: 26000, discount: 0.15, rating: 4.5, reviews: 1900, sold: 11200, stock: 520, created: daysAgo(200), options: [], material: '징크옥사이드 외', origin: '대한민국' }),
 

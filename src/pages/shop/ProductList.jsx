@@ -6,7 +6,7 @@ import ProductCard from '../../components/ProductCard';
 import { Checkbox, Empty, Pager } from '../../components/ui';
 import { cx, salePrice } from '../../lib/format';
 
-// 실제 구현(frontend #61): 서버 정렬은 신상품 · 가격 2종(판매량 · 리뷰 · 평점 정렬은 범위 밖), 24개씩 서버 페이징
+// 실제 구현(frontend #61): 서버 정렬은 신상품, 가격 2종(판매량, 리뷰, 평점 정렬은 범위 밖), 24개씩 서버 페이징
 const SORTS = [
   ['new', '신상품순'],
   ['low', '낮은 가격순'],

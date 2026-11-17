@@ -47,8 +47,8 @@ export default function ShopLayout() {
           {[0, 1].map((k) => (
             <span key={k} className="flex gap-12">
               <span>실결제금액의 5% 포인트 적립 — 구매확정 때 지급</span><span className="text-point">●</span>
-              <span>여러 스토어 상품도 한 번에 결제 · 배송완료 7일 뒤 자동 구매확정</span><span className="text-point">●</span>
-              <span>누적 구매확정 30만원 SILVER · 80만원 GOLD</span><span className="text-point">●</span>
+              <span>여러 스토어 상품도 한 번에 결제, 배송완료 7일 뒤 자동 구매확정</span><span className="text-point">●</span>
+              <span>누적 구매확정 30만원 SILVER, 80만원 GOLD</span><span className="text-point">●</span>
               <span>작은 가게 사장님, 곳간에 입점하세요 → 판매대금은 매주 목요일 정산</span><span className="text-point">●</span>
             </span>
           ))}
@@ -162,7 +162,7 @@ export default function ShopLayout() {
         </div>
         <div className="border-t border-line">
           <div className="max-w-[1280px] mx-auto px-4 md:px-6 py-6 text-[11.5px] text-mute leading-relaxed">
-            <p>(주)곳간 · 대표 홍길동 · 사업자등록번호 000-00-00000 · 통신판매업신고 2026-서울성동-0000 · 서울특별시 성동구 성수이로 00, 0층</p>
+            <p>(주)곳간, 대표 홍길동, 사업자등록번호 000-00-00000, 통신판매업신고 2026-서울성동-0000, 서울특별시 성동구 성수이로 00, 0층</p>
             <p className="mt-1">곳간은 통신판매중개자로서 통신판매의 당사자가 아니며, 입점 판매자가 등록한 상품정보 및 거래에 대한 책임은 각 판매자에게 있습니다.</p>
             <p className="mt-3 text-ink-2">※ 본 사이트는 팀 프로젝트용 목업이며 실제 거래가 이루어지지 않습니다. 이미지 출처: Unsplash</p>
           </div>

@@ -16,7 +16,7 @@ const LOGIN_TABS = [
   { role: 'ADMIN', label: '운영자', home: '/admin' },
 ];
 const roleMismatchMessage = (tab) => `${tab.label} 계정이 아니에요. 위에서 로그인 유형을 확인해주세요`;
-// 목업 계정: 이메일에 seller · admin 이 들어 있으면 그 역할, 아니면 구매회원
+// 목업 계정: 이메일에 seller, admin 이 들어 있으면 그 역할, 아니면 구매회원
 const MOCK_ACCOUNTS = {
   BUYER: { name: ME.name, roles: ['BUYER'] },
   SELLER: { name: '한지우', roles: ['SELLER'] },
@@ -24,7 +24,7 @@ const MOCK_ACCOUNTS = {
 };
 const accountOf = (email) => MOCK_ACCOUNTS[/admin/i.test(email) ? 'ADMIN' : /seller/i.test(email) ? 'SELLER' : 'BUYER'];
 
-// 소셜 로그인 — 카카오 · 네이버 · Google (실제는 제공자 가이드의 버튼 이미지 · 심볼, 목업은 같은 색의 글자 버튼)
+// 소셜 로그인 — 카카오, 네이버, Google (실제는 제공자 가이드의 버튼 이미지, 심볼, 목업은 같은 색의 글자 버튼)
 const SOCIAL_PROVIDERS = [
   { id: 'kakao', label: '카카오 로그인', icon: '/images/social/kakao-symbol.svg', className: 'bg-[#FEE500] text-black/85 rounded-[12px]' },
   { id: 'naver', label: '네이버 로그인', image: '/images/social/naver-login-wide.png' },
@@ -86,7 +86,7 @@ export function AuthCallback() {
   return <p className="pt-32 text-center text-sm text-mute">로그인 중이에요…</p>;
 }
 
-/* 로그인 — 자체 폼 → user-service → Keycloak (역할 BUYER · SELLER · ADMIN). 목업: 이메일로 역할을 정해 로그인 */
+/* 로그인 — 자체 폼 → user-service → Keycloak (역할 BUYER, SELLER, ADMIN). 목업: 이메일로 역할을 정해 로그인 */
 export function Login() {
   const nav = useNavigate();
   const { login, toast } = useApp();
@@ -138,7 +138,7 @@ export function Login() {
 const SIGNUP_AGREEMENTS = [
   { id: 'age', label: '(필수) 만 14세 이상입니다', required: true },
   { id: 'terms', label: '(필수) 이용약관 동의', required: true },
-  { id: 'privacy', label: '(필수) 개인정보 수집·이용 동의', required: true },
+  { id: 'privacy', label: '(필수) 개인정보 수집, 이용 동의', required: true },
   { id: 'marketing', label: '(선택) 마케팅 정보 수신 동의', required: false },
 ];
 
@@ -178,7 +178,7 @@ export function Signup() {
           {emailConfirmed && !emailError && <p className="mt-1 text-[12px] text-ink-2">사용할 수 있는 이메일이에요</p>}
           {emailError && <p className="mt-1 text-[12px] text-rust">{emailError}</p>}
         </div>
-        <div><label className="label">비밀번호</label><input type="password" className="field" placeholder="영문 · 특수문자 포함 8자 이상" /></div>
+        <div><label className="label">비밀번호</label><input type="password" className="field" placeholder="영문, 특수문자 포함 8자 이상" /></div>
         <div><label className="label">비밀번호 확인</label><input type="password" className="field" /></div>
         <div><label className="label">이름</label><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></div>
         <div><label className="label">휴대폰 번호</label><input type="tel" className="field" placeholder="010-0000-0000" /></div>
@@ -231,7 +231,7 @@ export function Help() {
       <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border border-ink p-6">
         <div>
           <div className="font-bold text-[16px]">1:1 상담</div>
-          <p className="mt-1 text-[13px] text-ink-2">주문 · 결제 · 계정 문제는 곳간 운영팀과 실시간으로 이야기해요.</p>
+          <p className="mt-1 text-[13px] text-ink-2">주문, 결제, 계정 문제는 곳간 운영팀과 실시간으로 이야기해요.</p>
         </div>
         <OpenChatButton className="btn btn-ink btn-sm" basePath="/mypage/chats" by="BUYER" request={{ type: 'BUYER_SUPPORT', buyerId: CHAT_ME.userId }}>운영팀과 채팅</OpenChatButton>
       </div>
@@ -240,7 +240,7 @@ export function Help() {
         <div className="bg-white p-6">
           <div className="eyebrow">Q&amp;A</div>
           <div className="mt-1.5 font-bold text-[16px]">상품문의는 판매자에게</div>
-          <p className="mt-2 text-[13px] text-ink-2 leading-relaxed">상품 · 배송 · 재입고 문의는 상품 상세의 Q&amp;A 탭에서 남기면 판매자가 직접 답변해요.</p>
+          <p className="mt-2 text-[13px] text-ink-2 leading-relaxed">상품, 배송, 재입고 문의는 상품 상세의 Q&amp;A 탭에서 남기면 판매자가 직접 답변해요.</p>
           <div className="mt-4 flex gap-2">
             <Link to="/products/p101#qna" className="btn btn-ink btn-sm">상품 Q&amp;A 예시</Link>
             <Link to="/mypage/qna" className="btn btn-line btn-sm">내 상품 문의</Link>
@@ -248,10 +248,10 @@ export function Help() {
         </div>
         <div className="bg-white p-6">
           <div className="eyebrow">Claims</div>
-          <div className="mt-1.5 font-bold text-[16px]">취소 · 반품 · 교환</div>
+          <div className="mt-1.5 font-bold text-[16px]">취소, 반품, 교환</div>
           <p className="mt-2 text-[13px] text-ink-2 leading-relaxed">주문 상태에 따라 마이페이지에서 바로 신청하고 처리 상태를 확인할 수 있어요.</p>
           <div className="mt-4 flex gap-2">
-            <Link to="/mypage/orders" className="btn btn-ink btn-sm">주문 · 배송</Link>
+            <Link to="/mypage/orders" className="btn btn-ink btn-sm">주문, 배송</Link>
             <Link to="/mypage/claims" className="btn btn-line btn-sm">신청 내역</Link>
           </div>
         </div>

@@ -63,13 +63,13 @@ export function SellerProductList() {
     const verb = st === '판매중' ? '판매재개했어요' : '판매중지했어요';
     const soldOut = st === '판매중' ? okRows.filter((r) => r.stock === 0).length : 0;
     setRows(rows.map((r) => (sel.has(r.id) && !r.blocked ? { ...r, status: st === '판매중' && r.stock === 0 ? '품절' : st } : r)));
-    const head = failed.length ? `${okRows.length}개 ${verb} · ${failed.length}개 실패 — 관리자가 판매중지한 상품은 재개할 수 없어요`
+    const head = failed.length ? `${okRows.length}개 ${verb}, ${failed.length}개 실패 — 관리자가 판매중지한 상품은 재개할 수 없어요`
       : soldOut > 0 && soldOut === okRows.length ? verb : `${okRows.length}개 상품을 ${verb}`;
     if (!soldOut) toast(head);
     else toast(soldOut === okRows.length ? `${head}. 재고가 0이라 품절로 보여요 — 「재고」에서 채워 주세요` : `${head}. 그중 ${soldOut}개는 재고가 0이라 품절로 보여요`);
     setSel(new Set(failed.map((r) => r.id)));
   };
-  // 복사 — 판매중지 · 재고 0 으로 새로 등록 (실제: 상세를 읽어 '(복사)' 이름으로 저장)
+  // 복사 — 판매중지, 재고 0 으로 새로 등록 (실제: 상세를 읽어 '(복사)' 이름으로 저장)
   const copy = (p) => {
     setRows([{ ...p, id: `${p.id}-c${rows.length}`, name: `${p.name} (복사)`.slice(0, 100), status: '판매중지', blocked: false, statusReason: '', stock: 0, rating: 0, reviews: 0, created: new Date() }, ...rows]);
     toast('판매중지 상태로 복사했어요. 재고를 채운 뒤 판매를 시작하세요');
@@ -90,7 +90,7 @@ export function SellerProductList() {
       <div className="panel p-4 flex flex-wrap items-center gap-3">
         <Segments items={['전체', '판매중', '품절', '판매중지']} value={status} onChange={setStatus} counts={counts} />
         <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-72 bg-white">
-          <Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="상품명 · 카테고리 · 상태 검색" className="flex-1 px-2 text-[13px] outline-none" />
+          <Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="상품명, 카테고리, 상태 검색" className="flex-1 px-2 text-[13px] outline-none" />
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export function SellerProductList() {
                   <td className="whitespace-nowrap">
                     <StatusPill s={p.blocked ? '강제중지' : p.status} />
                     {p.blocked && p.statusReason && <div className="text-[11.5px] text-rust mt-1 max-w-[180px] whitespace-normal">사유: {p.statusReason}</div>}
-                    {p.hidden && <div className="text-[11.5px] text-amber mt-1">쇼핑몰 미노출 · {p.hidden}</div>}
+                    {p.hidden && <div className="text-[11.5px] text-amber mt-1">쇼핑몰 미노출, {p.hidden}</div>}
                   </td>
                   <td className="whitespace-nowrap">{rated ? <>★ {p.rating} <span className="text-mute num">({comma(p.reviews)})</span></> : <span className="text-mute">-</span>}</td>
                   <td className="num text-ink-2">{ymd(p.created)}</td>
@@ -153,7 +153,7 @@ export function SellerProductList() {
       <Modal open={del} onClose={() => setDel(false)} title="상품 삭제" width={420}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setDel(false)}>취소</button><button className="btn btn-sm bg-rust text-white border-rust" onClick={() => { setRows(rows.filter((r) => !sel.has(r.id))); toast(`${sel.size}개 상품을 삭제했어요`); setSel(new Set()); setDel(false); }}>삭제</button></>}>
         <p className="text-[14px]">선택한 <b>{sel.size}개</b> 상품을 삭제할까요?</p>
-        <p className="text-[13px] text-mute mt-2">삭제한 상품은 쇼핑몰 · 장바구니에서 구매할 수 없게 돼요. 지난 주문과 리뷰는 그대로 남아요.</p>
+        <p className="text-[13px] text-mute mt-2">삭제한 상품은 쇼핑몰, 장바구니에서 구매할 수 없게 돼요. 지난 주문과 리뷰는 그대로 남아요.</p>
       </Modal>
     </div>
   );
@@ -217,7 +217,7 @@ export function SellerProductForm() {
       <PageHead crumbs="상품 > 상품 조회/수정" title={edit ? '상품 수정' : '상품 등록'} desc={edit ? `상품번호 ${src.id.toUpperCase()}` : '필수 항목(*)을 모두 입력하면 바로 판매가 시작됩니다.'} />
       <div className="grid xl:grid-cols-[1fr_320px] gap-4">
         <div className="space-y-4 min-w-0">
-          <Block title="카테고리 · 상품명">
+          <Block title="카테고리, 상품명">
             <Row label="카테고리" req>
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -229,10 +229,10 @@ export function SellerProductForm() {
                   <select value={sub} onChange={(e) => setSub(e.target.value)} className="field">{c.subs.map((s) => <option key={s}>{s}</option>)}</select>
                 </div>
               </div>
-              <p className="text-[12px] text-mute mt-1.5">카테고리는 운영자가 등록한 목록에서만 선택할 수 있어요 · 판매수수료는 카테고리별로 정산 때 적용돼요</p>
+              <p className="text-[12px] text-mute mt-1.5">카테고리는 운영자가 등록한 목록에서만 선택할 수 있어요, 판매수수료는 카테고리별로 정산 때 적용돼요</p>
             </Row>
             <Row label="상품명" req>
-              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className="field" placeholder="브랜드명 · 핵심 소재 · 상품 종류 순으로 작성하면 검색에 유리해요" />
+              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} className="field" placeholder="브랜드명, 핵심 소재, 상품 종류 순으로 작성하면 검색에 유리해요" />
               <div className="text-right text-[11.5px] text-mute mt-1 num">{name.length}/100</div>
             </Row>
           </Block>
@@ -246,7 +246,7 @@ export function SellerProductForm() {
             </Row>
           </Block>
 
-          <Block title="옵션 · 재고" desc="옵션은 최대 2개, 옵션값은 쉼표(,)로 구분하세요. 옵션이 없으면 비워 두고 재고만 입력하세요.">
+          <Block title="옵션, 재고" desc="옵션은 최대 2개, 옵션값은 쉼표(,)로 구분하세요. 옵션이 없으면 비워 두고 재고만 입력하세요.">
             {opts.map((o, i) => (
               <div key={i} className="grid grid-cols-[120px_1fr_36px] gap-2">
                 <input value={o.name} onChange={(e) => setOpts(opts.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))} maxLength={30} className="field" placeholder="옵션명" />
@@ -276,7 +276,7 @@ export function SellerProductForm() {
             {edit && <p className="text-[12px] text-mute">저장된 조합의 재고는 상품 목록의 재고 수정에서 바꿔요. 판매 체크를 풀면 그 조합은 삭제돼요(지난 주문은 그대로).</p>}
           </Block>
 
-          <Block title="상품 이미지" desc="최대 5장 · JPG · PNG · WEBP · 한 장 10MB 이하 · 1000×1250px 이상 권장 · 첫 번째 이미지가 대표 이미지">
+          <Block title="상품 이미지" desc="최대 5장, JPG, PNG, WEBP, 한 장 10MB 이하, 1000×1250px 이상 권장, 첫 번째 이미지가 대표 이미지">
             <div className="flex flex-wrap gap-2">
               {imgs.map((s, i) => (
                 <div key={s} className="relative w-24 h-28">
@@ -291,12 +291,12 @@ export function SellerProductForm() {
             </div>
           </Block>
 
-          <Block title="상세 설명" desc="HTML 로 작성할 수 있어요(최대 10,000자). 스크립트 · 스타일 같은 위험한 태그는 저장할 때 지워져요.">
+          <Block title="상세 설명" desc="HTML 로 작성할 수 있어요(최대 10,000자). 스크립트, 스타일 같은 위험한 태그는 저장할 때 지워져요.">
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} maxLength={10000} rows={8} className="field font-mono text-[13px]" placeholder="<p>상품의 특징, 사이즈 가이드, 세탁 방법 등을 작성하세요.</p>" />
             <div className="text-right text-[11.5px] text-mute num">{desc.length}/10,000</div>
           </Block>
 
-          <Block title="상품정보 제공고시" desc="그 밖의 항목(제조자 · 취급 주의사항 · 품질보증기준 등)은 상세 설명에 적어 주세요.">
+          <Block title="상품정보 제공고시" desc="그 밖의 항목(제조자, 취급 주의사항, 품질보증기준 등)은 상세 설명에 적어 주세요.">
             <Row label="소재" req><input className="field" maxLength={100} defaultValue={edit ? src.material : ''} /></Row>
             <Row label="제조국" req><input className="field" maxLength={50} defaultValue={edit ? src.origin : ''} /></Row>
           </Block>
@@ -320,7 +320,7 @@ export function SellerProductForm() {
               <div className="text-[13px] space-y-1">
                 <StatusPill s={src.blocked ? '강제중지' : src.status} />
                 {src.statusReason && <p className="text-rust text-[12px]">사유: {src.statusReason}</p>}
-                <p className="text-mute text-[12px]">판매중지 · 재개는 상품 목록에서 바꿔요</p>
+                <p className="text-mute text-[12px]">판매중지, 재개는 상품 목록에서 바꿔요</p>
               </div>
             ) : <Segments items={['판매중', '판매중지']} value={status} onChange={setStatus} />}
             <div className="grid grid-cols-2 gap-2 pt-2">
@@ -340,7 +340,7 @@ export function SellerProductForm() {
       <Modal open={ask === 'delete'} onClose={() => setAsk(null)} title="상품 삭제" width={420}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setAsk(null)}>취소</button><button className="btn btn-sm bg-rust text-white border-rust" onClick={() => { toast('상품을 삭제했어요'); nav('/seller/products'); }}>삭제</button></>}>
         <p className="text-[14px]">이 상품을 삭제할까요?</p>
-        <p className="text-[13px] text-mute mt-2">삭제한 상품은 쇼핑몰 · 장바구니에서 구매할 수 없게 돼요. 지난 주문과 리뷰는 그대로 남아요.</p>
+        <p className="text-[13px] text-mute mt-2">삭제한 상품은 쇼핑몰, 장바구니에서 구매할 수 없게 돼요. 지난 주문과 리뷰는 그대로 남아요.</p>
       </Modal>
     </div>
   );

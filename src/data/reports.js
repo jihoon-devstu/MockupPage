@@ -4,17 +4,17 @@ import { daysAgo } from '../lib/format';
 /* 신고 (admin-service report) — 사유 코드는 backend docs/api/admin.md 신고 사유 표와 같다 (대상마다 고를 수 있는 사유가 다름) */
 export const REPORT_REASONS = {
   REVIEW: [
-    { code: 'SPAM', label: '광고 · 도배' },
-    { code: 'ABUSE', label: '욕설 · 비방' },
-    { code: 'FALSE_INFO', label: '허위 · 구매와 무관한 리뷰' },
+    { code: 'SPAM', label: '광고, 도배' },
+    { code: 'ABUSE', label: '욕설, 비방' },
+    { code: 'FALSE_INFO', label: '허위, 구매와 무관한 리뷰' },
     { code: 'PRIVACY', label: '개인정보 노출' },
-    { code: 'OBSCENE', label: '음란 · 부적절한 사진' },
+    { code: 'OBSCENE', label: '음란, 부적절한 사진' },
     { code: 'ETC', label: '기타' },
   ],
   USER: [
-    { code: 'FRAUD', label: '거래 사기 · 결제 도용 의심' },
-    { code: 'ABUSE', label: '욕설 · 비방' },
-    { code: 'SPAM', label: '광고 · 도배' },
+    { code: 'FRAUD', label: '거래 사기, 결제 도용 의심' },
+    { code: 'ABUSE', label: '욕설, 비방' },
+    { code: 'SPAM', label: '광고, 도배' },
     { code: 'ETC', label: '기타' },
   ],
 };
@@ -26,10 +26,10 @@ export const REPORT_REASON_LABEL = {
   [SELLER_REQUEST]: '판매자 검토 요청',
 };
 
-/* ─────────── 신고 목업 데이터 (관리자 신고 관리 · 회원 상세) ───────────
-   - 대상(리뷰 · 회원)별로 신고를 묶는다 — 같은 대상의 처리 대기 신고는 한 번에 처리 (admin.md 2~4절)
-   - 신고 상태: OPEN 처리대기 · RESOLVED 조치완료 · DISMISSED 기각 / 조치: BLIND · UNBLIND · SUSPEND · UNSUSPEND · DISMISS
-   - summary = 신고 당시 대상 요약 (리뷰 본문 · 회원 이름) */
+/* ─────────── 신고 목업 데이터 (관리자 신고 관리, 회원 상세) ───────────
+   - 대상(리뷰, 회원)별로 신고를 묶는다 — 같은 대상의 처리 대기 신고는 한 번에 처리 (admin.md 2~4절)
+   - 신고 상태: OPEN 처리대기, RESOLVED 조치완료, DISMISSED 기각 / 조치: BLIND, UNBLIND, SUSPEND, UNSUSPEND, DISMISS
+   - summary = 신고 당시 대상 요약 (리뷰 본문, 회원 이름) */
 const FLAG_CODE = { '광고/홍보성 내용': 'SPAM', '욕설/비방': 'ABUSE', '상품과 무관한 내용': 'FALSE_INFO', '개인정보 노출': 'PRIVACY' };
 let rid = 100;
 let aid = 10;
@@ -71,7 +71,7 @@ export const REPORT_TARGETS = [
   },
   {
     targetType: 'USER', targetId: 'u4', summary: '최유나 (유나)',
-    reports: [rep('FRAUD', daysAgo(0, 9), { role: 'SELLER', by: 6, detail: '같은 날 다른 카드로 결제 · 취소를 여러 번 반복' })], actions: [],
+    reports: [rep('FRAUD', daysAgo(0, 9), { role: 'SELLER', by: 6, detail: '같은 날 다른 카드로 결제, 취소를 여러 번 반복' })], actions: [],
   },
   {
     targetType: 'USER', targetId: 'u7', summary: '강민호 (민호)',
@@ -80,7 +80,7 @@ export const REPORT_TARGETS = [
   },
 ];
 
-/** 목록 행 — 처리 대기 수 · 사유별 개수 · 최근 신고 · 마지막 조치 */
+/** 목록 행 — 처리 대기 수, 사유별 개수, 최근 신고, 마지막 조치 */
 export const reportRow = (t) => ({
   ...t,
   openCount: t.reports.filter((r) => r.status === 'OPEN').length,

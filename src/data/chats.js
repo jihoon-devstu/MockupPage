@@ -2,10 +2,10 @@ import { productById } from './catalog';
 import { daysAgo } from '../lib/format';
 
 /* 1:1 채팅 (chat-service :8089) 목업 데이터
-   - 방 3종: STORE_INQUIRY 스토어 톡(구매자 ↔ 스토어) · SELLER_SUPPORT 판매자 운영 상담(스토어 ↔ 관리자 전원) · BUYER_SUPPORT 고객센터 1:1 상담(구매자 ↔ 관리자 전원)
+   - 방 3종: STORE_INQUIRY 스토어 톡(구매자 ↔ 스토어), SELLER_SUPPORT 판매자 운영 상담(스토어 ↔ 관리자 전원), BUYER_SUPPORT 고객센터 1:1 상담(구매자 ↔ 관리자 전원)
    - 같은 방 = (type, buyerId, storeId) — 안 쓰는 쪽은 0
    - 목업 시점: 구매자 = 김서연(u1), 판매자 = 오롯이 리넨(s1), 관리자 = 곳간 운영팀
-   - read: 쪽(BUYER · SELLER · ADMIN)마다 마지막으로 읽은 메시지 번호 */
+   - read: 쪽(BUYER, SELLER, ADMIN)마다 마지막으로 읽은 메시지 번호 */
 
 export const ROOM_TYPE_LABEL = { STORE_INQUIRY: '스토어 톡', SELLER_SUPPORT: '판매자 운영 상담', BUYER_SUPPORT: '고객센터 1:1 상담' };
 export const CHAT_MAX_LENGTH = 1000;
@@ -37,7 +37,7 @@ const r103 = [
   text('ADMIN', '곳간 운영팀입니다. 스토어 톡 내용 확인했어요. 판매자에게 출고 일정을 확인하고 오늘 안에 다시 안내드릴게요.', daysAgo(0, 4)),
 ];
 const r104 = [
-  card('SELLER', { type: 'SETTLEMENT', id: 3921, title: '정산 9/21~9/27 · 지급 보류' }, daysAgo(1, 3)),
+  card('SELLER', { type: 'SETTLEMENT', id: 3921, title: '정산 9/21~9/27, 지급 보류' }, daysAgo(1, 3)),
   text('SELLER', '이번 주 정산이 지급 보류로 나오는데 이유를 알 수 있을까요?', daysAgo(1, 3)),
   text('ADMIN', '처리되지 않은 반품 요청 1건이 있어 보류됐어요. 처리하시면 다음 지급일에 함께 지급됩니다.', daysAgo(0, 2)),
 ];
@@ -47,7 +47,7 @@ const r105 = [
   text('BUYER', '쇼핑백도 같이 받을 수 있는지 궁금해요.', daysAgo(0, 3)),
 ];
 const r106 = [
-  card('SELLER', { type: 'SETTLEMENT', id: 3815, title: '정산 9/14~9/20 · 지급 보류' }, daysAgo(6)),
+  card('SELLER', { type: 'SETTLEMENT', id: 3815, title: '정산 9/14~9/20, 지급 보류' }, daysAgo(6)),
   text('SELLER', '지난 주차 정산이 지급 보류됐는데 언제 지급되나요?', daysAgo(6)),
   text('ADMIN', '미처리 반품 3건이 남아 보류됐어요. 처리가 끝나면 보류를 풀고 다음 지급일에 지급됩니다.', daysAgo(6)),
   text('SELLER', '네, 확인했습니다. 감사합니다.', daysAgo(5)),

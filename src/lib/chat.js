@@ -28,14 +28,14 @@ export function otherSide(room, side) {
   return side === 'BUYER' ? 'ADMIN' : 'BUYER';
 }
 
-/** 보이는 방: 구매자 = 내 스토어 톡 · 내 고객 상담 / 판매자 = 내 스토어의 스토어 톡 · 운영 상담 / 관리자 = 상담방 2종 전체 */
+/** 보이는 방: 구매자 = 내 스토어 톡, 내 고객 상담 / 판매자 = 내 스토어의 스토어 톡, 운영 상담 / 관리자 = 상담방 2종 전체 */
 export function isVisible(room, kind) {
   if (kind === 'buyer') return room.buyerId === CHAT_ME.userId && room.type !== 'SELLER_SUPPORT';
   if (kind === 'seller') return room.storeId === CHAT_ME.storeId && room.type !== 'BUYER_SUPPORT';
   return room.type !== 'STORE_INQUIRY';
 }
 
-/** 상대 이름 — 구매자 ← 스토어명 · 판매자 ← 가린 구매자 이름 · 관리자 ← 스토어명 · 회원 이름, 관리자 쪽은 "곳간 운영팀" */
+/** 상대 이름 — 구매자 ← 스토어명, 판매자 ← 가린 구매자 이름, 관리자 ← 스토어명, 회원 이름, 관리자 쪽은 "곳간 운영팀" */
 export function counterpartName(room, side) {
   const other = otherSide(room, side);
   if (other === 'ADMIN') return ADMIN_DISPLAY_NAME;
@@ -53,7 +53,7 @@ export function unreadCount(room, side) {
 export function preview(room) {
   const m = room.messages.at(-1);
   if (!m) return null;
-  return { text: m.kind === 'CONTEXT' ? `문의 대상 · ${m.content}` : m.content, at: m.at };
+  return { text: m.kind === 'CONTEXT' ? `문의 대상, ${m.content}` : m.content, at: m.at };
 }
 
 /** 메뉴 배지 — 그 화면에서 보이는 방의 안 읽은 메시지 합 */
@@ -73,11 +73,11 @@ function contextTitle(ctx) {
   if (ctx.type === 'ORDER') return `주문 ${ctx.id}`;
   if (ctx.type === 'ORDER_ITEM') {
     const line = myOrders.flatMap((o) => o.items).find((l) => l.lineId === ctx.id);
-    return line ? `${productById[line.productId]?.name ?? '상품'} · ${line.option}` : `상품주문 #${ctx.id}`;
+    return line ? `${productById[line.productId]?.name ?? '상품'}, ${line.option}` : `상품주문 #${ctx.id}`;
   }
   if (ctx.type === 'SETTLEMENT') {
     const s = settlements.find((x) => x.id === ctx.id);
-    return s ? `정산 ${s.id} · ${s.payout.toLocaleString()}원` : `정산 #${ctx.id}`;
+    return s ? `정산 ${s.id}, ${s.payout.toLocaleString()}원` : `정산 #${ctx.id}`;
   }
   if (ctx.type === 'REPORT') return `신고 #${ctx.id}`;
   return `${ctx.type} #${ctx.id}`;

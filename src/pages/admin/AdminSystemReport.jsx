@@ -9,7 +9,7 @@ import {
 } from '../../data/system';
 
 /* ─────────── 장애 분석 리포트 /admin/system/report ───────────
-   실제: IncidentReport · incidentReport.js (frontend #121 · #122), API backend docs/api/admin.md 10절
+   실제: IncidentReport, incidentReport.js (frontend #121, #122), API backend docs/api/admin.md 10절
    위는 운영팀이 읽는 순서(요약 문장 → 건수 → 시간대별 막대 → 이슈 → 이벤트), 개발자 상세는 접어 둔다
    목업: 기준 시각을 11/17 11:30 으로 고정하고 고정 사건 5건(data/system.js)으로 응답을 만든다. 내려받기는 토스트만 */
 

@@ -1,13 +1,13 @@
 /* 알림 센터 (admin-service notification, NTF-08) 목업 데이터
-   - 받는 쪽: USER(구매자 김서연) · STORE(오롯이 리넨) · ADMIN(관리자 전원)
-   - 종류: ORDER_PAID · ORDER_SHIPPED · ORDER_CANCELLED · ORDER_RETURNED · SETTLEMENT_PAID · STORE_APPROVED · STORE_REJECTED · STORE_SUPPLEMENT · CHAT_MESSAGE
-   - 실제로는 SQS 이벤트 · chat-service 요청 → 알림함(DynamoDB, 90일) → SSE 로 바로 도착. 목업은 목록 · 안 읽은 수 · 모두 읽음 · 링크 이동만 */
+   - 받는 쪽: USER(구매자 김서연), STORE(오롯이 리넨), ADMIN(관리자 전원)
+   - 종류: ORDER_PAID, ORDER_SHIPPED, ORDER_CANCELLED, ORDER_RETURNED, SETTLEMENT_PAID, STORE_APPROVED, STORE_REJECTED, STORE_SUPPLEMENT, CHAT_MESSAGE
+   - 실제로는 SQS 이벤트, chat-service 요청 → 알림함(DynamoDB, 90일) → SSE 로 바로 도착. 목업은 목록, 안 읽은 수, 모두 읽음, 링크 이동만 */
 
 export const NOTIFICATIONS = {
   USER: [
     { id: 'n-u1', type: 'CHAT_MESSAGE', title: '곳간 운영팀', body: '곳간 운영팀입니다. 스토어 톡 내용 확인했어요. 판매자에게 출고 일정을 확인하고…', link: '/mypage/chats/103', read: false, ago: '4시간 전' },
     { id: 'n-u2', type: 'CHAT_MESSAGE', title: '오롯이 리넨', body: '재입고되면 이 톡으로 바로 알려드릴게요!', link: '/mypage/chats/101', read: false, ago: '5시간 전' },
-    { id: 'n-u3', type: 'ORDER_SHIPPED', title: '배송이 시작됐어요', body: '프렌치 리넨 오버핏 셔츠 · CJ대한통운 송장 등록', link: '/mypage/orders/20260928-000017', read: false, ago: '어제' },
+    { id: 'n-u3', type: 'ORDER_SHIPPED', title: '배송이 시작됐어요', body: '프렌치 리넨 오버핏 셔츠, CJ대한통운 송장 등록', link: '/mypage/orders/20260928-000017', read: false, ago: '어제' },
     { id: 'n-u4', type: 'ORDER_PAID', title: '결제가 완료됐어요', body: '프렌치 리넨 오버핏 셔츠 외 1건', link: '/mypage/orders/20260928-000017', read: true, ago: '3일 전' },
     { id: 'n-u5', type: 'ORDER_RETURNED', title: '반품이 완료됐어요', body: '환불 금액은 결제수단으로 돌려드렸어요', link: '/mypage/claims', read: true, ago: '5일 전' },
   ],

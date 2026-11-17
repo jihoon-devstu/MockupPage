@@ -14,10 +14,10 @@ let ORDERS = sellerOrders.map((o) => ({ ...o }));
 
 const COURIERS = ['CJ대한통운', '롯데택배', '한진택배', '우체국택배', '로젠택배'];
 const demoInvoice = () => `6512${String(Math.floor(Math.random() * 1e8)).padStart(8, '0')}`;
-// 일괄 처리 결과 요약 — "2건 발주확인 완료" / "2건 발주확인 완료 · 1건 실패 (표에서 사유 확인)" (실제 sellerBulk.bulkSummary)
+// 일괄 처리 결과 요약 — "2건 발주확인 완료" / "2건 발주확인 완료, 1건 실패 (표에서 사유 확인)" (실제 sellerBulk.bulkSummary)
 const bulkSummary = (action, ok, failed = 0) => {
   const done = ok ? `${ok}건 ${action} 완료` : `${action}하지 못했어요`;
-  return failed ? `${done} · ${failed}건 실패 (표에서 사유 확인)` : done;
+  return failed ? `${done}, ${failed}건 실패 (표에서 사유 확인)` : done;
 };
 
 /* ─────────── 주문 관리 ─────────── */
@@ -33,7 +33,7 @@ export function SellerOrderList() {
   const save = (next) => { ORDERS = next; setRows(next); };
   const TABS = ['전체', ...FLOW];
   const counts = Object.fromEntries(TABS.map((t) => [t, t === '전체' ? rows.length : rows.filter((r) => r.status === t).length]));
-  // 검색칸 하나 — 상품주문번호 · 구매자 · 수령인 · 상품명 · 송장번호
+  // 검색칸 하나 — 상품주문번호, 구매자, 수령인, 상품명, 송장번호
   const hay = (r) => [r.lineId, userById[r.buyerId]?.name, r.receiver, productById[r.productId].name, r.invoice].join(' ');
   const list = rows.filter((r) => (tab === '전체' || r.status === tab) && hay(r).includes(q.trim()));
   const selRows = rows.filter((r) => sel.has(r.lineId));
@@ -66,7 +66,7 @@ export function SellerOrderList() {
       <div className="panel p-4 space-y-3">
         <div className="flex flex-wrap gap-3 items-center">
           <span className="text-[13px] font-semibold w-14">검색</span>
-          <div className="flex items-center border border-line-2 h-9 px-2.5 w-full sm:w-96 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 px-2 text-[13px] outline-none" placeholder="상품주문번호 · 구매자 · 수령인 · 상품명 · 송장번호" /></div>
+          <div className="flex items-center border border-line-2 h-9 px-2.5 w-full sm:w-96 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} className="flex-1 px-2 text-[13px] outline-none" placeholder="상품주문번호, 구매자, 수령인, 상품명, 송장번호" /></div>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export function SellerOrderList() {
           <Checkbox checked={allOn} onChange={(on) => setSel(on ? new Set(list.map((r) => r.lineId)) : new Set())} />
           <span className="text-ink-2 mr-2">선택 <b className="num text-ink">{sel.size}</b>건</span>
           <button disabled={!sel.size} onClick={confirm} className="btn btn-ink btn-xs">발주확인</button>
-          <button disabled={!sel.size} onClick={() => setInvoiceModal(true)} className="btn btn-line btn-xs">송장 입력 · 발송처리</button>
+          <button disabled={!sel.size} onClick={() => setInvoiceModal(true)} className="btn btn-line btn-xs">송장 입력, 발송처리</button>
           <button disabled={!sel.size} onClick={deliver} className="btn btn-line btn-xs">배송완료 처리</button>
         </div>
         <div className="overflow-x-auto">
@@ -112,7 +112,7 @@ export function SellerOrderList() {
         <Pager total={2} className="py-4" />
       </div>
 
-      <Modal open={invoiceModal} onClose={() => setInvoiceModal(false)} title={`송장 입력 · 발송처리 (${selRows.length}건)`} width={680}
+      <Modal open={invoiceModal} onClose={() => setInvoiceModal(false)} title={`송장 입력, 발송처리 (${selRows.length}건)`} width={680}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setInvoiceModal(false)}>취소</button><button className="btn btn-ink btn-sm" onClick={ship}>발송처리</button></>}>
         <p className="text-[12.5px] text-mute mb-3">배송준비 상태 주문만 발송처리됩니다. 송장번호를 비우면 데모용 송장번호가 자동으로 붙어요.</p>
         <table className="tbl">
@@ -132,7 +132,7 @@ export function SellerOrderList() {
   );
 }
 
-/* 처리 이력 — 주문 접수 · 결제 완료 · 발송 · 배송완료 · 구매확정 (실제 orderView.trackingOf: 상품주문 시각 필드로 최신 단계부터) */
+/* 처리 이력 — 주문 접수, 결제 완료, 발송, 배송완료, 구매확정 (실제 orderView.trackingOf: 상품주문 시각 필드로 최신 단계부터) */
 const DELIVERED = ['배송완료', '구매확정', '반품요청', '반품완료', '교환요청', '교환완료'];
 function historyOf(o) {
   const at = (h) => new Date(o.date.getTime() + h * 36e5);
@@ -159,7 +159,7 @@ export function SellerOrderDetail() {
   const ship = () => { update({ status: '배송중', courier: shipForm.courier, invoice: shipForm.invoice.trim() || demoInvoice() }, bulkSummary('발송처리', 1)); setShipForm(null); };
   return (
     <div>
-      <PageHead crumbs="주문 · 배송 > 주문 관리" title={<span className="num">{o.lineId}</span>} desc={`주문일시 ${ymdhm(o.date)} · 주문번호 ${o.orderId}`}
+      <PageHead crumbs="주문, 배송 > 주문 관리" title={<span className="num">{o.lineId}</span>} desc={`주문일시 ${ymdhm(o.date)}, 주문번호 ${o.orderId}`}
         right={<Link to="/seller/orders" className="btn btn-line btn-sm">목록</Link>} />
       <div className="grid xl:grid-cols-[1fr_360px] gap-4">
         <div className="space-y-4">
@@ -169,7 +169,7 @@ export function SellerOrderDetail() {
               <img src={p.images[0]} alt="" className="w-20 h-24 object-cover" />
               <div className="flex-1 text-[13px]">
                 <div className="font-semibold text-[15px]">{p.name}</div>
-                <div className="text-mute mt-1">{o.option || '단일상품'} · {o.qty}개</div>
+                <div className="text-mute mt-1">{o.option || '단일상품'}, {o.qty}개</div>
                 <div className="mt-2 num">{won(o.unitPrice)} × {o.qty} = <b>{won(amount)}</b></div>
               </div>
             </div>
@@ -219,20 +219,20 @@ export function SellerOrderDetail() {
 }
 
 /* ─────────── 취소/반품/교환 ───────────
-   실제 SellerClaimList · claimView 와 같은 흐름
+   실제 SellerClaimList, claimView 와 같은 흐름
    - 취소: 자동 처리 (판매자 할 일 없음) — 진행 중이면 '취소중'
-   - 반품: 요청 → 승인(수거 요청) → 수거 완료 · 환불 → 반품완료
+   - 반품: 요청 → 승인(수거 요청) → 수거 완료, 환불 → 반품완료
    - 교환: 요청 → 승인 → 수거 완료 → 재배송 송장 → (주문 관리 배송완료 또는 자동) 교환완료 */
 const STEP_LABEL = { REQUESTED: '요청', APPROVED: '승인', COLLECTED: '수거완료', RESHIPPED: '재배송중', REJECTED: '거부', WITHDRAWN: '철회', COMPLETED: '완료' };
 const OPEN_STEPS = ['REQUESTED', 'APPROVED', 'COLLECTED', 'RESHIPPED'];
-const SELLER_FAULT = ['상품 불량 · 파손', '오배송'];
+const SELLER_FAULT = ['상품 불량, 파손', '오배송'];
 const REJECT_REASONS = ['상품 사용 흔적 확인', '반품 기한 경과', '구성품 누락', '기타'];
 
 const claimStatusLabel = (c) => (c.type === '취소' && c.step === 'APPROVED' ? '취소중' : `${c.type}${STEP_LABEL[c.step]}`);
 function nextAction(c) {
   if (c.type === '취소') return null;
   if (c.step === 'REQUESTED') return { action: 'approve', label: '승인 (수거 요청)', rejectable: true };
-  if (c.step === 'APPROVED') return { action: 'collect', label: c.type === '반품' ? '수거 완료 · 환불' : '수거 완료' };
+  if (c.step === 'APPROVED') return { action: 'collect', label: c.type === '반품' ? '수거 완료, 환불' : '수거 완료' };
   if (c.step === 'COLLECTED' && c.type === '교환') return { action: 'reship', label: '재배송 송장' };
   return null;
 }
@@ -247,7 +247,7 @@ function claimProgress(c) {
     default: return `${c.type} 처리가 끝났어요.`;
   }
 }
-// 환불액 — 신청 때 계산된 금액 (반품 배송비 차감 포함) · 사용 포인트는 환원
+// 환불액 — 신청 때 계산된 금액 (반품 배송비 차감 포함), 사용 포인트는 환원
 function claimMoney(r) {
   const amount = r.unitPrice * r.qty;
   const used = r.usedPoint || 0;
@@ -307,7 +307,7 @@ export function SellerClaims() {
 
   return (
     <div>
-      <PageHead title="취소 · 반품 · 교환" desc="요청 접수 후 3영업일 내 처리해주세요. 반품은 수거 완료 시 결제 취소 → 재고 복원 → 구매자 포인트 환원 · 회수가 함께 진행됩니다." />
+      <PageHead title="취소, 반품, 교환" desc="요청 접수 후 3영업일 내 처리해주세요. 반품은 수거 완료 시 결제 취소 → 재고 복원 → 구매자 포인트 환원, 회수가 함께 진행됩니다." />
       <div className="flex flex-wrap gap-2">
         <Segments items={['처리대기', '처리완료']} value={tab} onChange={setTab} counts={{ 처리대기: pending.length, 처리완료: byType.length - pending.length }} />
         <Segments items={['전체', '취소', '반품', '교환']} value={type} onChange={setType} counts={typeCounts} />
@@ -358,10 +358,10 @@ export function SellerClaims() {
             </> : <button className="btn btn-line btn-sm" onClick={() => setDetail(null)}>닫기</button>}>
             <div className="flex gap-3 pb-4 border-b border-line text-[13px]">
               <img src={p.images[0]} alt="" className="w-14 h-16 object-cover" />
-              <div className="flex-1"><div className="font-semibold">{p.name}</div><div className="text-mute">{detail.option || '단일상품'} · {detail.qty}개</div><div className="num text-mute">{detail.lineId}</div></div>
+              <div className="flex-1"><div className="font-semibold">{p.name}</div><div className="text-mute">{detail.option || '단일상품'}, {detail.qty}개</div><div className="num text-mute">{detail.lineId}</div></div>
               <StatusPill s={claimStatusLabel(view(detail))} />
             </div>
-            <div className="mt-4"><KV rows={[['유형', c.type], ['사유', `${c.reason}${c.detail ? ` · ${c.detail}` : ''}`], ['요청일', ymd(c.requested)], ['구매자', userById[detail.buyerId]?.name ?? detail.receiver], ['진행', claimProgress(view(detail))], ['송장', invoice ? <span className="num">{invoice}</span> : '-']]} /></div>
+            <div className="mt-4"><KV rows={[['유형', c.type], ['사유', `${c.reason}${c.detail ? `, ${c.detail}` : ''}`], ['요청일', ymd(c.requested)], ['구매자', userById[detail.buyerId]?.name ?? detail.receiver], ['진행', claimProgress(view(detail))], ['송장', invoice ? <span className="num">{invoice}</span> : '-']]} /></div>
             {c.type !== '교환' && (
               <div className="mt-4 bg-cream p-4 text-[13px] space-y-1.5">
                 <div className="flex justify-between"><span className="text-ink-2">상품 결제금액</span><span className="num">{won(m.amount)}</span></div>
@@ -369,7 +369,7 @@ export function SellerClaims() {
                 <div className="flex justify-between font-bold border-t border-line-2 pt-1.5"><span>결제수단 환불액 (부분 취소)</span><span className="num">{won(m.refund)}</span></div>
               </div>
             )}
-            <p className="text-[12px] text-mute mt-2">{c.type === '교환' ? '교환은 결제 · 재고 변동 없이 회수 확인 후 같은 옵션으로 재배송합니다.' : '환불액은 신청 때 계산된 금액(반품 배송비 차감 포함)이에요. 판매자 정산에서는 해당 상품주문이 제외됩니다.'}</p>
+            <p className="text-[12px] text-mute mt-2">{c.type === '교환' ? '교환은 결제, 재고 변동 없이 회수 확인 후 같은 옵션으로 재배송합니다.' : '환불액은 신청 때 계산된 금액(반품 배송비 차감 포함)이에요. 판매자 정산에서는 해당 상품주문이 제외됩니다.'}</p>
           </Modal>
         );
       })()}
@@ -379,7 +379,7 @@ export function SellerClaims() {
         <label className="label">거부 사유</label>
         <select value={rejectForm.reason} onChange={(e) => setRejectForm({ ...rejectForm, reason: e.target.value })} className="field mb-3">{REJECT_REASONS.map((r) => <option key={r}>{r}</option>)}</select>
         <textarea rows={3} value={rejectForm.text} onChange={(e) => setRejectForm({ ...rejectForm, text: e.target.value })} maxLength={400} className="field" placeholder="구매자에게 전달할 상세 사유" />
-        <p className="text-[12px] text-mute mt-2">거부 사유는 구매자의 취소 · 반품 · 교환 내역에 표시됩니다.</p>
+        <p className="text-[12px] text-mute mt-2">거부 사유는 구매자의 취소, 반품, 교환 내역에 표시됩니다.</p>
       </Modal>
 
       <Modal open={!!reship} onClose={() => setReship(null)} title="교환 재배송 송장" width={460}

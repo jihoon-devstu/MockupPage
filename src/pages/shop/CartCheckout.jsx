@@ -29,7 +29,7 @@ const totalsOf = (groups, point = 0) => {
   return { sale, ship, pay, earn: earnOf(pay) };
 };
 
-/* 구매 가능: 판매중 상품 · 운영중 스토어 (판매중지 · 품절 · 정지 스토어 상품은 주문에서 빠짐) */
+/* 구매 가능: 판매중 상품, 운영중 스토어 (판매중지, 품절, 정지 스토어 상품은 주문에서 빠짐) */
 const purchasable = (l) => l.product.status === '판매중' && storeById[l.product.storeId].status === '운영중';
 
 function Summary({ groups, point = 0, cta, label = '결제 예정금액' }) {
@@ -55,7 +55,7 @@ export function Cart() {
   const { cart, setQty, toggleLine, toggleAll, removeLines, toast } = useApp();
   const nav = useNavigate();
   const checked = cart.filter((l) => l.checked);
-  // 실제: 스토어 머리의 배송비 · 무료배송까지 남은 금액은 선택된 구매 가능 줄 기준 (서버 계산)
+  // 실제: 스토어 머리의 배송비, 무료배송까지 남은 금액은 선택된 구매 가능 줄 기준 (서버 계산)
   const groups = groupByStore(cart).map((g) => {
     const subtotal = g.lines.filter((l) => l.checked && purchasable(l)).reduce((a, l) => a + l.unit * l.qty, 0);
     return { ...g, subtotal, ship: subtotal ? shipFeeFor(g.store, subtotal) : 0 };
@@ -86,7 +86,7 @@ export function Cart() {
                 <div className="flex items-center justify-between px-4 h-12 bg-cream border-b border-line">
                   <Link to={`/store/${g.store.id}`} className="font-bold text-[14px] hover:underline">{g.store.name}</Link>
                   <span className="text-[12px] text-ink-2">
-                    {g.subtotal === 0 ? '선택한 상품 없음' : g.ship === 0 ? '무료배송' : <>배송비 {won(g.ship)}{g.store.freeOver - g.subtotal > 0 && <> · <span className="text-point">{won(g.store.freeOver - g.subtotal)} 더 담으면 무료배송</span></>}</>}
+                    {g.subtotal === 0 ? '선택한 상품 없음' : g.ship === 0 ? '무료배송' : <>배송비 {won(g.ship)}{g.store.freeOver - g.subtotal > 0 && <>, <span className="text-point">{won(g.store.freeOver - g.subtotal)} 더 담으면 무료배송</span></>}</>}
                   </span>
                 </div>
                 {g.lines.map((l) => (
@@ -135,7 +135,7 @@ export function Cart() {
   );
 }
 
-// 포트원 V2 · 토스페이먼츠 테스트 채널에서 지원하는 것만 (무통장입금 · 곳간페이 없음)
+// 포트원 V2, 토스페이먼츠 테스트 채널에서 지원하는 것만 (무통장입금, 곳간페이 없음)
 const PAY_METHODS = ['신용/체크카드', '카카오페이', '네이버페이', '토스페이'];
 const MEMO_OPTIONS = ['문 앞에 놓아주세요', '경비실에 맡겨주세요', '배송 전 연락 바랍니다'];
 const MEMO_CUSTOM = '직접 입력';
@@ -200,7 +200,7 @@ export function Checkout() {
                 {g.lines.map((l) => (
                   <div key={l.key} className="flex gap-3 p-3 border-t border-line text-[13px]">
                     <img src={l.product.images[0]} alt="" className="w-14 h-16 object-cover" />
-                    <div className="flex-1"><div className="font-medium">{l.product.name}</div><div className="text-mute">{l.option || '단일상품'} · {l.qty}개</div></div>
+                    <div className="flex-1"><div className="font-medium">{l.product.name}</div><div className="text-mute">{l.option || '단일상품'}, {l.qty}개</div></div>
                     <div className="font-bold num">{won(l.unit * l.qty)}</div>
                   </div>
                 ))}
@@ -222,7 +222,7 @@ export function Checkout() {
                 {point > 0 && <button onClick={() => setPoint(0)} className="btn btn-ghost shrink-0">취소</button>}
               </div>
               <span />
-              <span className="text-[12px] text-mute -mt-1">1P = 1원 · 사용 후 잔여 {comma(myPointBalance - point)}P</span>
+              <span className="text-[12px] text-mute -mt-1">1P = 1원, 사용 후 잔여 {comma(myPointBalance - point)}P</span>
             </div>
             <div className="mt-4 bg-cream p-4 text-[13px] space-y-1.5">
               <div className="flex justify-between"><span className="text-ink-2">상품금액 + 배송비</span><span className="num">{won(base.sale + base.ship)}</span></div>
@@ -238,15 +238,15 @@ export function Checkout() {
                 <button key={m} onClick={() => setMethod(m)} className={cx('h-12 border text-[14px]', method === m ? 'border-ink border-2 font-bold' : 'border-line-2 hover:border-ink')}>{m}</button>
               ))}
             </div>
-            <p className="text-[12px] text-mute mt-2">카드사 · 할부는 결제창에서 고릅니다</p>
+            <p className="text-[12px] text-mute mt-2">카드사, 할부는 결제창에서 고릅니다</p>
           </Section>
 
           <section className="border-t border-ink pt-5 text-[13px] space-y-2">
             <Checkbox checked={agree} onChange={setAgree} label="주문 내용을 확인했으며, 아래 내용에 모두 동의합니다." />
             <ul className="pl-7 text-mute space-y-1 text-[12px]">
-              <li>(필수) 개인정보 수집·이용 및 판매자 제3자 제공 동의</li>
+              <li>(필수) 개인정보 수집, 이용 및 판매자 제3자 제공 동의</li>
               <li>(필수) 전자결제대행 이용 동의</li>
-              <li>곳간은 통신판매중개자이며, 상품·거래 책임은 각 판매자에게 있습니다.</li>
+              <li>곳간은 통신판매중개자이며, 상품, 거래 책임은 각 판매자에게 있습니다.</li>
             </ul>
           </section>
         </div>
@@ -263,7 +263,7 @@ export function Checkout() {
         <div className="space-y-2">
           {addresses.map((a) => (
             <button key={a.id} onClick={() => { setAddr(a); setAddrModal(false); }} className={cx('w-full text-left border p-4 text-[13px]', addr.id === a.id ? 'border-ink border-2' : 'border-line-2')}>
-              <div className="font-bold">{a.label} · {a.name}{a.main && <span className="ml-2 text-point text-[11px]">기본</span>}</div>
+              <div className="font-bold">{a.label}, {a.name}{a.main && <span className="ml-2 text-point text-[11px]">기본</span>}</div>
               <div className="text-ink-2 mt-1">{a.addr} {a.detail}</div>
             </button>
           ))}
@@ -302,7 +302,7 @@ export function OrderComplete() {
           ['주문번호', <span className="num">{st.orderNo ?? '20261001-000052'}</span>],
           ['사용 포인트', <span className="num">{comma(st.point || 0)}P</span>],
           ['실결제금액', <b className="num">{won(pay)}</b>],
-          ['적립 예정 포인트', <span className="num text-moss font-semibold">+{comma(st.earn ?? earnOf(pay))}P <span className="text-mute font-normal text-[12px]">실결제금액의 {POINT_RATE * 100}% · 구매확정 시 적립</span></span>],
+          ['적립 예정 포인트', <span className="num text-moss font-semibold">+{comma(st.earn ?? earnOf(pay))}P <span className="text-mute font-normal text-[12px]">실결제금액의 {POINT_RATE * 100}%, 구매확정 시 적립</span></span>],
           ['배송지', st.address ?? `${myAddresses[0].addr} ${myAddresses[0].detail}`],
         ].map(([k, v]) => (
           <div key={k} className="flex py-3.5 border-b border-line"><span className="w-28 text-mute">{k}</span><span className="flex-1">{v}</span></div>

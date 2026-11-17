@@ -65,9 +65,9 @@ export function StoreHome() {
 
         <div className="mt-16 grid md:grid-cols-3 gap-px bg-line border border-line text-[13px]">
           {[
-            ['배송', [s.courier, s.shipFee ? `${comma(s.shipFee)}원${s.freeOver ? ` (${comma(s.freeOver)}원 이상 무료)` : ''}` : '무료배송'].filter(Boolean).join(' · ')],
+            ['배송', [s.courier, s.shipFee ? `${comma(s.shipFee)}원${s.freeOver ? ` (${comma(s.freeOver)}원 이상 무료)` : ''}` : '무료배송'].filter(Boolean).join(', ')],
             ['출고', s.dispatch],
-            ['판매자 정보', `${s.owner} · 사업자 ${s.bizNo} · ${s.phone}`],
+            ['판매자 정보', `${s.owner}, 사업자 ${s.bizNo}, ${s.phone}`],
           ].map(([k, v]) => <div key={k} className="bg-white p-5"><div className="eyebrow mb-1.5">{k}</div>{v}</div>)}
         </div>
       </div>

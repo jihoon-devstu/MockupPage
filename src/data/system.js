@@ -1,8 +1,8 @@
-/* 시스템 상태 · 장애 분석 리포트 목업 데이터 (실제 frontend #116 ~ #122, backend docs/api/admin.md 8 ~ 10절)
-   - 실시간 모니터링: 실제는 Prometheus · Zipkin · Loki 를 폴링. 목업은 1초마다 가짜 트래픽을 만들어 같은 모양으로 쌓는다
+/* 시스템 상태, 장애 분석 리포트 목업 데이터 (실제 frontend #116 ~ #122, backend docs/api/admin.md 8 ~ 10절)
+   - 실시간 모니터링: 실제는 Prometheus, Zipkin, Loki 를 폴링. 목업은 1초마다 가짜 트래픽을 만들어 같은 모양으로 쌓는다
      (서비스를 전부 내리면 그 서비스로 가는 요청이 게이트웨이 502 로 바뀌고, 5xx 건수(최근 1분)가 오른다)
    - 장애 리포트: 실제는 서버가 기간을 받아 계산. 목업은 11/16 저녁 ~ 11/17 오전의 고정 사건 5건으로 같은 응답을 만든다
-   - 값은 전부 시연용 예시(실측 아님). IP 는 문서용 대역(203.0.113.x · 198.51.100.x) */
+   - 값은 전부 시연용 예시(실측 아님). IP 는 문서용 대역(203.0.113.x, 198.51.100.x) */
 
 export const serviceShortName = (name) => name.replace(/-service$/, '');
 
@@ -33,7 +33,7 @@ export const isServerError = (status) => status != null && status >= 500;
 
 /* ─────────── 실시간 모니터링 시뮬레이션 ─────────── */
 
-// 게이트웨이 라우트가 있는 서비스 9개 (keycloak · mysql · redis · gateway 제외). base = 평소 초당 요청, ms = 평소 평균 응답
+// 게이트웨이 라우트가 있는 서비스 9개 (keycloak, mysql, redis, gateway 제외). base = 평소 초당 요청, ms = 평소 평균 응답
 // apis = [메서드, API(묶음), 경로 예시, 비율, 응답 배수]
 const MONITOR_SERVICES = [
   ['order-service', 0.3, 48, [['GET', '/api/cart', '/api/cart', 0.35, 0.9], ['POST', '/api/cart/items', '/api/cart/items', 0.25, 1.4], ['PATCH', '/api/cart/items/{id}', '/api/cart/items/{n}', 0.2, 1.1], ['DELETE', '/api/cart/items/{id}', '/api/cart/items/{n}', 0.2, 1]]],
@@ -48,7 +48,7 @@ const MONITOR_SERVICES = [
 ].map(([name, base, ms, apis]) => ({ name, base, ms, apis }));
 export const MONITOR_SERVICE_NAMES = MONITOR_SERVICES.map((s) => s.name);
 
-const POINTS = 36;          // 그래프 3분 · 5초 간격
+const POINTS = 36;          // 그래프 3분, 5초 간격
 const CALL_POOL = 400;      // 호출 표본 (필터해도 40건이 남게)
 const hex = (n) => Array.from({ length: n }, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
 const jitter = (v, r = 0.15) => v * (1 + (Math.random() * 2 - 1) * r);
@@ -63,11 +63,11 @@ export function createMonitor() {
     total: series(),
     byService: Object.fromEntries(MONITOR_SERVICE_NAMES.map((n) => [n, series()])),
     db: {},
-    seconds: [],      // 초마다 서비스별 {req, err, msSum} — 5분 보관(분석 탭 · 5xx 1분 합)
+    seconds: [],      // 초마다 서비스별 {req, err, msSum} — 5분 보관(분석 탭, 5xx 1분 합)
     apiSeconds: [],   // 초마다 API 별 {service, api, status, count, msSum}
     calls: [],        // 호출 표본 최신순
     logs: [
-      // 평소에도 보이는 WARN · ERROR 로그 예시, 최신순 (5xx 아님 → 장애 감지 아님)
+      // 평소에도 보이는 WARN, ERROR 로그 예시, 최신순 (5xx 아님 → 장애 감지 아님)
       { kind: 'LOG', timestampMs: Date.now() - 4 * 60000 - 870, service: 'payment-service', level: 'ERROR', title: '포트원 결제 조회 시간 초과(5000ms), 재시도 1회 후 성공', status: null, traceId: hex(32) },
       { kind: 'LOG', timestampMs: Date.now() - 7 * 60000 - 4210, service: 'user-service', level: 'WARN', title: 'Keycloak 토큰 발급 응답 지연 1240ms', status: null, traceId: hex(32) },
     ],
@@ -91,7 +91,7 @@ export function tickMonitor(m, t, env) {
     const down = state === 'DOWN';
     const ms = down ? 3 : jitter(s.ms * (1 + share / 150) * (state === 'RECOVERING' && share > 0 ? 1.8 : 1));
     sec.svc[s.name] = { req, err: down ? req : 0, msSum: req * ms };
-    s.apis.forEach(([method, api, , ratio, mult]) => {
+    s.apis.forEach(([method, api, ratio, mult]) => {
       const count = req * ratio;
       apiSec.rows.push({ service: s.name, api: `${method} ${api}`, status: down ? '502' : '200', count, msSum: count * (down ? 3 : ms * mult) });
     });
@@ -113,7 +113,7 @@ export function tickMonitor(m, t, env) {
   const k = Math.min(6, Math.max(total < 0.5 ? 0 : 1, Math.round(Math.sqrt(total) * 1.1)));
   for (let i = 0; i < k; i += 1) {
     const x = pick(sampleFrom, (y) => y.req);
-    const [method, api, path, , mult] = pick(x.s.apis, (a) => a[3]);
+    const [method, api, path, mult] = pick(x.s.apis, (a) => a[3]);
     const status = x.down ? 502 : Math.random() < 0.03 ? (x.s.name === 'user-service' ? 401 : 404) : 200;
     const call = {
       traceId: hex(32), timestampMs: t + Math.floor((i / k) * 1000), method, api: `${method} ${api}`,
@@ -132,7 +132,7 @@ export function tickMonitor(m, t, env) {
   });
   m.logs = m.logs.filter((l) => l.timestampMs >= t - 600000).slice(0, 400);
 
-  // 5초마다 그래프 점 — 초당 요청 · 평균 응답은 직전 15초, 5xx 는 최근 1분 건수
+  // 5초마다 그래프 점 — 초당 요청, 평균 응답은 직전 15초, 5xx 는 최근 1분 건수
   if (Math.floor(t / 1000) % 5 === 0) {
     const recent = m.seconds.filter((x) => x.t > t - 15000);
     const minute = m.seconds.filter((x) => x.t > t - 60000);

@@ -13,26 +13,26 @@ import InquiryModal from '../../components/InquiryModal';
 import { CHAT_ME } from '../../data/chats';
 import { cx, won, comma, ymd, ymdhm } from '../../lib/format';
 
-/* 실제 구현 features/order (orderView · claimView · MyOrders · MyOrderDetail · MyClaimRequest · MyClaims),
-   features/review (MyReviews · MyReviewModal), features/user (MyPoints · MyProfile · MyAddresses) 와 같은 구성 */
+/* 실제 구현 features/order (orderView, claimView, MyOrders, MyOrderDetail, MyClaimRequest, MyClaims),
+   features/review (MyReviews, MyReviewModal), features/user (MyPoints, MyProfile, MyAddresses) 와 같은 구성 */
 const allLines = myOrders.flatMap((o) => o.items.map((l) => ({ ...l, orderId: o.id })));
 const DAY = 864e5;
-// 상품주문 시각 (목업: 주문 시각 기준으로 계산 — 실제는 서버의 shippedAt · deliveredAt · confirmedAt)
+// 상품주문 시각 (목업: 주문 시각 기준으로 계산 — 실제는 서버의 shippedAt, deliveredAt, confirmedAt)
 const shippedAt = (l) => new Date(l.date.getTime() + 26 * 36e5);
 const deliveredAt = (l) => new Date(l.date.getTime() + 46 * 36e5);
 const confirmedAt = (l) => new Date(l.date.getTime() + (46 + 72) * 36e5);
 const reviewExpiresAt = (l) => confirmedAt(l).getTime() + 30 * DAY;
-// 리뷰 작성 가능 — 구매확정 후 30일 안 · 아직 안 씀
+// 리뷰 작성 가능 — 구매확정 후 30일 안, 아직 안 씀
 const writableOf = (l) => l.status === '구매확정' && !l.reviewed && reviewExpiresAt(l) > Date.now();
-// 결제 대기 · 실패 주문의 상품주문은 '주문완료'로 남는다 → 주문 상태(결제대기 · 결제실패)로 보여 준다
+// 결제 대기, 실패 주문의 상품주문은 '주문완료'로 남는다 → 주문 상태(결제대기, 결제실패)로 보여 준다
 const lineStatusLabel = (o, l) => ({ PENDING: '결제대기', FAILED: '결제실패' })[o.status] ?? l.status;
 const payMethodLabel = (p) => ({ CARD: '카드', EASY_PAY: '간편결제' })[p?.method] ?? (p?.method || '포인트 결제');
 const sortedOrders = [...myOrders].sort((a, b) => b.date - a.date);
 
-/* 클레임 단계 — 화면은 유형 + 단계 (반품요청 · 반품승인 · 반품수거완료 · 교환재배송중 · 반품완료 · 반품거부, 취소 진행 중은 "취소중") */
+/* 클레임 단계 — 화면은 유형 + 단계 (반품요청, 반품승인, 반품수거완료, 교환재배송중, 반품완료, 반품거부, 취소 진행 중은 "취소중") */
 const CLAIM_STEP_LABEL = { REQUESTED: '요청', APPROVED: '승인', COLLECTED: '수거완료', RESHIPPED: '재배송중', REJECTED: '거부', WITHDRAWN: '철회', COMPLETED: '완료' };
 const claimStatusLabel = ({ type, step }) => (type === '취소' && step === 'APPROVED' ? '취소중' : `${type}${CLAIM_STEP_LABEL[step] ?? ''}`);
-// 구매자가 철회할 수 있는지 — 반품 · 교환이 판매자 승인 전일 때만 (취소는 즉시 처리)
+// 구매자가 철회할 수 있는지 — 반품, 교환이 판매자 승인 전일 때만 (취소는 즉시 처리)
 const canWithdraw = ({ type, step }) => type !== '취소' && step === 'REQUESTED';
 function claimProgress({ type, step, rejectReason }) {
   switch (step) {
@@ -48,7 +48,7 @@ function claimProgress({ type, step, rejectReason }) {
 
 /* ─────────── 레이아웃 ─────────── */
 const MENU = [
-  ['쇼핑', [['/mypage/orders', '주문 · 배송'], ['/mypage/claims', '취소 · 반품 · 교환'], ['/cart', '장바구니']]],
+  ['쇼핑', [['/mypage/orders', '주문, 배송'], ['/mypage/claims', '취소, 반품, 교환'], ['/cart', '장바구니']]],
   ['활동', [['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'], ['/mypage/chats', '1:1 채팅']]],
   ['혜택', [['/mypage/points', '포인트']]],
   ['내 정보', [['/mypage/profile', '회원정보 수정'], ['/mypage/addresses', '배송지 관리']]],
@@ -65,7 +65,7 @@ export function MyPageLayout() {
         <div className="p-6 md:p-8 flex items-center gap-5">
           <img src={ME.avatar} alt="" className="w-16 h-16 rounded-full object-cover" />
           <div>
-            <div className="flex items-center gap-2 text-[13px] text-white/60"><GradeBadge grade={ME.grade} dark /> {gradeById[ME.grade].label} 회원 · {next ? `${next.id}까지 ${won(next.min - ME.spent)}` : '최고 등급'}</div>
+            <div className="flex items-center gap-2 text-[13px] text-white/60"><GradeBadge grade={ME.grade} dark /> {gradeById[ME.grade].label} 회원, {next ? `${next.id}까지 ${won(next.min - ME.spent)}` : '최고 등급'}</div>
             <div className="text-[22px] font-bold mt-0.5">{ME.name}님, 반가워요</div>
             <div className="mt-2 h-1 w-56 bg-white/15"><div className="h-full bg-[#e6c06a]" style={{ width: `${next ? (ME.spent / next.min) * 100 : 100}%` }} /></div>
           </div>
@@ -102,7 +102,7 @@ export function MyPageLayout() {
 
 const H = ({ children, right }) => <div className="flex items-end justify-between border-b border-ink pb-3 mb-5"><h1 className="text-[20px] font-bold">{children}</h1>{right}</div>;
 
-/* ─────────── 리뷰 작성 · 수정 모달 ───────────
+/* ─────────── 리뷰 작성, 수정 모달 ───────────
    target: { line } 이면 작성(작성 가능한 상품주문), { review } 면 수정(내가 쓴 리뷰) */
 const FITS = ['작아요', '정사이즈', '커요'];
 const CONTENT_MIN = 20;
@@ -132,7 +132,7 @@ function ReviewForm({ target, onClose }) {
     toast(editing ? '리뷰를 수정했어요' : '리뷰가 등록되었어요');
     onClose();
   };
-  // 목업: 사진 추가를 누르면 상품 사진을 하나씩 붙인다 (실제는 JPG · PNG · WEBP · 10MB 이하 파일 선택)
+  // 목업: 사진 추가를 누르면 상품 사진을 하나씩 붙인다 (실제는 JPG, PNG, WEBP, 10MB 이하 파일 선택)
   const addPhoto = () => setPhotos((prev) => [...prev, p.images[prev.length % p.images.length]]);
   return (
     <Modal open onClose={onClose} title={editing ? '리뷰 수정' : '리뷰 쓰기'} width={560}
@@ -170,21 +170,21 @@ function ReviewForm({ target, onClose }) {
           <button onClick={addPhoto} className="w-20 h-20 border border-dashed border-line-2 text-mute flex flex-col items-center justify-center text-[11px] gap-1"><Camera size={18} />사진 추가</button>
         )}
       </div>
-      <p className="mt-3 text-[12px] text-mute">사진은 최대 {MAX_IMAGES}장 · 10MB 이하 · 상품과 무관한 내용, 욕설은 운영 정책에 따라 블라인드 처리될 수 있습니다.</p>
+      <p className="mt-3 text-[12px] text-mute">사진은 최대 {MAX_IMAGES}장, 10MB 이하, 상품과 무관한 내용, 욕설은 운영 정책에 따라 블라인드 처리될 수 있습니다.</p>
       {error && <p role="alert" className="mt-3 text-[13px] text-rust">{error}</p>}
     </Modal>
   );
 }
 
-/* ─────────── 주문 · 배송 ─────────── */
-// 철회 버튼은 철회할 수 있는 클레임(판매자 승인 전 반품 · 교환)일 때만, 리뷰쓰기는 작성 가능(구매확정 후 30일 안 · 안 씀)일 때만
+/* ─────────── 주문, 배송 ─────────── */
+// 철회 버튼은 철회할 수 있는 클레임(판매자 승인 전 반품, 교환)일 때만, 리뷰쓰기는 작성 가능(구매확정 후 30일 안, 안 씀)일 때만
 function LineActions({ o, l, onReview }) {
   const { toast } = useApp();
   const nav = useNavigate();
   const b = 'btn btn-line btn-xs';
-  if (o.status !== 'PAID') return null; // 결제 대기 · 실패 주문은 할 일 없음 (대기는 서버가 정리)
+  if (o.status !== 'PAID') return null; // 결제 대기, 실패 주문은 할 일 없음 (대기는 서버가 정리)
   const confirmPurchase = () => {
-    if (!window.confirm('구매확정하면 반품 · 교환을 신청할 수 없어요. 구매확정할까요?')) return;
+    if (!window.confirm('구매확정하면 반품, 교환을 신청할 수 없어요. 구매확정할까요?')) return;
     toast('구매확정 되었어요. 리뷰를 작성할 수 있어요');
   };
   switch (l.status) {
@@ -202,7 +202,7 @@ function LineActions({ o, l, onReview }) {
   }
 }
 
-// 결제 대기 · 실패 안내 — 결제 대기 만료는 서버 스케줄러가 처리하고 화면은 상태만 보여 준다
+// 결제 대기, 실패 안내 — 결제 대기 만료는 서버 스케줄러가 처리하고 화면은 상태만 보여 준다
 function OrderNotice({ status }) {
   if (status === 'PENDING') return <div className="px-4 py-2.5 text-[12px] bg-cream border-b border-line text-ink-2">결제가 아직 확인되지 않았어요. 결제를 마치지 않으면 잠시 후 주문이 자동 취소되고 사용한 포인트는 돌려드려요.</div>;
   if (status === 'FAILED') return <div className="px-4 py-2.5 text-[12px] bg-cream border-b border-line text-rust">결제 시간이 지났거나 결제가 확인되지 않아 주문이 취소되었어요. 사용한 포인트는 자동으로 돌려드려요.</div>;
@@ -220,7 +220,7 @@ export function MyOrders() {
   const shownOrders = from ? sortedOrders.filter((o) => o.date >= from) : sortedOrders;
   return (
     <div>
-      <H>주문 · 배송</H>
+      <H>주문, 배송</H>
       <div className="grid grid-cols-5 border border-line">
         {counts.map(([s, n], i) => (
           <div key={s} className={cx('py-5 text-center relative', i && 'border-l border-line')}>
@@ -251,8 +251,8 @@ export function MyOrders() {
                     <StatusPill s={lineStatusLabel(o, l)} />
                     <div className="mt-1.5 text-mute">{storeById[p.storeId].name}</div>
                     <Link to={`/products/${p.id}`} className="font-medium text-[14px] hover:underline">{p.name}</Link>
-                    <div className="text-mute mt-0.5">{l.option || '단일상품'} · {l.qty}개 · <b className="text-ink num">{won(l.unitPrice * l.qty)}</b></div>
-                    {l.status === '배송완료' && <div className="text-[12px] text-moss mt-1">{ymd(deliveredAt(l))} 배송완료 · 7일 뒤 자동 구매확정</div>}
+                    <div className="text-mute mt-0.5">{l.option || '단일상품'}, {l.qty}개, <b className="text-ink num">{won(l.unitPrice * l.qty)}</b></div>
+                    {l.status === '배송완료' && <div className="text-[12px] text-moss mt-1">{ymd(deliveredAt(l))} 배송완료, 7일 뒤 자동 구매확정</div>}
                   </div>
                   <div className="w-full sm:w-auto flex sm:flex-col gap-1.5 sm:items-stretch sm:min-w-[96px]"><LineActions o={o} l={{ ...l, orderId: o.id }} onReview={setReview} /></div>
                 </div>
@@ -266,7 +266,7 @@ export function MyOrders() {
   );
 }
 
-// 배송 진행 — 상품주문 시각으로 최신 단계부터 (주문 접수 · 결제 완료 · 발송 · 배송완료 · 구매확정)
+// 배송 진행 — 상품주문 시각으로 최신 단계부터 (주문 접수, 결제 완료, 발송, 배송완료, 구매확정)
 function trackingOf(o, l) {
   const delivered = l.invoice && l.status !== '배송중';
   return [
@@ -289,7 +289,7 @@ export function MyOrderDetail() {
   return (
     <div>
       <H right={<Link to="/mypage/orders" className="text-[13px] text-ink-2">← 목록</Link>}>주문 상세</H>
-      <div className="text-[13px] text-ink-2 mb-4"><b className="text-ink">{ymdhm(o.date)}</b> 주문 · <span className="num">{o.id}</span></div>
+      <div className="text-[13px] text-ink-2 mb-4"><b className="text-ink">{ymdhm(o.date)}</b> 주문, <span className="num">{o.id}</span></div>
 
       <div className="grid md:grid-cols-[1fr_320px] gap-6">
         <div className="border border-line">
@@ -298,7 +298,7 @@ export function MyOrderDetail() {
             return (
               <div key={l.lineId} className="flex gap-4 p-4 border-b border-line last:border-0 text-[13px]">
                 <img src={p.images[0]} alt="" className="w-16 h-20 object-cover" />
-                <div className="flex-1"><StatusPill s={lineStatusLabel(o, l)} /><div className="font-medium text-[14px] mt-1.5">{p.name}</div><div className="text-mute">{storeById[l.storeId].name} · {l.option || '단일상품'} · {l.qty}개</div></div>
+                <div className="flex-1"><StatusPill s={lineStatusLabel(o, l)} /><div className="font-medium text-[14px] mt-1.5">{p.name}</div><div className="text-mute">{storeById[l.storeId].name}, {l.option || '단일상품'}, {l.qty}개</div></div>
                 <div className="flex flex-col items-end justify-between">
                   <div className="font-bold num">{won(l.unitPrice * l.qty)}</div>
                   <OpenChatButton className="btn btn-line btn-xs" basePath="/mypage/chats" by="BUYER"
@@ -342,7 +342,7 @@ export function MyOrderDetail() {
           </div>
           <div className="flex gap-2 mt-2">
             <OpenChatButton basePath="/mypage/chats" by="BUYER" request={{ type: 'BUYER_SUPPORT', buyerId: CHAT_ME.userId, context: { type: 'ORDER', id: o.id } }}>
-              결제 · 환불 문의
+              결제, 환불 문의
             </OpenChatButton>
           </div>
         </div>
@@ -351,14 +351,14 @@ export function MyOrderDetail() {
   );
 }
 
-/* ─────────── 클레임 신청 (취소 · 반품 · 교환) ─────────── */
-// 신청할 수 있는 클레임 — 결제완료: 즉시 취소, 배송완료: 반품 · 교환(7일 이내는 서버가 판단). 배송준비 취소요청은 없음
+/* ─────────── 클레임 신청 (취소, 반품, 교환) ─────────── */
+// 신청할 수 있는 클레임 — 결제완료: 즉시 취소, 배송완료: 반품, 교환(7일 이내는 서버가 판단). 배송준비 취소요청은 없음
 const CLAIM_ALLOWED = { 결제완료: ['취소'], 배송완료: ['반품', '교환'] };
 // 클레임 사유 (backend ClaimReasonCode) — 취소는 판매자 귀책 사유 없음
 const CLAIM_REASONS = [
   { label: '단순 변심', types: ['취소', '반품', '교환'] },
   { label: '배송 지연', types: ['취소'] },
-  { label: '상품 불량 · 파손', types: ['반품', '교환'], sellerFault: true },
+  { label: '상품 불량, 파손', types: ['반품', '교환'], sellerFault: true },
   { label: '오배송', types: ['반품', '교환'], sellerFault: true },
   { label: '기타 (상세 사유에 적어 주세요)', types: ['취소', '반품', '교환'] },
 ];
@@ -366,7 +366,7 @@ const isSellerFault = (reason) => CLAIM_REASONS.some((r) => r.label === reason &
 const reasonLabel = (reason) => reason.replace(/ \(.*\)$/, '');
 
 /* 환불 예정액 (실제는 서버 claims/preview)
-   취소: 그 스토어의 마지막 상품주문이면 배송비 환불 · 반품: 구매자 사유면 왕복 배송비 차감 · 교환: 금액 0
+   취소: 그 스토어의 마지막 상품주문이면 배송비 환불, 반품: 구매자 사유면 왕복 배송비 차감, 교환: 금액 0
    결제수단 환불 = 상품금액 ± 배송비 − 그 상품주문분 사용 포인트(환원). 적립은 구매확정 때라 회수할 적립 포인트 없음 */
 // 같은 스토어에 취소되지 않은 다른 상품주문이 남았는지 — 남았으면 취소해도 배송비를 돌려주지 않는다 (실제 ClaimTxService.lastOfStore 와 같은 기준)
 const sameStoreLeft = (o, l) => o.items.some((x) => x.lineId !== l.lineId && x.storeId === l.storeId && !['취소요청', '취소완료'].includes(x.status));
@@ -389,7 +389,7 @@ function PreviewBox({ r, type, reason, left }) {
     <div className="bg-cream p-5 text-[14px] space-y-2">
       {row('상품 금액', won(r.amount))}
       {type === '교환'
-        ? row('교환 배송비', '판매자 부담 · 같은 옵션으로 다시 보내 드려요')
+        ? row('교환 배송비', '판매자 부담, 같은 옵션으로 다시 보내 드려요')
         : <>
           {type === '취소'
             ? row('배송비 환불', r.ship ? `+${won(r.ship)}` : left ? '없음 (같은 스토어 상품이 남아 있어요)' : '없음 (배송비를 내지 않은 주문이에요)')
@@ -407,7 +407,7 @@ export function ClaimRequest() {
   const { lineId } = useParams();
   const l = allLines.find((x) => x.lineId === lineId);
   if (!l) return <p className="text-mute py-10 text-center">상품주문을 찾을 수 없어요</p>;
-  return <ClaimRequestBody key={l.lineId} l={l} />; // key: 다른 상품주문으로 이동하면 유형 · 사유 초기화
+  return <ClaimRequestBody key={l.lineId} l={l} />; // key: 다른 상품주문으로 이동하면 유형, 사유 초기화
 }
 
 function ClaimRequestBody({ l }) {
@@ -423,16 +423,16 @@ function ClaimRequestBody({ l }) {
   const r = refundOf(o, l, type, reason);
   return (
     <div>
-      <H>취소 · 반품 · 교환 신청</H>
+      <H>취소, 반품, 교환 신청</H>
       <div className="flex gap-4 border border-line p-4 text-[13px]">
         <img src={p.images[0]} alt="" className="w-16 h-20 object-cover" />
-        <div className="flex-1"><div className="text-mute">{store.name}</div><div className="font-medium text-[14px]">{p.name}</div><div className="text-mute">{l.option || '단일상품'} · {l.qty}개 · {won(r.amount)}</div></div>
+        <div className="flex-1"><div className="text-mute">{store.name}</div><div className="font-medium text-[14px]">{p.name}</div><div className="text-mute">{l.option || '단일상품'}, {l.qty}개, {won(r.amount)}</div></div>
         <div><StatusPill s={lineStatusLabel(o, l)} /></div>
       </div>
       {!types.length ? (
         <div className="mt-6 text-center text-[14px] text-ink-2">
-          <p>지금은 취소 · 반품 · 교환을 신청할 수 없는 상품이에요.</p>
-          <p className="text-[12px] text-mute mt-1">결제완료: 취소 / 배송완료 후 7일 이내: 반품 · 교환 (배송준비 중 취소는 고객센터로 문의해 주세요)</p>
+          <p>지금은 취소, 반품, 교환을 신청할 수 없는 상품이에요.</p>
+          <p className="text-[12px] text-mute mt-1">결제완료: 취소 / 배송완료 후 7일 이내: 반품, 교환 (배송준비 중 취소는 고객센터로 문의해 주세요)</p>
           <Link to="/mypage/orders" className="btn btn-line mt-5">주문 내역으로</Link>
         </div>
       ) : (
@@ -448,7 +448,7 @@ function ClaimRequestBody({ l }) {
                 );
               })}
             </div>
-            <p className="text-[12px] text-mute mt-1.5">결제완료: 취소 / 배송완료 후 7일 이내: 반품 · 교환 (구매확정 후에는 신청할 수 없어요)</p>
+            <p className="text-[12px] text-mute mt-1.5">결제완료: 취소 / 배송완료 후 7일 이내: 반품, 교환 (구매확정 후에는 신청할 수 없어요)</p>
           </div>
           <div>
             <label className="label">{type} 사유</label>
@@ -465,7 +465,7 @@ function ClaimRequestBody({ l }) {
             </div>
           )}
           <PreviewBox r={r} type={type} reason={reason} left={sameStoreLeft(o, l)} />
-          <p className="text-[12px] text-mute -mt-3">{type === '취소' ? '결제완료 상태는 판매자 확인 없이 바로 취소되고 결제수단으로 환불돼요.' : type === '반품' ? '판매자가 회수 상품을 확인한 후 환불됩니다. (영업일 1~3일)' : '교환은 결제 · 재고 변동 없이 회수 확인 후 같은 옵션으로 재배송됩니다.'}</p>
+          <p className="text-[12px] text-mute -mt-3">{type === '취소' ? '결제완료 상태는 판매자 확인 없이 바로 취소되고 결제수단으로 환불돼요.' : type === '반품' ? '판매자가 회수 상품을 확인한 후 환불됩니다. (영업일 1~3일)' : '교환은 결제, 재고 변동 없이 회수 확인 후 같은 옵션으로 재배송됩니다.'}</p>
           <div className="flex gap-2 justify-end">
             <button onClick={() => nav(-1)} className="btn btn-line">이전으로</button>
             <button disabled={!reason} onClick={() => { toast(DONE_MESSAGE[type]); nav('/mypage/orders'); }} className="btn btn-ink px-8">{type} 신청하기</button>
@@ -492,10 +492,10 @@ export function MyClaims() {
   const curRefund = cur && refundOf(orderOfLine(cur.lineId), cur, cur.claim.type, cur.claim.reason);
   return (
     <div>
-      <H>취소 · 반품 · 교환</H>
+      <H>취소, 반품, 교환</H>
       <div className="mb-4 flex flex-wrap gap-3 items-center">
         <Segments items={['전체', '취소', '반품', '교환']} value={type} onChange={setType} counts={counts} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="상품 · 옵션 · 사유" className="field field-sm w-56 ml-auto" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="상품, 옵션, 사유" className="field field-sm w-56 ml-auto" />
       </div>
       <table className="w-full text-[13px] border-t border-ink">
         <thead><tr className="text-left text-ink-2 border-b border-line"><th className="py-3 font-semibold">상품</th><th className="font-semibold">유형</th><th className="font-semibold hidden sm:table-cell">사유</th><th className="font-semibold hidden sm:table-cell">신청일</th><th className="font-semibold">상태</th><th /></tr></thead>
@@ -515,9 +515,9 @@ export function MyClaims() {
       </table>
       <div className="mt-6 bg-cream p-5 text-[13px] text-ink-2 leading-relaxed">
         <b className="text-ink">처리 안내</b><br />
-        · 결제완료 상태: 즉시 취소<br />
-        · 반품/교환: 배송완료 후 7일 이내 신청 가능 · 구매확정 후에는 신청 불가 · 판매자 승인 → 회수 → 환불(반품) · 재배송(교환)<br />
-        · 취소 · 반품 완료 시 그 상품주문분 사용 포인트는 환원됩니다. (적립은 구매확정 때라 회수할 적립 포인트가 없어요)
+        - 결제완료 상태: 즉시 취소<br />
+        - 반품/교환: 배송완료 후 7일 이내 신청 가능, 구매확정 후에는 신청 불가, 판매자 승인 → 회수 → 환불(반품), 재배송(교환)<br />
+        - 취소, 반품 완료 시 그 상품주문분 사용 포인트는 환원됩니다. (적립은 구매확정 때라 회수할 적립 포인트가 없어요)
       </div>
 
       <Modal open={!!cur} onClose={() => setOpen(null)} title={cur ? `${cur.claim.type} 상세` : ''} width={560}
@@ -529,7 +529,7 @@ export function MyClaims() {
           <div className="space-y-4">
             <div className="text-[13px] space-y-1.5">
               <div><span className="text-mute w-24 inline-block">상품주문번호</span><span className="num">{cur.lineId}</span></div>
-              <div><span className="text-mute w-24 inline-block">사유</span>{reasonLabel(cur.claim.reason)}{cur.claim.detail && ` · ${cur.claim.detail}`}</div>
+              <div><span className="text-mute w-24 inline-block">사유</span>{reasonLabel(cur.claim.reason)}{cur.claim.detail && `, ${cur.claim.detail}`}</div>
               <div><span className="text-mute w-24 inline-block">신청일</span><span className="num">{ymd(cur.claim.requested)}</span></div>
               <div><span className="text-mute w-24 inline-block">처리 상태</span>{claimProgress(cur.claim)}</div>
               {cur.claim.type === '교환' && cur.claim.reship && <div><span className="text-mute w-24 inline-block">재배송</span><span className="num">{cur.claim.reship.courier} {cur.claim.reship.trackingNo}</span></div>}
@@ -552,7 +552,7 @@ export function MyClaims() {
 export function MyReviews() {
   const { toast } = useApp();
   const [tab, setTab] = useState('todo');
-  const [target, setTarget] = useState(null); // { line } 작성 · { review } 수정
+  const [target, setTarget] = useState(null); // { line } 작성, { review } 수정
   const [deleting, setDeleting] = useState(null);
   const todo = allLines.filter(writableOf);
   const mine = reviews.filter((r) => r.userId === ME.id).slice(0, 6);
@@ -567,7 +567,7 @@ export function MyReviews() {
       </div>
       {tab === 'todo' ? (
         <div className="space-y-3">
-          <p className="text-[13px] text-mute mb-2">구매확정된 상품주문 1건당 1개 · 확정 후 30일 이내 · 별점과 사진(최대 {MAX_IMAGES}장)을 남길 수 있어요</p>
+          <p className="text-[13px] text-mute mb-2">구매확정된 상품주문 1건당 1개, 확정 후 30일 이내, 별점과 사진(최대 {MAX_IMAGES}장)을 남길 수 있어요</p>
           {todo.length === 0 && <Empty title="작성 가능한 리뷰가 없어요" desc="구매확정한 상품의 리뷰를 여기서 쓸 수 있어요" />}
           {todo.map((l) => {
             const p = productById[l.productId];
@@ -576,7 +576,7 @@ export function MyReviews() {
                 <img src={p.images[0]} alt="" className="w-16 h-20 object-cover" />
                 <div className="flex-1 text-[13px]">
                   <div className="font-medium text-[14px]">{p.name}</div>
-                  <div className="text-mute">{l.option && `${l.option} · `}{ymd(confirmedAt(l))} 구매확정</div>
+                  <div className="text-mute">{l.option && `${l.option}, `}{ymd(confirmedAt(l))} 구매확정</div>
                   <div className="text-point text-[12px] mt-1">작성기한 D-{dDay(l)}</div>
                 </div>
                 <button onClick={() => setTarget({ line: l })} className="btn btn-ink btn-sm">리뷰 쓰기</button>
@@ -596,8 +596,8 @@ export function MyReviews() {
                   <div className="font-medium">{p.name}</div>
                   <div className="flex items-center gap-2 text-mute mt-0.5">
                     <Stars value={r.rating} size={11} /> {ymd(r.date)}
-                    {r.option && <span>· {r.option}</span>}
-                    {r.fit && <span>· 사이즈 {r.fit}</span>}
+                    {r.option && <span>, {r.option}</span>}
+                    {r.fit && <span>, 사이즈 {r.fit}</span>}
                     {r.blinded && <Pill tone="rust">블라인드</Pill>}
                   </div>
                   {r.blinded && <p className="mt-2 text-[12px] text-rust">관리자에 의해 블라인드 처리된 리뷰예요. 다른 구매자에게 보이지 않아요.</p>}
@@ -626,7 +626,7 @@ export function MyReviews() {
   );
 }
 
-// 상품 문의 — 내가 쓴 문의 · 판매자 답변 (카드형 목록). 답변 전까지만 수정, 삭제는 언제든 (실제 review/components/MyQna.jsx)
+// 상품 문의 — 내가 쓴 문의, 판매자 답변 (카드형 목록). 답변 전까지만 수정, 삭제는 언제든 (실제 review/components/MyQna.jsx)
 export function MyQna() {
   const { toast } = useApp();
   const [list, setList] = useState(() => qnas.filter((q) => q.userId === ME.id).sort((a, b) => b.date - a.date));
@@ -680,7 +680,7 @@ export function MyQna() {
   );
 }
 
-/* ─────────── 1:1 채팅 (스토어 톡 · 고객센터 1:1 상담) ─────────── */
+/* ─────────── 1:1 채팅 (스토어 톡, 고객센터 1:1 상담) ─────────── */
 export function MyChats() {
   return (
     <div>
@@ -716,7 +716,7 @@ export function MyPoints() {
       </div>
       <div className="mt-6 mb-4 flex flex-wrap gap-3 items-center">
         <Segments items={['전체', ...POINT_TYPES]} value={type} onChange={setType} counts={counts} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="내용 · 주문번호" className="field field-sm w-56 ml-auto" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="내용, 주문번호" className="field field-sm w-56 ml-auto" />
       </div>
       <table className="w-full text-[13px] border-t border-ink">
         <thead><tr className="text-left text-ink-2 border-b border-line"><th className="py-3 font-semibold w-28">일자</th><th className="font-semibold w-16">구분</th><th className="font-semibold">내용</th><th className="font-semibold text-right">포인트</th><th className="font-semibold text-right hidden sm:table-cell">잔액</th></tr></thead>
@@ -735,15 +735,15 @@ export function MyPoints() {
       </table>
       <div className="mt-6 bg-cream p-5 text-[13px] text-ink-2 leading-relaxed">
         <b className="text-ink">포인트 안내</b><br />
-        · 구매확정 시 실결제금액(포인트 사용분 제외)의 {POINT_RATE * 100}%가 적립되며, 다음 결제부터 사용할 수 있어요.<br />
-        · 사용 · 적립 포인트는 상품주문 단위로 금액 비율에 따라 나뉘어 기록돼요.<br />
-        · 취소 · 반품이 완료되면 그 상품주문분 사용 포인트는 환원됩니다.
+        - 구매확정 시 실결제금액(포인트 사용분 제외)의 {POINT_RATE * 100}%가 적립되며, 다음 결제부터 사용할 수 있어요.<br />
+        - 사용, 적립 포인트는 상품주문 단위로 금액 비율에 따라 나뉘어 기록돼요.<br />
+        - 취소, 반품이 완료되면 그 상품주문분 사용 포인트는 환원됩니다.
       </div>
     </div>
   );
 }
 
-/* ─────────── 회원정보 수정 — 내 정보 수정 · 비밀번호 변경 · 탈퇴 ─────────── */
+/* ─────────── 회원정보 수정 — 내 정보 수정, 비밀번호 변경, 탈퇴 ─────────── */
 const SIGNUP_PROVIDER_LABELS = { KAKAO: '카카오', NAVER: '네이버', GOOGLE: 'Google' };
 
 export function MyProfile() {
@@ -759,7 +759,7 @@ export function MyProfile() {
         <img src={ME.avatar} alt="" className="w-16 h-16 rounded-full object-cover" />
         <div><label className="label">이메일</label><input className="field bg-cream text-mute" defaultValue={ME.email} readOnly /></div>
         <div><label className="label">이름</label><input className="field" defaultValue={ME.name} /></div>
-        <div><label className="label">닉네임 <span className="font-normal text-mute">(선택 · 비우면 삭제)</span></label><input className="field" defaultValue={ME.nick} /></div>
+        <div><label className="label">닉네임 <span className="font-normal text-mute">(선택, 비우면 삭제)</span></label><input className="field" defaultValue={ME.nick} /></div>
         <div><label className="label">휴대폰</label><input type="tel" className="field" placeholder="010-0000-0000" defaultValue={ME.phone} /></div>
         <div className="flex justify-end"><button onClick={() => toast('회원정보가 수정되었어요')} className="btn btn-ink px-8">저장</button></div>
         <div className="border-t border-line pt-4">
@@ -773,7 +773,7 @@ export function MyProfile() {
         </div>
       </div>
       <div className="mt-10 border border-line p-5 text-[13px]">
-        <div className="font-bold mb-3">회원등급 <span className="text-mute font-normal">· 누적 구매확정 금액 기준 · 적립률은 모든 등급 {POINT_RATE * 100}%</span></div>
+        <div className="font-bold mb-3">회원등급 <span className="text-mute font-normal">, 누적 구매확정 금액 기준, 적립률은 모든 등급 {POINT_RATE * 100}%</span></div>
         <div className="grid grid-cols-3 gap-px bg-line">
           {GRADES.map((g) => (
             <div key={g.id} className={cx('p-3 text-center', g.id === ME.grade ? 'bg-ink text-white' : 'bg-white')}>
@@ -794,7 +794,7 @@ export function MyProfile() {
 // 비밀번호 변경 — 성공해도 로그인 상태는 그대로
 function PasswordModal({ onClose }) {
   const { toast } = useApp();
-  const fields = [['현재 비밀번호', 'current-password'], ['새 비밀번호', 'new-password', '영문 · 특수문자 포함 8자 이상'], ['새 비밀번호 확인', 'new-password']];
+  const fields = [['현재 비밀번호', 'current-password'], ['새 비밀번호', 'new-password', '영문, 특수문자 포함 8자 이상'], ['새 비밀번호 확인', 'new-password']];
   return (
     <Modal open onClose={onClose} title="비밀번호 변경" width={420}
       footer={<><button className="btn btn-line btn-sm" onClick={onClose}>취소</button><button className="btn btn-ink btn-sm" onClick={() => { toast('비밀번호를 변경했어요'); onClose(); }}>변경</button></>}>
@@ -838,7 +838,7 @@ const POSTCODE_SAMPLES = [
 export function MyAddresses() {
   const { toast } = useApp();
   const [addresses, setAddresses] = useState(myAddresses);
-  const [editing, setEditing] = useState(null); // null · { mode: 'create' } · { mode: 'edit', address }
+  const [editing, setEditing] = useState(null); // null, { mode: 'create' }, { mode: 'edit', address }
   const [deleting, setDeleting] = useState(null);
   const full = addresses.length >= MAX_ADDRESSES;
   const setDefault = (a) => {
@@ -863,7 +863,7 @@ export function MyAddresses() {
         {addresses.map((a) => (
           <div key={a.id} className="border border-line p-5 flex justify-between gap-4 text-[13px]">
             <div>
-              <div className="font-bold text-[14px]">{a.label} · {a.name} {a.main && <span className="text-point text-[11px] ml-1">기본배송지</span>}</div>
+              <div className="font-bold text-[14px]">{a.label}, {a.name} {a.main && <span className="text-point text-[11px] ml-1">기본배송지</span>}</div>
               <div className="text-ink-2 mt-1">{a.phone}</div><div className="text-ink-2">({a.zip}) {a.addr} {a.detail}</div>
             </div>
             <div className="flex gap-1.5 items-start shrink-0">
@@ -887,7 +887,7 @@ export function MyAddresses() {
   );
 }
 
-// 등록 · 수정 — 같은 폼. 우편번호 · 기본 주소는 주소 검색으로만 채운다, 등록은 연락처를 내 휴대폰으로 미리 채운다
+// 등록, 수정 — 같은 폼. 우편번호, 기본 주소는 주소 검색으로만 채운다, 등록은 연락처를 내 휴대폰으로 미리 채운다
 // 주문서도 이 폼으로 바로 등록한다 (실제 ShopCheckout → MyAddresses.AddressFormModal)
 export function AddressFormModal({ address, onSave, onClose }) {
   const editMode = !!address;
@@ -896,7 +896,7 @@ export function AddressFormModal({ address, onSave, onClose }) {
   const [error, setError] = useState('');
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const submit = () => {
-    if (!form.label.trim() || !form.name.trim() || !form.phone.trim()) return setError('배송지명 · 받는 분 · 연락처를 입력해주세요');
+    if (!form.label.trim() || !form.name.trim() || !form.phone.trim()) return setError('배송지명, 받는 분, 연락처를 입력해주세요');
     if (!form.zip) return setError('주소 검색으로 주소를 입력해주세요');
     onSave(form);
   };

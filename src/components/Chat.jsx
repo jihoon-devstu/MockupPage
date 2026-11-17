@@ -9,10 +9,10 @@ import {
   useChatRooms, SIDE, isVisible, otherSide, counterpartName, unreadCount, preview, openRoom, sendMessage, markRead, setRoomStatus,
 } from '../lib/chat';
 
-/* 1:1 채팅 (chat-service) — 실제 구현 features/chat/components 의 ChatInbox · ChatRoomPanel · OpenChatButton 과 같은 구성
+/* 1:1 채팅 (chat-service) — 실제 구현 features/chat/components 의 ChatInbox, ChatRoomPanel, OpenChatButton 과 같은 구성
    목업: 실시간 연결(STOMP) 대신 보내면 잠시 뒤 상대가 읽고 → "입력 중…" → 답장하는 흐름을 흉내 */
 
-// 화면마다 보는 방 종류 탭 — 구매자: 스토어 톡 · 고객센터 / 판매자: 스토어 톡 · 운영 상담 / 관리자: 상담방 2종 (+ 처리 대기 · 종료)
+// 화면마다 보는 방 종류 탭 — 구매자: 스토어 톡, 고객센터 / 판매자: 스토어 톡, 운영 상담 / 관리자: 상담방 2종 (+ 처리 대기, 종료)
 const TABS = {
   buyer: [['전체', {}], ['스토어 톡', { type: 'STORE_INQUIRY' }], ['고객센터', { type: 'BUYER_SUPPORT' }]],
   seller: [['전체', {}], ['스토어 톡', { type: 'STORE_INQUIRY' }], ['운영 상담', { type: 'SELLER_SUPPORT' }]],
@@ -24,7 +24,7 @@ const CONNECTION_TEXT = { connecting: '연결 중…', disconnected: '연결이 
 const PAGE = 20; // 한 번에 보이는 메시지 수 — 실제는 서버 페이지(위로 더 보기)
 const REPLY = { BUYER: '네, 확인했어요. 감사합니다!', SELLER: '확인해 보고 바로 안내드릴게요. 잠시만 기다려 주세요!', ADMIN: '곳간 운영팀입니다. 내용 확인 후 바로 답변드릴게요.' };
 
-/** 채팅함 — 왼쪽 방 목록 · 오른쪽 열린 방(/…/chats/:roomId). 좁은 화면은 하나씩 */
+/** 채팅함 — 왼쪽 방 목록, 오른쪽 열린 방(/…/chats/:roomId). 좁은 화면은 하나씩 */
 export function ChatInbox({ kind, basePath }) {
   const { roomId } = useParams();
   const navigate = useNavigate();
@@ -83,7 +83,7 @@ export function ChatInbox({ kind, basePath }) {
   );
 }
 
-/** 열린 방 — 메시지 목록 · 입력 · 상담 상태(관리자). 관리자의 도움 요청 스토어 톡 열람은 읽기 전용 */
+/** 열린 방 — 메시지 목록, 입력, 상담 상태(관리자). 관리자의 도움 요청 스토어 톡 열람은 읽기 전용 */
 function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
   const { toast } = useApp();
   const navigate = useNavigate();
@@ -175,7 +175,7 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
         <div className="px-4 py-3 text-[13px] text-mute border-t border-line">구매자가 도움을 요청한 스토어 톡이에요. 관리자는 읽기만 할 수 있어요.</div>
       ) : (
         <div className="flex gap-2 p-3 border-t border-line shrink-0">
-          <textarea value={text} maxLength={CHAT_MAX_LENGTH} rows={2} placeholder="메시지 입력 (Enter 보내기 · Shift+Enter 줄바꿈)"
+          <textarea value={text} maxLength={CHAT_MAX_LENGTH} rows={2} placeholder="메시지 입력 (Enter 보내기, Shift+Enter 줄바꿈)"
             className="flex-1 resize-none border border-line-2 px-3 py-2 text-[14px] outline-none focus:border-ink"
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -197,7 +197,7 @@ function ChatRoomPanel({ room, side, basePath, readOnly, onBack }) {
 
 // 문맥 카드 머리 — 어떤 화면에서 무엇을 두고 묻는지 (실제 프론트 chatView.contextLabel 과 같음)
 const CONTEXT_LABEL = {
-  PRODUCT: '상품 문의', ORDER: '주문 · 결제 문의', ORDER_ITEM: '주문 상품 문의', SETTLEMENT: '정산 문의',
+  PRODUCT: '상품 문의', ORDER: '주문, 결제 문의', ORDER_ITEM: '주문 상품 문의', SETTLEMENT: '정산 문의',
   STORE: '스토어 문의', REPORT: '신고 처리 문의', CHAT_ROOM: '스토어 톡 도움 요청',
 };
 
@@ -227,7 +227,7 @@ function MessageItem({ m, mine, read, basePath }) {
 
 /**
  * 다른 화면에서 채팅 열기 — 같은 방이 있으면 그 방에 문맥 카드만 붙는다. 열리면 basePath/{roomId} 로 이동
- * request = { type, buyerId?, storeId?, context?: { type, id } }, by = 여는 쪽(BUYER · SELLER · ADMIN)
+ * request = { type, buyerId?, storeId?, context?: { type, id } }, by = 여는 쪽(BUYER, SELLER, ADMIN)
  */
 export function OpenChatButton({ request, by, basePath, className = 'btn btn-line btn-sm', children }) {
   const navigate = useNavigate();

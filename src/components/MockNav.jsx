@@ -5,18 +5,18 @@ import { cx } from '../lib/format';
 
 /* 목업 리뷰용 화면 이동 패널 (실서비스에는 포함하지 않음) */
 export const SCREENS = [
-  ['구매자 · 쇼핑몰', [
-    ['/', '메인'], ['/products?cat=fashion', '상품 목록 (카테고리)'], ['/products?q=리넨', '검색 결과'], ['/products/p101', '상품 상세 (옵션·리뷰)'],
+  ['구매자, 쇼핑몰', [
+    ['/', '메인'], ['/products?cat=fashion', '상품 목록 (카테고리)'], ['/products?q=리넨', '검색 결과'], ['/products/p101', '상품 상세 (옵션, 리뷰)'],
     ['/products/p103', '상품 상세 (품절)'], ['/products?cat=fashion&review=down', '상품 목록 — 평점 조회 실패 (별점 숨김)'], ['/stores', '스토어 목록'], ['/store/s1', '스토어 홈'], ['/cart', '장바구니'], ['/checkout', '주문/결제'],
     ['/order/complete', '주문 완료'], ['/order/complete?pay=checking', '결제 확인 중'], ['/order/complete?pay=failed', '결제 실패'],
-    ['/login', '로그인'], ['/signup', '회원가입'], ['/auth/callback', '소셜 로그인 콜백'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'], ['/seller/apply?status=PENDING', '입점 신청 — 심사대기'], ['/seller/apply?status=SUPPLEMENT', '입점 신청 — 보완요청 · 재제출'], ['/seller/apply?status=REJECTED', '입점 신청 — 반려(재신청 가능)'], ['/seller/apply?status=APPROVED', '입점 신청 — 승인'],
+    ['/login', '로그인'], ['/signup', '회원가입'], ['/auth/callback', '소셜 로그인 콜백'], ['/help', '고객센터 (FAQ)'], ['/seller/apply', '입점 신청'], ['/seller/apply?status=PENDING', '입점 신청 — 심사대기'], ['/seller/apply?status=SUPPLEMENT', '입점 신청 — 보완요청, 재제출'], ['/seller/apply?status=REJECTED', '입점 신청 — 반려(재신청 가능)'], ['/seller/apply?status=APPROVED', '입점 신청 — 승인'],
   ]],
-  ['구매자 · 마이페이지', [
-    ['/mypage/orders', '주문 · 배송'], ['/mypage/orders/20260928-000017', '주문 상세 (포인트 사용)'], ['/mypage/orders/20261001-000058', '주문 상세 (결제대기)'],
+  ['구매자, 마이페이지', [
+    ['/mypage/orders', '주문, 배송'], ['/mypage/orders/20260928-000017', '주문 상세 (포인트 사용)'], ['/mypage/orders/20261001-000058', '주문 상세 (결제대기)'],
     ['/mypage/claim/20260930-000031-01?type=취소', '취소 신청'], ['/mypage/claim/20260924-000042-01?type=반품', '반품 신청'], ['/mypage/claim/20260924-000042-01?type=교환', '교환 신청'],
     ['/mypage/claims', '취소/반품/교환 내역'], ['/mypage/reviews', '리뷰 관리'], ['/mypage/qna', '상품 문의'],
     ['/mypage/chats', '1:1 채팅'], ['/mypage/chats/101', '스토어 톡 (상품 문의 카드)'], ['/mypage/chats/103', '고객센터 상담 (도움 요청)'], ['/mypage/points', '포인트'],
-    ['/mypage/profile', '회원정보 · 등급'], ['/mypage/addresses', '배송지'],
+    ['/mypage/profile', '회원정보, 등급'], ['/mypage/addresses', '배송지'],
   ]],
   ['판매자센터', [
     ['/seller', '대시보드'], ['/seller/products', '상품 조회'], ['/seller/products?review=down', '상품 조회 — 평점 조회 실패'], ['/seller/products/new', '상품 등록'], ['/seller/products/p101/edit', '상품 수정'],
@@ -27,9 +27,9 @@ export const SCREENS = [
   ['스토어 관리자', [
     ['/admin', '운영 대시보드'], ['/admin/applications', '입점 심사 목록'], ['/admin/applications/31', '입점 심사 상세'], ['/admin/stores', '스토어 관리'],
     ['/admin/stores/s5', '스토어 상세 (정지)'], ['/admin/settlements', '정산 관리'], ['/admin/users', '회원 관리'], ['/admin/users/u11', '회원 상세 (정지)'],
-    ['/admin/users/u1', '회원 상세 (포인트 · 등급)'], ['/admin/reports', '신고 관리'],
+    ['/admin/users/u1', '회원 상세 (포인트, 등급)'], ['/admin/reports', '신고 관리'],
     ['/admin/chats', '상담함'], ['/admin/chats/103', '고객 상담 (도움 요청 카드)'], ['/admin/chats/102', '스토어 톡 열람 (읽기 전용)'], ['/admin/chats/106', '판매자 상담 (종료)'],
-    ['/admin/categories', '카테고리 · 수수료'],
+    ['/admin/categories', '카테고리, 수수료'],
     ['/admin/system', '시스템 상태 (장애 시연)'], ['/admin/system?chaos=off', '시스템 상태 — 내리기 꺼짐'], ['/admin/system?conn=lost', '시스템 상태 — 연결 끊김'], ['/admin/system?scenario=recovering', '시스템 상태 — 이중화 검증 복구 중 (장애 주입 막힘)'],
     ['/admin/system?load=running', '시스템 상태 — 부하테스트 실행 중, 장애 감지'], ['/admin/system/report', '장애 분석 리포트'],
   ]],

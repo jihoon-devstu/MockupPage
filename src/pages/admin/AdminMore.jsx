@@ -21,10 +21,10 @@ export function AdminStores() {
   const list = stores.filter((s) => (tab === '전체' || s.status === tab) && (s.name + s.owner + s.bizNo).includes(q));
   return (
     <div>
-      <PageHead title="스토어 관리" desc="입점 승인된 스토어 목록 · 등급은 최근 3개월 거래액과 페널티 점수로 매월 1일 갱신" />
+      <PageHead title="스토어 관리" desc="입점 승인된 스토어 목록, 등급은 최근 3개월 거래액과 페널티 점수로 매월 1일 갱신" />
       <div className="flex flex-wrap gap-3 items-center">
         <Segments items={T} value={tab} onChange={setTab} counts={counts} />
-        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="스토어명 · 대표자 · 사업자번호" className="flex-1 px-2 text-[13px] outline-none" /></div>
+        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="스토어명, 대표자, 사업자번호" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
@@ -67,7 +67,7 @@ function TableSearch({ value, onChange, placeholder }) {
 export function AdminStoreDetail() {
   const { id } = useParams();
   const s = storeById[id] || stores[0];
-  return <StoreDetailBody key={s.id} s={s} />; // key: 다른 스토어로 이동하면 모달 · 표 상태 초기화
+  return <StoreDetailBody key={s.id} s={s} />; // key: 다른 스토어로 이동하면 모달, 표 상태 초기화
 }
 
 function StoreDetailBody({ s }) {
@@ -76,17 +76,17 @@ function StoreDetailBody({ s }) {
   const [status, setStatus] = useState(s.status); // 모달에서 고른 상태
   const [reason, setReason] = useState('');
   const [modal, setModal] = useState(false);
-  const canSubmit = status !== cur.status && reason.trim() !== ''; // 정지 · 해제 모두 사유 필수
+  const canSubmit = status !== cur.status && reason.trim() !== ''; // 정지, 해제 모두 사유 필수
   const submitStatus = () => {
     setCur({ status, reason: reason.trim() }); setModal(false); setReason('');
     toast(status === '정지' ? '스토어를 정지했어요 — 상품이 숨겨지고 정산 지급이 보류돼요' : '스토어 정지를 해제했어요');
   };
   const [prods, setProds] = useState(() => productsOfStore(s.id).map((p) => ({ ...p })));
-  const [blockTarget, setBlockTarget] = useState(null); // { product, blocked } — 강제중지 · 해제 확인 모달
+  const [blockTarget, setBlockTarget] = useState(null); // { product, blocked } — 강제중지, 해제 확인 모달
   const [blockReason, setBlockReason] = useState('');
   const [prodQ, setProdQ] = useState('');
   const [settleQ, setSettleQ] = useState('');
-  const ss = settlements.filter((x) => x.storeId === s.id).sort((a, b) => b.start - a.start); // 최근 8주 · 최신 먼저
+  const ss = settlements.filter((x) => x.storeId === s.id).sort((a, b) => b.start - a.start); // 최근 8주, 최신 먼저
   const sum = ratingSummary(reviewsOfStore(s.id));
   const onSale = prods.filter((p) => productStatusLabel(p) === '판매중').length;
   const prodRows = prods.filter((p) => (p.name + productStatusLabel(p)).includes(prodQ));
@@ -95,7 +95,7 @@ function StoreDetailBody({ s }) {
   const closeBlock = () => { setBlockTarget(null); setBlockReason(''); };
   const submitBlock = () => {
     const { product, blocked } = blockTarget;
-    // 강제중지 → 쇼핑몰에서 숨김 · 사유 기록 / 해제 → 판매중지(STOPPED)로 돌아가고 판매자가 직접 재개
+    // 강제중지 → 쇼핑몰에서 숨김, 사유 기록 / 해제 → 판매중지(STOPPED)로 돌아가고 판매자가 직접 재개
     setProds(prods.map((p) => (p.id === product.id ? { ...p, blocked, status: '판매중지', statusReason: blocked ? blockReason.trim() : null } : p)));
     closeBlock();
     toast(blocked ? `${product.name} — 강제 판매중지했어요 (쇼핑몰에서 숨겨지고 판매자는 재개할 수 없어요)` : `${product.name} — 강제 판매중지를 풀었어요 (판매중지 상태 — 판매자가 점검 후 재개)`);
@@ -103,21 +103,21 @@ function StoreDetailBody({ s }) {
 
   return (
     <div>
-      <PageHead crumbs="판매자 > 스토어 관리" title={s.name} desc={`${s.owner} · ${s.company} · 입점 ${ymd(s.since)}`}
+      <PageHead crumbs="판매자 > 스토어 관리" title={s.name} desc={`${s.owner}, ${s.company}, 입점 ${ymd(s.since)}`}
         right={<><Link to={`/store/${s.id}`} className="btn btn-line btn-sm">쇼핑몰에서 보기 <ExternalLink size={13} /></Link>
           <OpenChatButton basePath="/admin/chats" by="ADMIN" request={{ type: 'SELLER_SUPPORT', storeId: s.id, context: { type: 'STORE', id: s.id } }}>판매자와 상담</OpenChatButton>{cur.status !== '폐점' && <button onClick={() => { setStatus(cur.status); setModal(true); }} className="btn btn-ink btn-sm">상태 변경</button>}</>} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <Kpi label="8주 거래액" value={shortWon(ss.reduce((a, x) => a + x.gross, 0))} unit="원" sub={`정산서 ${comma(ss.length)}건 · 이번 주 포함`} />
-        <Kpi label="8주 수수료 수익" value={shortWon(ss.reduce((a, x) => a + x.commission, 0))} unit="원" sub="정산서 기준 · 상위 카테고리별 판매수수료" />
+        <Kpi label="8주 거래액" value={shortWon(ss.reduce((a, x) => a + x.gross, 0))} unit="원" sub={`정산서 ${comma(ss.length)}건, 이번 주 포함`} />
+        <Kpi label="8주 수수료 수익" value={shortWon(ss.reduce((a, x) => a + x.commission, 0))} unit="원" sub="정산서 기준, 상위 카테고리별 판매수수료" />
         <Kpi label="평균 평점" value={sum.total ? sum.avg.toFixed(2) : '-'} sub={`리뷰 ${comma(sum.total)}건`} />
-        <Kpi label="판매중 상품" value={comma(onSale)} unit="개" sub={`등록 ${comma(prods.length)}개 · 삭제 제외`} />
+        <Kpi label="판매중 상품" value={comma(onSale)} unit="개" sub={`등록 ${comma(prods.length)}개, 삭제 제외`} />
       </div>
       <div className="grid xl:grid-cols-[1fr_380px] gap-4 mt-4">
         <div className="space-y-4">
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <span className="panel-title">등록 상품 {prods.length}</span>
-              <TableSearch value={prodQ} onChange={setProdQ} placeholder="상품명 · 상태" />
+              <TableSearch value={prodQ} onChange={setProdQ} placeholder="상품명, 상태" />
             </div>
             <div className="panel overflow-x-auto">
               <table className="tbl">
@@ -126,7 +126,7 @@ function StoreDetailBody({ s }) {
                   {prodRows.map((p) => (
                     <tr key={p.id}>
                       <td><div className="flex items-center gap-2.5"><img src={p.images[0]} alt="" className="w-9 h-9 object-cover bg-cream" />
-                        <div><div>{p.name}</div><div className="text-[11.5px] text-mute">{catById[p.cat].name} · {p.sub}</div></div></div></td>
+                        <div><div>{p.name}</div><div className="text-[11.5px] text-mute">{catById[p.cat].name}, {p.sub}</div></div></div></td>
                       <td className="text-right num">{comma(p.price)}</td>
                       <td className="text-right num">{comma(p.stock)}</td>
                       <td><StatusPill s={productStatusLabel(p)} />{p.statusReason && <div className="text-[11.5px] text-mute mt-0.5">{p.statusReason}</div>}</td>
@@ -163,7 +163,7 @@ function StoreDetailBody({ s }) {
             <KV rows={[
               ['상태', <span><StatusPill s={cur.status} />{cur.reason && <span className="block text-[11.5px] text-mute mt-1">{cur.reason}</span>}</span>],
               ['등급', s.grade], ['상호', s.company], ['사업자번호', s.bizNo], ['고객 문의', s.phone || '-'],
-              ['배송', `${s.courier || '택배사 미지정'} · ${won(s.shipFee)} · ${s.freeOver ? `${won(s.freeOver)} 이상 무료` : '무료배송 없음'}`],
+              ['배송', `${s.courier || '택배사 미지정'}, ${won(s.shipFee)}, ${s.freeOver ? `${won(s.freeOver)} 이상 무료` : '무료배송 없음'}`],
               ['출고 안내', s.dispatch || '-'],
               ['입점 신청', s.applicationId ? <Link to={`/admin/applications/${s.applicationId}`} className="hover:underline">신청서 #{s.applicationId}</Link> : '-'],
             ]} />
@@ -173,7 +173,7 @@ function StoreDetailBody({ s }) {
             <ol className="text-[12.5px] space-y-2">
               {[...s.history].reverse().map((h) => (
                 <li key={h.at.getTime()} className="text-ink-2">
-                  <div><span className="num text-mute">{ymdhm(h.at)}</span> · <b className="text-ink">{h.from ? `${h.from} → ${h.to}` : `개설 (${h.to})`}</b> · {ACTOR_LABEL[h.actor] ?? h.actor}</div>
+                  <div><span className="num text-mute">{ymdhm(h.at)}</span>, <b className="text-ink">{h.from ? `${h.from} → ${h.to}` : `개설 (${h.to})`}</b>, {ACTOR_LABEL[h.actor] ?? h.actor}</div>
                   {h.reason && <div className="text-mute mt-0.5">{h.reason}</div>}
                 </li>
               ))}
@@ -187,7 +187,7 @@ function StoreDetailBody({ s }) {
         <p className="text-[13.5px] font-semibold">{blockTarget?.product.name}</p>
         <div className="mt-3 text-[13px] text-ink-2 bg-cream p-3 leading-relaxed">
           {blockTarget?.blocked
-            ? '쇼핑몰에서 즉시 숨겨지고 구매할 수 없어요. 판매자는 수정 · 재고 변경 · 삭제는 할 수 있지만 판매를 재개할 수 없어요.'
+            ? '쇼핑몰에서 즉시 숨겨지고 구매할 수 없어요. 판매자는 수정, 재고 변경, 삭제는 할 수 있지만 판매를 재개할 수 없어요.'
             : '판매중지(STOPPED) 상태로 돌아가요. 판매자가 내용을 점검한 뒤 직접 재개합니다.'}
         </div>
         {blockTarget?.blocked && <>
@@ -209,11 +209,11 @@ function StoreDetailBody({ s }) {
   );
 }
 
-/* ─────────── 상담함 (판매자 운영 상담 · 고객센터 1:1 상담, 관리자 전원 공용) ─────────── */
+/* ─────────── 상담함 (판매자 운영 상담, 고객센터 1:1 상담, 관리자 전원 공용) ─────────── */
 export function AdminChats() {
   return (
     <>
-      <PageHead title="상담함" desc="판매자 · 고객 상담을 관리자 전원이 함께 봅니다. 답변은 '곳간 운영팀' 이름으로 나갑니다." />
+      <PageHead title="상담함" desc="판매자, 고객 상담을 관리자 전원이 함께 봅니다. 답변은 '곳간 운영팀' 이름으로 나갑니다." />
       <ChatInbox kind="admin" basePath="/admin/chats" />
     </>
   );
@@ -231,7 +231,7 @@ const isoWeek = (monday) => {
 };
 const SETTLE_ACTOR = { SYSTEM: '자동', ADMIN: '곳간 운영팀' };
 
-/** 정산 상세 (실제 SettlementDetailBody 와 같은 칸) — 목업은 정산서에서 건별 상품주문 · 상태 이력을 만들어 보여 준다 */
+/** 정산 상세 (실제 SettlementDetailBody 와 같은 칸) — 목업은 정산서에서 건별 상품주문, 상태 이력을 만들어 보여 준다 */
 function settlementDetail(s) {
   const ps = productsOfStore(s.storeId);
   const n = Math.max(1, s.orders);
@@ -259,7 +259,7 @@ function settlementDetail(s) {
 function SettlementDetailBody({ d }) {
   return (
     <div className="text-[14px]">
-      <div className="text-[13px] text-mute mb-3">대상기간 {ymd(d.start)} ~ {ymd(d.end)} · {d.status === '지급완료' ? '지급일' : '지급 예정일'} {ymd(d.pay)}</div>
+      <div className="text-[13px] text-mute mb-3">대상기간 {ymd(d.start)} ~ {ymd(d.end)}, {d.status === '지급완료' ? '지급일' : '지급 예정일'} {ymd(d.pay)}</div>
       <div className="border-t border-ink num">
         {[['구매확정 매출', d.gross], ['판매수수료 (카테고리별)', -d.commission], ['결제수수료 (2.2%)', -d.pgFee]].map(([k, v]) => (
           <div key={k} className="flex justify-between py-2.5 border-b border-line"><span className="font-sans text-ink-2">{k}</span><span>{v < 0 ? '−' : ''}{won(Math.abs(v))}</span></div>
@@ -272,7 +272,7 @@ function SettlementDetailBody({ d }) {
           <tbody>
             {d.items.map((i) => (
               <tr key={i.orderItemId}>
-                <td><div className="font-medium">{i.productName}</div><div className="text-[11px] text-mute num">{i.orderNo}{i.carriedOver && ' · 이월'}</div></td>
+                <td><div className="font-medium">{i.productName}</div><div className="text-[11px] text-mute num">{i.orderNo}{i.carriedOver && ', 이월'}</div></td>
                 <td className="num text-ink-2 whitespace-nowrap">{ymd(i.confirmedAt)}</td>
                 <td className="text-right num">{comma(i.amount)}</td>
                 <td className="text-right num">{pct(i.rate, 1)}</td>
@@ -288,7 +288,7 @@ function SettlementDetailBody({ d }) {
           <li key={`${h.at.getTime()}-${idx}`} className="flex items-center gap-1.5 flex-wrap">
             <span className="num text-mute">{ymdhm(h.at)}</span>
             {h.from && <><StatusPill s={h.from} /><span className="text-mute">→</span></>}<StatusPill s={h.to} />
-            <span className="text-ink-2">{SETTLE_ACTOR[h.actor] ?? h.actor}{h.reason && ` · ${h.reason}`}</span>
+            <span className="text-ink-2">{SETTLE_ACTOR[h.actor] ?? h.actor}{h.reason && `, ${h.reason}`}</span>
           </li>
         ))}
       </ol>
@@ -304,7 +304,7 @@ export function AdminSettlements() {
   const [hold, setHold] = useState(null);
   const [holdOpen, setHoldOpen] = useState(false); // 선택 건 보류 사유 입력
   const [holdReason, setHoldReason] = useState('');
-  const [detail, setDetail] = useState(null); // 지급 전 확인 — 건별 상품주문 · 이력
+  const [detail, setDetail] = useState(null); // 지급 전 확인 — 건별 상품주문, 이력
   const [q, setQ] = useState('');
   const weekRows = rows.filter((s) => s.start.getTime() === week);
   const list = weekRows.filter((s) => (storeById[s.storeId].name + s.status).includes(q));
@@ -327,19 +327,19 @@ export function AdminSettlements() {
   };
   const aggregate = () => {
     const w = isoWeek(new Date(week));
-    toast(`${w} 집계 — 새 정산서 0 · 다시 계산 ${weekRows.length} · 자동 보류 ${weekRows.filter((s) => s.status === '지급보류').length} · 이월 ${weekRows.reduce((a, s) => a + (s.carriedOver || 0), 0)}건`);
+    toast(`${w} 집계 — 새 정산서 0, 다시 계산 ${weekRows.length}, 자동 보류 ${weekRows.filter((s) => s.status === '지급보류').length}, 이월 ${weekRows.reduce((a, s) => a + (s.carriedOver || 0), 0)}건`);
   };
   const d = detail && settlementDetail(detail);
   return (
     <div>
-      <PageHead title="정산 관리" desc="구매확정일 기준 주간 정산 · 지급액 = 구매확정 매출 − 판매수수료(카테고리별) − 결제수수료(2.2%) · 환불은 구매확정 전에 끝나 정산에 들어오지 않음" />
+      <PageHead title="정산 관리" desc="구매확정일 기준 주간 정산, 지급액 = 구매확정 매출 − 판매수수료(카테고리별) − 결제수수료(2.2%), 환불은 구매확정 전에 끝나 정산에 들어오지 않음" />
       <div className="panel p-4 flex flex-wrap items-center gap-3">
         <span className="text-[13px] font-semibold">정산 주차</span>
         <select value={week} onChange={(e) => { setWeek(Number(e.target.value)); setSel(new Set()); }} className="field field-sm h-9 w-auto">
           {WEEKS.map((w) => <option key={w} value={w}>{ymd(new Date(w))} ~ {ymd(new Date(w + 6 * DAY)).slice(5)} (지급 {ymd(new Date(w + 10 * DAY)).slice(5)})</option>)}
         </select>
         <button onClick={aggregate} className="btn btn-line btn-sm ml-auto">이 주차 지금 집계</button>
-        <span className="text-[11.5px] text-mute w-full sm:w-auto">자동 집계: 매주 월 03:00 · 클러스터 기동 시 지난주 — 여러 번 눌러도 스토어 × 주차 1건</span>
+        <span className="text-[11.5px] text-mute w-full sm:w-auto">자동 집계: 매주 월 03:00, 클러스터 기동 시 지난주 — 여러 번 눌러도 스토어 × 주차 1건</span>
       </div>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
         <Kpi label="구매확정 매출" value={shortWon(tot('gross'))} unit="원" />
@@ -353,8 +353,8 @@ export function AdminSettlements() {
           <span className="text-ink-2 mr-2">선택 <b className="num text-ink">{sel.size}</b>건</span>
           <button disabled={!sel.size} onClick={pay} className="btn btn-ink btn-xs">지급 실행</button>
           <button disabled={!sel.size} onClick={() => setHoldOpen(true)} className="btn btn-line btn-xs">지급 보류</button>
-          <span className="text-mute">지급 대기 {payable.length}건 · {won(payable.reduce((a, s) => a + s.payout, 0))}</span>
-          <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="스토어 · 상태" className="flex-1 px-2 text-[13px] outline-none" /></div>
+          <span className="text-mute">지급 대기 {payable.length}건, {won(payable.reduce((a, s) => a + s.payout, 0))}</span>
+          <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="스토어, 상태" className="flex-1 px-2 text-[13px] outline-none" /></div>
         </div>
       </div>
       <div className="mt-3">
@@ -382,7 +382,7 @@ export function AdminSettlements() {
                     <td>
                       <span className="inline-flex gap-1">
                         <button onClick={() => setDetail(s)} className="btn btn-line btn-xs">상세</button>
-                        {s.status === '지급보류' && <button onClick={() => setHold(s)} className="btn btn-line btn-xs">사유 · 해제</button>}
+                        {s.status === '지급보류' && <button onClick={() => setHold(s)} className="btn btn-line btn-xs">사유, 해제</button>}
                       </span>
                     </td>
                   </tr>
@@ -392,7 +392,7 @@ export function AdminSettlements() {
           </table>
         </div>
       </div>
-      <Modal open={!!d} onClose={() => setDetail(null)} title={`정산 상세 · ${d ? `${d.storeName} ${d.week}` : ''}`} width={600}
+      <Modal open={!!d} onClose={() => setDetail(null)} title={`정산 상세, ${d ? `${d.storeName} ${d.week}` : ''}`} width={600}
         footer={d && (
           <OpenChatButton basePath="/admin/chats" by="ADMIN" request={{ type: 'SELLER_SUPPORT', storeId: d.storeId, context: { type: 'SETTLEMENT', id: d.id } }}>
             <MessagesSquare size={14} /> 판매자와 상담
@@ -400,7 +400,7 @@ export function AdminSettlements() {
         )}>
         {d && <SettlementDetailBody d={d} />}
       </Modal>
-      <Modal open={!!hold} onClose={() => setHold(null)} title="지급 보류 사유 · 해제" width={440}
+      <Modal open={!!hold} onClose={() => setHold(null)} title="지급 보류 사유, 해제" width={440}
         footer={<><button className="btn btn-line btn-sm" onClick={() => setHold(null)}>닫기</button><button className="btn btn-ink btn-sm" onClick={releaseHold}>보류 해제</button></>}>
         <p className="text-[14px]">{hold?.holdReason}</p>
       </Modal>
@@ -413,7 +413,7 @@ export function AdminSettlements() {
 }
 
 /* ─────────── 회원 관리 ─────────── */
-// 회원 상태는 정상 · 이용정지 뿐 (휴면 없음). 주문 수는 order 데이터라 회원 목록 · 상세에 없음
+// 회원 상태는 정상, 이용정지 뿐 (휴면 없음). 주문 수는 order 데이터라 회원 목록, 상세에 없음
 export function AdminUsers() {
   const [tab, setTab] = useState('전체');
   const [grade, setGrade] = useState('전체');
@@ -425,11 +425,11 @@ export function AdminUsers() {
   const list = users.filter((u) => (tab === '전체' || u.status === tab) && (grade === '전체' || u.grade === grade) && (u.name + u.email).includes(q));
   return (
     <div>
-      <PageHead title="회원 관리" desc="회원등급은 누적 구매확정 금액 기준 (NORMAL · SILVER 30만원 · GOLD 80만원) · 포인트 적립률 5%" />
+      <PageHead title="회원 관리" desc="회원등급은 누적 구매확정 금액 기준 (NORMAL, SILVER 30만원, GOLD 80만원), 포인트 적립률 5%" />
       <div className="flex flex-wrap gap-3 items-center">
         <Segments items={T} value={tab} onChange={setTab} counts={counts} />
         <Segments items={G} value={grade} onChange={setGrade} counts={gCounts} />
-        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름 · 이메일" className="flex-1 px-2 text-[13px] outline-none" /></div>
+        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름, 이메일" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
@@ -456,7 +456,7 @@ export function AdminUsers() {
 }
 
 const SUSPEND_DURATIONS = [{ value: '7', label: '7일', days: 7 }, { value: '30', label: '30일', days: 30 }, { value: 'permanent', label: '영구', days: null }];
-const SUSPEND_REASONS = ['허위 리뷰 / 리뷰 어뷰징', '결제 도용 의심', '욕설 · 비방'];
+const SUSPEND_REASONS = ['허위 리뷰 / 리뷰 어뷰징', '결제 도용 의심', '욕설, 비방'];
 
 export function AdminUserDetail() {
   const { id } = useParams();
@@ -476,7 +476,7 @@ function UserDetailBody({ u: initial }) {
   const ph = userPointHistory(u);
   const [pointQ, setPointQ] = useState('');
   const pointRows = ph.filter((r) => (r.type + r.desc).includes(pointQ));
-  const moderation = REPORTS.find((t) => t.targetType === 'USER' && t.targetId === u.id); // 이 회원이 받은 신고 · 신고 관리에서 한 조치
+  const moderation = REPORTS.find((t) => t.targetType === 'USER' && t.targetId === u.id); // 이 회원이 받은 신고, 신고 관리에서 한 조치
   const suspended = u.status === '이용정지';
   const confirm = () => {
     if (suspended) {
@@ -489,7 +489,7 @@ function UserDetailBody({ u: initial }) {
   };
   return (
     <div>
-      <PageHead crumbs="회원 · 콘텐츠 > 회원 관리" title={<span className="flex items-center gap-2">{u.name} <GradeBadge grade={u.grade} /></span>} desc={`${u.email} · 가입 ${ymd(u.joined)}`}
+      <PageHead crumbs="회원, 콘텐츠 > 회원 관리" title={<span className="flex items-center gap-2">{u.name} <GradeBadge grade={u.grade} /></span>} desc={`${u.email}, 가입 ${ymd(u.joined)}`}
         right={<button onClick={() => setModal('ban')} className={cx('btn btn-sm', suspended ? 'btn-ink' : 'btn-line text-rust')}>{suspended ? '정지 해제' : '이용 정지'}</button>} />
       <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
         <Kpi label="회원등급" value={u.grade} sub={next ? `${next.id}까지 ${won(next.min - u.spent)}` : '최고 등급'} />
@@ -510,7 +510,7 @@ function UserDetailBody({ u: initial }) {
             <div className="flex flex-wrap items-center gap-3 mb-2">
               <span className="panel-title">포인트 내역</span>
               <span className="text-[12px] text-mute">최근 {ph.length}건</span>
-              <TableSearch value={pointQ} onChange={setPointQ} placeholder="구분 · 내용" />
+              <TableSearch value={pointQ} onChange={setPointQ} placeholder="구분, 내용" />
             </div>
             <div className="panel overflow-x-auto">
               <table className="tbl">
@@ -534,19 +534,19 @@ function UserDetailBody({ u: initial }) {
             {urev.length === 0 && <div className="py-10 text-center text-mute text-sm">작성한 리뷰가 없습니다.</div>}
             {urev.map((r) => (
               <div key={r.id} className="px-5 py-3.5 border-b border-line last:border-0 text-[13px]">
-                <div className="flex items-center gap-2"><Stars value={r.rating} size={11} /><span className="text-mute">{ymd(r.date)} · {productById[r.productId].name}</span>{r.blinded && <Pill tone="rust">블라인드</Pill>}</div>
+                <div className="flex items-center gap-2"><Stars value={r.rating} size={11} /><span className="text-mute">{ymd(r.date)}, {productById[r.productId].name}</span>{r.blinded && <Pill tone="rust">블라인드</Pill>}</div>
                 <p className="mt-1 text-ink-2">{r.body}</p>
               </div>
             ))}
           </div>
           <div className="panel">
-            <div className="panel-head"><span className="panel-title">받은 신고 · 제재 이력</span><span className="text-[11.5px] text-mute">신고 관리에서 처리한 조치</span></div>
+            <div className="panel-head"><span className="panel-title">받은 신고, 제재 이력</span><span className="text-[11.5px] text-mute">신고 관리에서 처리한 조치</span></div>
             {!moderation && <div className="py-8 text-center text-mute text-sm">받은 신고가 없습니다.</div>}
             {moderation?.actions.map((a) => (
-              <div key={`a${a.moderationActionId}`} className="px-5 py-2.5 border-b border-line text-[13px]"><Pill tone={a.action === 'SUSPEND' ? 'rust' : 'mute'}>{REPORT_ACTION_LABEL[a.action]}</Pill> <span className="text-ink-2">{a.reason}</span>{a.action === 'SUSPEND' && <span className="text-mute"> · {a.suspendDays ? `${a.suspendDays}일` : '영구'}</span>}<div className="text-[11.5px] text-mute num">{ymdhm(a.createdAt)} · 신고 {a.reportCount}건</div></div>
+              <div key={`a${a.moderationActionId}`} className="px-5 py-2.5 border-b border-line text-[13px]"><Pill tone={a.action === 'SUSPEND' ? 'rust' : 'mute'}>{REPORT_ACTION_LABEL[a.action]}</Pill> <span className="text-ink-2">{a.reason}</span>{a.action === 'SUSPEND' && <span className="text-mute">, {a.suspendDays ? `${a.suspendDays}일` : '영구'}</span>}<div className="text-[11.5px] text-mute num">{ymdhm(a.createdAt)}, 신고 {a.reportCount}건</div></div>
             ))}
             {moderation?.reports.map((r) => (
-              <div key={`r${r.reportId}`} className="px-5 py-2.5 border-b border-line last:border-0 text-[13px]">{REPORT_REASON_LABEL[r.reasonCode] ?? r.reasonCode}{r.detail && <span className="text-ink-2"> — {r.detail}</span>}<div className="text-[11.5px] text-mute num">{ymdhm(r.createdAt)} · 신고자 #{r.reporterId}</div></div>
+              <div key={`r${r.reportId}`} className="px-5 py-2.5 border-b border-line last:border-0 text-[13px]">{REPORT_REASON_LABEL[r.reasonCode] ?? r.reasonCode}{r.detail && <span className="text-ink-2"> — {r.detail}</span>}<div className="text-[11.5px] text-mute num">{ymdhm(r.createdAt)}, 신고자 #{r.reporterId}</div></div>
             ))}
           </div>
         </div>
@@ -568,7 +568,7 @@ function UserDetailBody({ u: initial }) {
             <select className="field" value={reason} onChange={(e) => setReason(e.target.value)}>
               {SUSPEND_REASONS.map((r) => <option key={r}>{r}</option>)}
             </select>
-            <p className="mt-2 text-[12px] text-mute">정지하면 로그인 · 토큰 재발급이 막히고, 기간 정지는 끝나는 시각에 자동 해제돼요.</p>
+            <p className="mt-2 text-[12px] text-mute">정지하면 로그인, 토큰 재발급이 막히고, 기간 정지는 끝나는 시각에 자동 해제돼요.</p>
           </>
         )}
       </Modal>
@@ -577,7 +577,7 @@ function UserDetailBody({ u: initial }) {
 }
 
 /* ─────────── 신고 관리 ─────────── */
-// 리뷰 · 회원 신고를 대상별로 묶어 처리 (블라인드 · 이용정지 · 해제 · 기각) — 실제 ReportModeration.jsx · admin.md 2~4절
+// 리뷰, 회원 신고를 대상별로 묶어 처리 (블라인드, 이용정지, 해제, 기각) — 실제 ReportModeration.jsx, admin.md 2~4절
 export let REPORTS = REPORT_TARGETS.map((t) => ({ ...t }));
 const REPORT_TABS = ['처리 대기', '처리 완료', '전체'];
 const REPORT_TYPES = ['전체', '리뷰', '회원'];
@@ -590,7 +590,7 @@ const REPORT_ACTIONS = {
 };
 const REPORT_ACTION_LABEL = { BLIND: '블라인드', UNBLIND: '블라인드 해제', SUSPEND: '이용정지', UNSUSPEND: '정지 해제', DISMISS: '기각' };
 const inReportTab = (t, tab) => (tab === '처리 대기' ? t.openCount > 0 : tab === '처리 완료' ? t.openCount === 0 : true);
-const reasonText = (counts) => Object.entries(counts).map(([code, n]) => `${REPORT_REASON_LABEL[code] ?? code} ${n}`).join(' · ');
+const reasonText = (counts) => Object.entries(counts).map(([code, n]) => `${REPORT_REASON_LABEL[code] ?? code} ${n}`).join(', ');
 
 export function AdminReports() {
   const [tab, setTab] = useState('처리 대기');
@@ -605,11 +605,11 @@ export function AdminReports() {
   const open = target && REPORTS.find((t) => t.targetType === target.type && t.targetId === target.id);
   return (
     <div>
-      <PageHead title="신고 관리" desc="회원 · 리뷰 신고를 대상별로 모아 처리 · 판매자의 리뷰 검토 요청도 여기로 · 신고가 쌓여도 자동 블라인드는 하지 않음" />
+      <PageHead title="신고 관리" desc="회원, 리뷰 신고를 대상별로 모아 처리, 판매자의 리뷰 검토 요청도 여기로, 신고가 쌓여도 자동 블라인드는 하지 않음" />
       <div className="flex flex-wrap gap-3 items-center">
         <Segments items={REPORT_TABS} value={tab} onChange={setTab} counts={counts} />
         <Segments items={REPORT_TYPES} value={type} onChange={setType} />
-        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="내용 · 사유" className="flex-1 px-2 text-[13px] outline-none" /></div>
+        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="내용, 사유" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel mt-3 overflow-x-auto">
         <table className="tbl">
@@ -637,7 +637,7 @@ export function AdminReports() {
   );
 }
 
-// 대상 현재 값 · 신고 목록 · 조치 이력 · 처리 폼 — 처리하면 그 대상의 처리 대기 신고를 한 번에 닫는다
+// 대상 현재 값, 신고 목록, 조치 이력, 처리 폼 — 처리하면 그 대상의 처리 대기 신고를 한 번에 닫는다
 function ReportDetailBody({ d, onDone }) {
   const { toast } = useApp();
   const actions = REPORT_ACTIONS[d.targetType];
@@ -651,7 +651,7 @@ function ReportDetailBody({ d, onDone }) {
     const openReports = d.reports.filter((r) => r.status === 'OPEN');
     const days = action === 'SUSPEND' ? SUSPEND_DURATIONS.find((x) => x.value === duration).days : null;
     const status = action === 'DISMISS' ? 'DISMISSED' : 'RESOLVED';
-    // 목업: 대상 서비스 값도 함께 바꾼다 (리뷰 블라인드 · 회원 상태)
+    // 목업: 대상 서비스 값도 함께 바꾼다 (리뷰 블라인드, 회원 상태)
     if (review && action === 'BLIND') Object.assign(review, { blinded: true, blindReason: reason.trim() });
     if (review && action === 'UNBLIND') Object.assign(review, { blinded: false, blindReason: null });
     if (user && action === 'SUSPEND') Object.assign(user, { status: '이용정지', suspendedUntil: days ? new Date(Date.now() + days * DAY) : null });
@@ -662,7 +662,7 @@ function ReportDetailBody({ d, onDone }) {
       actions: [...d.actions, { moderationActionId: Date.now(), action, reason: reason.trim(), reportCount: openReports.length, createdAt: new Date(), suspendDays: days }],
     };
     REPORTS = REPORTS.map((t) => (t === d ? updated : t));
-    toast(`${REPORT_ACTION_LABEL[action]} 처리 · 신고 ${openReports.length}건 닫음`);
+    toast(`${REPORT_ACTION_LABEL[action]} 처리, 신고 ${openReports.length}건 닫음`);
     onDone();
   };
 
@@ -673,7 +673,7 @@ function ReportDetailBody({ d, onDone }) {
           <KV rows={[['리뷰', review.body],
             ...(review.photos.length ? [['사진', <div className="flex flex-wrap gap-1.5">{review.photos.map((u) => (
               <a key={u} href={u} target="_blank" rel="noopener noreferrer"><img src={u} alt="리뷰 사진" className="w-14 h-14 object-cover bg-white" /></a>))}</div>]] : []),
-            ['별점 · 상품', `${review.rating}점 · 상품 #${String(review.productId).replace(/^p/, '')}`], ['상태', review.blinded ? `블라인드 (${review.blindReason ?? ''})` : '노출 중']]} />
+            ['별점, 상품', `${review.rating}점, 상품 #${String(review.productId).replace(/^p/, '')}`], ['상태', review.blinded ? `블라인드 (${review.blindReason ?? ''})` : '노출 중']]} />
         )}
         {user && (
           <KV rows={[['회원', <Link to={`/admin/users/${user.id}`} className="hover:underline">{user.name} ({user.nick})</Link>], ['이메일', user.email], ['상태', user.status]]} />
@@ -688,7 +688,7 @@ function ReportDetailBody({ d, onDone }) {
               <Pill tone={REPORT_STATUS_TONE[r.status]}>{REPORT_STATUS_LABEL[r.status]}</Pill>
               <div className="flex-1">
                 <div>{REPORT_REASON_LABEL[r.reasonCode] ?? r.reasonCode}{r.detail && <span className="text-ink-2"> — {r.detail}</span>}</div>
-                <div className="text-[11.5px] text-mute num">{ymdhm(r.createdAt)} · {r.reporterRole === 'SELLER' ? '판매자' : '구매자'} #{r.reporterId}</div>
+                <div className="text-[11.5px] text-mute num">{ymdhm(r.createdAt)}, {r.reporterRole === 'SELLER' ? '판매자' : '구매자'} #{r.reporterId}</div>
               </div>
             </li>
           ))}
@@ -700,7 +700,7 @@ function ReportDetailBody({ d, onDone }) {
           <div className="font-semibold mb-1">조치 이력</div>
           <ol className="space-y-1 text-[12.5px]">
             {d.actions.map((a) => (
-              <li key={a.moderationActionId} className="text-ink-2"><span className="num text-mute">{ymdhm(a.createdAt)}</span> · <b>{REPORT_ACTION_LABEL[a.action]}</b>{a.action === 'SUSPEND' && ` (${a.suspendDays ? `${a.suspendDays}일` : '영구'})`} · {a.reason} · 신고 {a.reportCount}건</li>
+              <li key={a.moderationActionId} className="text-ink-2"><span className="num text-mute">{ymdhm(a.createdAt)}</span>, <b>{REPORT_ACTION_LABEL[a.action]}</b>{a.action === 'SUSPEND' && ` (${a.suspendDays ? `${a.suspendDays}일` : '영구'})`}, {a.reason}, 신고 {a.reportCount}건</li>
             ))}
           </ol>
         </div>
@@ -727,8 +727,8 @@ function ReportDetailBody({ d, onDone }) {
   );
 }
 
-/* ─────────── 카테고리 · 수수료 ─────────── */
-// 카테고리는 삭제하지 않고 사용 중지만 (store · settlement 가 category_id 를 참조)
+/* ─────────── 카테고리, 수수료 ─────────── */
+// 카테고리는 삭제하지 않고 사용 중지만 (store, settlement 가 category_id 를 참조)
 export function AdminCategories() {
   const { toast } = useApp();
   const [open, setOpen] = useState(() => new Set([categories[0].id]));
@@ -755,7 +755,7 @@ export function AdminCategories() {
   const ActiveBtn = ({ k }) => <button onClick={() => toggleActive(k)} className="btn btn-ghost btn-xs">{inactive.has(k) ? '사용' : '사용 중지'}</button>;
   return (
     <div>
-      <PageHead title="카테고리 · 수수료" desc="상위 / 하위 2단계 카테고리 · 판매자는 상품 등록 시 이 목록에서만 선택합니다 · 수수료율 변경은 판매자 공지 후 7일 뒤 적용"
+      <PageHead title="카테고리, 수수료" desc="상위 / 하위 2단계 카테고리, 판매자는 상품 등록 시 이 목록에서만 선택합니다, 수수료율 변경은 판매자 공지 후 7일 뒤 적용"
         right={<>
           <button onClick={() => setEdit({ mode: 'new', parent: '' })} className="btn btn-line btn-sm">+ 상위 카테고리</button>
           <button onClick={reserve} className="btn btn-ink btn-sm">수수료 변경 예약</button>
@@ -763,7 +763,7 @@ export function AdminCategories() {
       <div className="flex flex-wrap items-center gap-2 mb-3 text-[12.5px]">
         <button onClick={() => setOpen(new Set(categories.map((c) => c.id)))} className="btn btn-line btn-xs">모두 펼치기</button>
         <button onClick={() => setOpen(new Set())} className="btn btn-line btn-xs">모두 접기</button>
-        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="카테고리명 · 코드" className="flex-1 px-2 text-[13px] outline-none" /></div>
+        <div className="flex items-center border border-line-2 h-9 px-2.5 ml-auto w-full sm:w-64 bg-white"><Search size={15} className="text-mute" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="카테고리명, 코드" className="flex-1 px-2 text-[13px] outline-none" /></div>
       </div>
       <div className="panel overflow-x-auto">
         <table className="tbl">
@@ -812,7 +812,7 @@ export function AdminCategories() {
           <div className="space-y-3">
             <div>
               <label className="label">상위 카테고리</label>
-              {/* 상위 · 하위 이동은 안 됨(수수료 기준이 바뀜) → 수정할 때는 고정 */}
+              {/* 상위, 하위 이동은 안 됨(수수료 기준이 바뀜) → 수정할 때는 고정 */}
               <select className="field" defaultValue={edit.parent} disabled={edit.mode === 'edit'}>
                 <option value="">없음 (상위 카테고리로 등록)</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}

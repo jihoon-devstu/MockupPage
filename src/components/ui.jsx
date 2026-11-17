@@ -213,7 +213,7 @@ export function BarChart({ data, height = 220, valueKey = 'amount', color = 'var
         <div className="pointer-events-none absolute top-0 bg-ink text-white text-xs px-2.5 py-1.5 whitespace-nowrap"
           style={{ left: `${((pad.l + hover * bw + bw / 2) / W) * 100}%`, transform: 'translateX(-50%)' }}>
           <div className="text-white/60 num">{md(data[hover].date)}</div>
-          <div className="font-semibold num">{won(data[hover][valueKey])} · {data[hover].orders}건</div>
+          <div className="font-semibold num">{won(data[hover][valueKey])}, {data[hover].orders}건</div>
         </div>
       )}
     </div>
