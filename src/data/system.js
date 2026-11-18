@@ -1,4 +1,4 @@
-/* 시스템 상태, 장애 분석 리포트 목업 데이터 (실제 frontend #116 ~ #122, #125 ~ #127, backend docs/api/admin.md 8 ~ 10절)
+/* 시스템 상태, 장애 분석 리포트 목업 데이터 (실제 frontend #116 ~ #122, #124 ~ #129, backend docs/api/admin.md 8 ~ 10절)
    - 실시간 모니터링: 실제는 Prometheus, Zipkin, Loki 를 폴링. 목업은 1초마다 가짜 트래픽을 만들어 같은 모양으로 쌓는다
      (서비스를 전부 내리면 그 서비스로 가는 요청이 게이트웨이 502 로 바뀌고, 5xx 건수(최근 1분)가 오른다)
    - 장애 리포트: 실제는 서버가 기간을 받아 계산. 목업은 11/16 저녁 ~ 11/17 오전의 고정 사건 5건으로 같은 응답을 만든다
@@ -320,12 +320,37 @@ export const DONE_RESULT = {
   serverErrors: { 'product-service': 612 },
 };
 
-/* ─────────── 현재 접속자 (실제 SystemVisitors, admin.md 9절 visitors) ───────────
-   실제는 최근 60초 안에 신호가 있는 사람을 5초마다 다시 센다. 목업은 5초마다 작게 오르내리는 가짜 값 */
+// ?load=stopped — 8분 전에 관리자가 중지한 둘러보기 60명 실행(5분 중 1분 48초). 실패 없음 (목업 고정값)
+export const STOPPED_RESULT = {
+  requests: 10368, failed: 0, byStatus: { 200: 10368 }, p95Ms: 96, avgRps: 96, peakVus: 60, elapsedSec: 108,
+  topFailures: [],
+  serverErrors: {},
+};
+
+/* ─────────── 현재 접속자 (실제 SystemVisitors, monitor.js visitorBreakdown, admin.md 9절 visitors) ───────────
+   실제는 최근 60초 안에 신호가 있는 사람(브라우저 방문자 ID)을 5초마다 다시 센다. 로그인 회원은 대표 역할(관리자 > 판매자 > 구매자) 하나로 나눈다.
+   목업은 5초마다 작게 오르내리는 가짜 값 */
 export function nextVisitors(prev) {
   const step = (v, lo, hi) => Math.min(hi, Math.max(lo, v + Math.floor(Math.random() * 3) - 1));
-  const visitors = step(prev?.visitors ?? 14, 8, 24);
-  return { visitors, members: Math.min(visitors, step(prev?.members ?? 6, 2, 12)) };
+  const buyers = step(prev?.buyers ?? 5, 2, 9);
+  const sellers = step(prev?.sellers ?? 2, 0, 3);
+  const admins = step(prev?.admins ?? 1, 1, 2);
+  const members = buyers + sellers + admins;
+  const visitors = Math.max(members, step(prev?.visitors ?? 14, 8, 24));
+  return { visitors, members, buyers, sellers, admins, windowSeconds: 60 };
+}
+
+/** 접속자 구분 카드 — 총, 비회원(총 - 로그인 회원), 구매자, 판매자, 관리자. 값이 없으면 null */
+export function visitorBreakdown(data) {
+  if (!data || data.visitors == null) return [];
+  const guests = data.members == null ? null : Math.max(0, data.visitors - data.members);
+  return [
+    { key: 'total', label: '총 접속자', value: data.visitors },
+    { key: 'guest', label: '비회원', value: guests },
+    { key: 'buyer', label: '구매자', value: data.buyers },
+    { key: 'seller', label: '판매자', value: data.sellers },
+    { key: 'admin', label: '관리자', value: data.admins },
+  ];
 }
 
 /* ─────────── 장애 분석 리포트 ─────────── */
@@ -424,24 +449,28 @@ const INCIDENTS = [
 const EVENTS = [
   [at('11-16T19:30'), 'DEPLOY', 'store-service', '새 버전 배포 시작'],
   [at('11-16T19:30') + 21000, 'POD_START', 'store-service', 'store-service-5d8c7b9f4-q7m2n 시작'],
-  [at('11-16T19:30') + 64000, 'POD_STOP', 'store-service', 'store-service-6b4f8d2c1-h3k9t 종료'],
+  [at('11-16T19:30') + 64000, 'POD_STOP', 'store-service', 'store-service-6b4f8d2c1-h3k9t 종료(배포 교체)'],
   [at('11-17T03:12') + 40000, 'POD_RESTART', 'review-service', 'review-service-7c9d8f6b5-k2x4p 재시작 1회(OOMKilled)'],
   [at('11-17T10:12') + 3000, 'LOADTEST_START', null, '부하테스트 시작'],
   [at('11-17T10:24') + 3000, 'LOADTEST_END', null, '부하테스트 종료(최대 150명)'],
+  // 부하가 끝나고 HPA 가 늘렸던 파드를 줄임
+  [at('11-17T10:31') + 9000, 'POD_STOP', 'product-service', 'product-service-84f6c9d7b-x8c2v 종료(자동 축소)'],
+  [at('11-17T10:31') + 9000, 'POD_STOP', 'review-service', 'review-service-7c9d8f6b5-r4j7d 종료(자동 축소)'],
   // 이중화 검증 — 5xx 없이 끝나 이슈는 아님
   ...['order-service', 'product-service', 'payment-service', 'store-service', 'user-service'].flatMap((s, i) => [
     [at('11-17T10:41') + 2000 + i * 100, 'CHAOS_KILL', s, '관리자가 파드 1개 강제 종료(ONE)'],
+    [at('11-17T10:41') + 3000 + i * 100, 'POD_STOP', s, `${s}-${['6f9c4d8b7', '84f6c9d7b', '5b7d9e2c4', '5d8c7b9f4', '7a3e5c1d9'][i]}-${['t2k9m', 'h6w3p', 'c8n1x', 'q7m2n', 'z4r8b'][i]} 종료(장애 주입)`],
     [at('11-17T10:41') + 2000 + (30 + i * 2) * 1000, 'CHAOS_RECOVER', s, `복구 완료(${30 + i * 2}초)`],
   ]),
   [at('11-17T11:00') + 4000, 'LOADTEST_START', null, '부하테스트 시작'],
   [at('11-17T11:05') + 12000, 'CHAOS_KILL', 'product-service', '관리자가 파드 2개 강제 종료(ALL)'],
-  [at('11-17T11:05') + 13000, 'POD_STOP', 'product-service', 'product-service-84f6c9d7b-2xk8w 종료'],
-  [at('11-17T11:05') + 13000, 'POD_STOP', 'product-service', 'product-service-84f6c9d7b-9pq4r 종료'],
+  [at('11-17T11:05') + 13000, 'POD_STOP', 'product-service', 'product-service-84f6c9d7b-2xk8w 종료(장애 주입)'],
+  [at('11-17T11:05') + 13000, 'POD_STOP', 'product-service', 'product-service-84f6c9d7b-9pq4r 종료(장애 주입)'],
   [at('11-17T11:05') + 15000, 'POD_START', 'product-service', 'product-service-84f6c9d7b-m5t7z 시작'],
   [at('11-17T11:05') + 15000, 'POD_START', 'product-service', 'product-service-84f6c9d7b-w1n6c 시작'],
   [at('11-17T11:05') + 53000, 'CHAOS_RECOVER', 'product-service', '복구 완료(41초)'],
   [at('11-17T11:10') + 4000, 'LOADTEST_END', null, '부하테스트 종료(최대 120명)'],
-].map(([t, type, service, detail]) => ({ t, type, service, detail }));
+].map(([t, type, service, detail]) => ({ t, type, service, detail })).sort((a, b) => a.t - b.t);
 const SUSPICIOUS_LOGS = [
   [42, 5, 'GET /.env 404 ip=203.0.113.45 type=secret-file'], [43, 12, 'GET /.git/config 404 ip=203.0.113.45 type=secret-file'],
   [43, 40, 'GET /wp-admin/setup-config.php 404 ip=198.51.100.23 type=cms-probe'], [44, 8, 'GET /phpmyadmin/index.php 404 ip=198.51.100.23 type=cms-probe'],
@@ -534,9 +563,88 @@ export function buildReport({ from, to: rawTo }) {
   };
 }
 
-/** 이슈 대표 건수 — 공격 의심은 탐색 요청, 요청 급증은 429(없으면 전체 요청), 나머지는 5xx */
-export const issueCount = (i) => (i.kind === 'ATTACK' ? i.suspicious : i.kind === 'TRAFFIC' ? i.rateLimited || i.requests || 0 : i.serverErrors);
 export const issueWindow = (i) => `${formatDayTime(i.startMs)} ~ ${formatTime(i.endMs)}`;
+/** 이슈 길이(분) */
+export const issueMinutes = (i) => Math.max(1, Math.round((i.endMs - i.startMs) / 60000));
+
+/** 이슈 영향 한 줄: "상품, 5xx 913건" */
+export function issueImpact(i) {
+  const where = i.services.map(serviceLabel).join(', ');
+  const traffic = i.rateLimited ? `429 ${i.rateLimited}건` : `요청 ${i.requests ?? 0}건`;
+  const what = { ATTACK: `탐색 요청 ${i.suspicious}건`, TRAFFIC: traffic }[i.kind] ?? `5xx ${i.serverErrors}건`;
+  return where ? `${where}, ${what}` : what;
+}
+
+/** 이슈 구분 (frontend #129) — 외부 탐색(공격 의심), 의도한 시험(장애 주입, 부하테스트), 실제 장애(그 밖). 외부 탐색은 실제 장애와 따로 센다 */
+export const ISSUE_CLASS = {
+  attack: { short: '외부 탐색', long: '외부 탐색(인터넷 자동 스캐너), 서비스 영향은 응답 실패 건수로 확인' },
+  intended: { short: '의도한 시험', long: '의도한 시험(장애 주입 또는 부하테스트)' },
+  real: { short: '실제 장애', long: '실제 장애, 확인 필요' },
+};
+export const issueClass = (i) => {
+  if (i.kind === 'ATTACK') return 'attack';
+  return i.intended ? 'intended' : 'real';
+};
+
+/** 한눈에 보기 — 상태 배지와 숫자 카드. 배지는 서비스 장애만 세고 외부 탐색은 덧붙인다: "실제 장애 없음, 외부 탐색 1건" */
+export function overview(report) {
+  const s = report.summary;
+  const real = report.issues.filter((i) => issueClass(i) === 'real').length;
+  const attacks = report.issues.filter((i) => issueClass(i) === 'attack').length;
+  const base = real > 0 ? `실제 장애 ${real}건` : '실제 장애 없음';
+  return {
+    status: real > 0 ? 'bad' : 'ok',
+    statusText: attacks > 0 ? `${base}, 외부 탐색 ${attacks}건` : base,
+    cards: [
+      { label: '이슈', value: s.issues, sub: `의도한 시험 ${s.intendedIssues}` },
+      { label: '응답 실패(5xx)', value: s.serverErrors },
+      { label: '공격 의심', value: s.suspicious },
+      { label: '요청 제한(429)', value: s.rateLimited },
+      { label: '전체 요청', value: s.requests },
+    ],
+  };
+}
+
+const tally = (map, key) => map.set(key, (map.get(key) ?? 0) + 1);
+const joinTally = (map) => [...map].map(([k, n]) => (n > 1 ? `${k} ${n}` : k)).join(', ');
+const servicesOf = (list) => {
+  const m = new Map();
+  list.forEach((e) => tally(m, serviceLabel(e.service)));
+  return joinTally(m);
+};
+const numbersIn = (list, re) => list.map((e) => Number(re.exec(e.detail)?.[1])).filter(Boolean);
+
+/** 운영 이벤트 요약표 — 원본 이벤트(파드 시작, 종료 하나하나)를 종류별 한 줄로. alert = 원인 미상 종료, 재시작, 차단기처럼 확인이 필요한 줄 */
+export function summarizeEvents(events = []) {
+  const by = (type) => events.filter((e) => e.type === type);
+  const rows = [];
+  const chaos = by('CHAOS_KILL');
+  if (chaos.length) {
+    const secs = numbersIn(by('CHAOS_RECOVER'), /(\d+)초/);
+    const recovery = secs.length ? ` / 복구 평균 ${Math.round(secs.reduce((a, b) => a + b, 0) / secs.length)}초, 최장 ${Math.max(...secs)}초` : '';
+    rows.push({ label: '장애 주입', count: chaos.length, detail: servicesOf(chaos) + recovery });
+  }
+  const loads = by('LOADTEST_START');
+  if (loads.length) {
+    const peaks = numbersIn(by('LOADTEST_END'), /최대 (\d+)명/);
+    rows.push({ label: '부하테스트', count: loads.length, detail: peaks.length ? `최대 ${Math.max(...peaks)}명` : '' });
+  }
+  const deploys = by('DEPLOY');
+  if (deploys.length) rows.push({ label: '배포', count: deploys.length, detail: servicesOf(deploys) });
+  const stops = by('POD_STOP');
+  if (stops.length) {
+    const reasons = new Map();
+    stops.forEach((e) => tally(reasons, /\(([^)]+)\)$/.exec(e.detail)?.[1] ?? '원인 미상'));
+    rows.push({ label: '파드 종료', count: stops.length, detail: joinTally(reasons), alert: reasons.has('원인 미상') });
+  }
+  const starts = by('POD_START');
+  if (starts.length) rows.push({ label: '파드 시작', count: starts.length, detail: servicesOf(starts) });
+  const restarts = by('POD_RESTART');
+  if (restarts.length) rows.push({ label: '파드 재시작', count: restarts.length, detail: servicesOf(restarts), alert: true });
+  const circuits = by('CIRCUIT_OPEN');
+  if (circuits.length) rows.push({ label: '차단기 열림', count: circuits.length, detail: circuits.map((e) => e.detail).join(', '), alert: true });
+  return rows;
+}
 
 /** 시간대별 막대 배치 — 서비스별 5xx 를 쌓고, 5xx 없는 구간의 탐색 요청은 회색 */
 export function barLayout(buckets, { width = 960, height = 180, pad: p = 28 } = {}) {

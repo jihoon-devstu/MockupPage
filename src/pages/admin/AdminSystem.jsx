@@ -6,7 +6,7 @@ import { PageHead, Modal } from '../../components/ui';
 import {
   SCENARIO_SERVICES, createMonitor, tickMonitor, errorsPerMinute, monitorOverview, monitorCalls, monitorErrors, monitorSummary, traceOf,
   hasErrors, isLatencySpike, formatClock, isServerError,
-  SCENARIO_LABEL, formatCount, progress, failureCauses, createLoadAcc, tickLoadAcc, loadResult, DONE_RESULT, nextVisitors,
+  SCENARIO_LABEL, formatCount, progress, failureCauses, createLoadAcc, tickLoadAcc, loadResult, DONE_RESULT, STOPPED_RESULT, nextVisitors, visitorBreakdown,
 } from '../../data/system';
 
 /* ─────────── 시스템 상태 (장애 시연 F-1) ───────────
@@ -18,7 +18,9 @@ import {
    목업 전용 주소: ?chaos=off = 내리기 스위치 꺼짐, ?conn=lost = 상태 조회 실패(마지막 값 유지), ?scenario=recovering = 시나리오 직후 복구 중(장애 주입 버튼 막힘)
    - ?load=running = 혼합 시나리오 120명 실행 중 + 20초 전 product 전부 내림(장애 감지)
    - ?load=done = 25분 전에 끝난 혼합 90명 실행(결과 탭, 502 일부)
-   현재 접속자, 부하테스트 진행 막대와 결과 탭, 중지 버튼, 진행 중 알림 띠(frontend #125 ~ #127, admin.md 8절 result, 9절 visitors) */
+   - ?load=stopped = 8분 전에 관리자가 중지한 둘러보기 60명 실행(상태 중지됨, 결과 탭, 실패 없음)
+   현재 접속자, 부하테스트 진행 막대와 결과 탭, 중지 버튼, 진행 중 알림 띠(frontend #125 ~ #127, admin.md 8절 result, 9절 visitors)
+   현재 접속자 총, 비회원, 구매자, 판매자, 관리자 구분 카드, 부하테스트 중지됨 STOPPED(frontend #128) */
 
 // 서비스 13개 — 서버 순서 그대로. desired = Helm values replicas (구매 경로, 입구 2, 나머지 1)
 const SERVICES = [
@@ -354,13 +356,23 @@ function LoadTestPanel({ scenario, onScenarioChange, load, accounts, k6, result,
   );
 }
 
-/* ─── 현재 접속자 (실제 SystemVisitors) — 회원 + 비회원, 로그인 회원 그래프 2칸 ─── */
-function Visitors({ history }) {
+/* ─── 현재 접속자 (실제 SystemVisitors) — 총 접속자 그래프 + 구분 카드 5개(총, 비회원, 구매자, 판매자, 관리자) ─── */
+const visitorCount = (v) => (v == null ? '-' : `${v}명`);
+function Visitors({ history, data }) {
   return (
-    <section aria-label="현재 접속자" className="grid sm:grid-cols-2 gap-3">
-      <LineChart label="현재 접속자 (회원 + 비회원)" points={history.visitors} floor={5} format={(v) => `${v}명`} />
-      <LineChart label="로그인 회원" points={history.members} floor={5} format={(v) => `${v}명`} />
-      <p className="sm:col-span-2 -mt-1 text-xs text-mute">탭을 열면 바로 늘고 닫으면 바로 줄어요(브라우저가 강제 종료되면 최대 1분 뒤). 5초마다 갱신, 부하테스트 가상 사용자는 빼고 셉니다.</p>
+    <section aria-label="현재 접속자" className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3">
+      <LineChart label="현재 접속자 (총)" points={history} floor={5} format={(v) => `${v}명`} />
+      <ul className="grid grid-cols-5 gap-2" aria-label="접속자 구분">
+        {visitorBreakdown(data).map((i) => (
+          <li key={i.key} className={`border px-3 py-2 ${i.key === 'total' ? 'border-ink' : 'border-line'} bg-paper`}>
+            <span className="text-sm text-mute">{i.label}</span>
+            <p className="text-xl font-bold tabular-nums">{visitorCount(i.value)}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="lg:col-span-2 -mt-1 text-xs text-mute">
+        탭을 열면 바로 늘고 닫으면 바로 줄어요(브라우저가 강제 종료되면 최대 1분 뒤). 5초마다 갱신, 부하테스트 가상 사용자는 빼고 셉니다. 역할이 여러 개면 관리자, 판매자, 구매자 순으로 하나만 셉니다.
+      </p>
     </section>
   );
 }
@@ -569,15 +581,20 @@ export function AdminSystem() {
   const timers = useRef([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
-  // 부하테스트 — 목업은 k6 Job 대신 화면 상태. ?load=running = 혼합 120명이 2분 15초째 실행 중, ?load=done = 25분 전에 끝난 실행
-  // load.vus = 지금 사용자 수(슬라이더), startVus = 시작할 때 사용자 수, finishedAt = 실제 끝난 시각(admin.md 8절)
+  // 부하테스트 — 목업은 k6 Job 대신 화면 상태. ?load=running = 혼합 120명이 2분 15초째 실행 중, ?load=done = 25분 전에 끝난 실행,
+  // ?load=stopped = 8분 전에 중지한 실행. load.vus = 지금 사용자 수(슬라이더), startVus = 시작할 때 사용자 수, finishedAt = 실제 끝난 시각(admin.md 8절)
   const loadDone = sp.get('load') === 'done';
+  const loadStopped = sp.get('load') === 'stopped';
   const [scenario, setScenario] = useState(loadStart ? 'MIXED' : 'BROWSE');
   const [load, setLoad] = useState(() => {
     if (loadStart) return { scenario: 'MIXED', state: 'RUNNING', vus: 120, startVus: 120, durationSec: 300, startedAt: Date.now() - 135000, finishedAt: null };
     if (loadDone) {
       const startedAt = Date.now() - 30 * 60000;
       return { scenario: 'MIXED', state: 'DONE', vus: 90, startVus: 90, durationSec: 300, startedAt, finishedAt: startedAt + 300000 };
+    }
+    if (loadStopped) {
+      const finishedAt = Date.now() - 8 * 60000;
+      return { scenario: 'BROWSE', state: 'STOPPED', vus: 60, startVus: 60, durationSec: 300, startedAt: finishedAt - 108000, finishedAt };
     }
     return null;
   });
@@ -596,8 +613,8 @@ export function AdminSystem() {
     const now = Date.now();
     const monitor = createMonitor();
     const k6 = { vus: [], rps: [] };
-    const acc = loadStart ? createLoadAcc() : null; // 부하테스트 결과 누적 (?load=done 은 고정 결과)
-    const visitors = { visitors: [], members: [] };
+    const acc = loadStart ? createLoadAcc() : null; // 부하테스트 결과 누적 (?load=done, ?load=stopped 는 고정 결과)
+    const visitors = [];
     let v = null;
     for (let i = 180; i >= 1; i -= 1) {
       const t = now - i * 1000;
@@ -620,11 +637,16 @@ export function AdminSystem() {
         k6.vus.push({ t: tt, v: 90 });
         k6.rps.push({ t: tt, v: 90 * 1.6 * (0.92 + Math.random() * 0.16) });
       }
+      // 중지된 실행은 1분 48초치만 (끝난 시각에서 멈춤)
+      if (loadStopped && i <= 108) {
+        const tt = t - 8 * 60000;
+        k6.vus.push({ t: tt, v: 60 });
+        k6.rps.push({ t: tt, v: 60 * 1.6 * (0.92 + Math.random() * 0.16) });
+      }
       // 현재 접속자 — 실제는 화면을 연 뒤부터 쌓이지만 목업은 2분치를 미리 채운다
       if (i <= 120 && Math.floor(t / 1000) % 5 === 0) {
         v = nextVisitors(v);
-        visitors.visitors.push({ t, v: v.visitors });
-        visitors.members.push({ t, v: v.members });
+        visitors.push({ t, v: v.visitors });
       }
     }
     sim.current = { monitor, k6, acc, visitors, lastVisitors: v };
@@ -647,11 +669,9 @@ export function AdminSystem() {
       }
       // 현재 접속자 — 5초마다 작게 오르내림
       if (Math.floor(t / 1000) % 5 === 0) {
-        const { visitors } = sim.current;
         const v = nextVisitors(sim.current.lastVisitors);
         sim.current.lastVisitors = v;
-        visitors.visitors = [...visitors.visitors, { t, v: v.visitors }].slice(-120);
-        visitors.members = [...visitors.members, { t, v: v.members }].slice(-120);
+        sim.current.visitors = [...sim.current.visitors, { t, v: v.visitors }].slice(-120);
       }
       setTick((n) => n + 1);
     }, 1000);
@@ -678,10 +698,10 @@ export function AdminSystem() {
   const scaleLoad = () => running && setLoad((l) => ({ ...l, vus }));
   // 중지 = 실제 DELETE /loadtest, 상태는 STOPPED(중지됨)
   const stopLoad = () => { setLoad((l) => ({ ...l, state: 'STOPPED', finishedAt: Date.now() })); toast('부하테스트를 중지했어요.'); };
-  const loadTestResult = sim.current.acc ? loadResult(sim.current.acc) : loadDone ? DONE_RESULT : null;
+  const loadTestResult = sim.current.acc ? loadResult(sim.current.acc) : loadDone ? DONE_RESULT : loadStopped ? STOPPED_RESULT : null;
   const prepareAccounts = () => {
     setAccounts({ state: 'RUNNING' });
-    toast('부하용 계정 300개를 준비하고 있어요 — 약 1분');
+    toast('부하용 계정 300개를 준비하고 있어요(약 1분).');
     timers.current.push(setTimeout(() => setAccounts({ state: 'DONE' }), 8000)); // 목업은 8초
   };
 
@@ -739,7 +759,7 @@ export function AdminSystem() {
       )}
       {connLost && <p role="alert" className="mb-3 px-4 py-3 bg-rust-soft text-lg font-bold text-rust">연결 끊김 — 마지막으로 받은 상태를 보여 주고 있어요.</p>}
       <div className="grid gap-4">
-        <Visitors history={sim.current.visitors} />
+        <Visitors history={sim.current.visitors} data={sim.current.lastVisitors} />
         <div id="loadtest">
           <LoadTestPanel scenario={scenario} onScenarioChange={setScenario} load={load} accounts={accounts} k6={sim.current.k6} result={loadTestResult}
             vus={vus} onVus={setVus} durationSec={durationSec} onDuration={setDurationSec}
